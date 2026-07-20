@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
     <!-- Navbar -->
@@ -24,7 +25,8 @@
                 <li><a href="#about">About</a></li>
                 <li><a href="#services">Services</a></li>
                 <li><a href="#contact">Contact</a></li>
-                <li><a href="#" class="btn-nav">Get Started</a></li>
+                <li><a href="login.html" class="btn-nav">Portal Login</a></li>
+                <li><a href="admission.html" class="btn-nav" style="background: var(--gradient);">Apply Now</a></li>
             </ul>
         </div>
     </nav>
@@ -42,7 +44,7 @@
                     <h1>We Build <span class="gradient-text">Future Leaders</span> That Matter</h1>
                     <p>Tech Bridge Academy is dedicated to delivering quality education through innovation, technology, and academic excellence. We empower students with the knowledge, skills, and character needed to succeed in a rapidly evolving world and become confident leaders of tomorrow.</p>
                     <div class="hero-buttons">
-                        <a href="#contact" class="btn btn-primary">Apply for Admission</a>
+                        <a href="admission.html" class="btn btn-primary">Apply for Admission</a>
                         <a href="#about" class="btn btn-secondary">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                             Watch School Demo
@@ -79,6 +81,95 @@
                         <h3>Creative Solutions</h3>
                         <p>Innovative & Technological <br> approach</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Student Registration Section -->
+    <section class="reg-section" id="studentCard">
+        <div class="container">
+            <div class="section-header">
+                <span class="badge" style="background:rgba(255,255,255,0.2);color:white;">Student Registration</span>
+                <h2>Register as a <span class="gradient-text">Student</span></h2>
+                <p>Fill in the form below to register and get your student ID card</p>
+            </div>
+            <div class="reg-wrapper">
+                <div class="reg-form-box">
+                    <form id="registrationForm">
+                        <div class="reg-form-group">
+                            <label for="regFullName">Full Name</label>
+                            <input type="text" id="regFullName" placeholder="Enter your full name">
+                        </div>
+                        <div class="reg-form-group">
+                            <label for="regEmail">Email Address</label>
+                            <input type="email" id="regEmail" placeholder="Enter your email">
+                        </div>
+                        <div class="reg-form-group">
+                            <label for="regPhone">Phone Number</label>
+                            <input type="tel" id="regPhone" placeholder="Enter your phone number">
+                        </div>
+                        <div class="reg-form-group">
+                            <label for="regGmail">Gmail Address</label>
+                            <input type="email" id="regGmail" placeholder="Enter your gmail address">
+                        </div>
+                        <div class="reg-form-group">
+                            <label for="regAddress">Student Address</label>
+                            <input type="text" id="regAddress" placeholder="Enter your address">
+                        </div>
+                        <div class="reg-form-group">
+                            <label for="regAge">Age</label>
+                            <input type="number" id="regAge" min="1" max="120" placeholder="Enter your age">
+                        </div>
+                        <div class="reg-form-group">
+                            <label for="regCourse">Course</label>
+                            <select id="regCourse">
+                                <option value="">Select a course</option>
+                                <option value="JavaScript">JavaScript</option>
+                                <option value="Web Design">Web Design</option>
+                                <option value="Python">Python</option>
+                                <option value="Graphic Design">Graphic Design</option>
+                            </select>
+                        </div>
+                        <div class="reg-form-group">
+                            <label for="regFaculty">Faculty</label>
+                            <select id="regFaculty">
+                                <option value="">Select a faculty</option>
+                                <option value="Art">Art</option>
+                                <option value="Science">Science</option>
+                                <option value="Commercial">Commercial</option>
+                            </select>
+                        </div>
+                        <div class="reg-form-group">
+                            <label for="regAvatar">Upload Photo</label>
+                            <input type="file" id="regAvatar" accept="image/*">
+                            <div class="reg-avatar-preview" id="regAvatarPreview">
+                                <span>No photo selected</span>
+                            </div>
+                        </div>
+                        <div class="reg-form-group">
+                            <label for="regIdColor">ID Card Color</label>
+                            <div class="reg-color-row">
+                                <input type="color" id="regIdColor" value="#667eea">
+                                <span id="regColorLabel">#667eea</span>
+                            </div>
+                        </div>
+                        <div class="reg-form-group">
+                            <label for="regPassword">Password</label>
+                            <input type="password" id="regPassword" placeholder="Enter your password">
+                        </div>
+                        <div class="reg-form-group">
+                            <label for="regConfirmPassword">Confirm Password</label>
+                            <input type="password" id="regConfirmPassword" placeholder="Confirm your password">
+                        </div>
+                        <div id="regMessage" class="reg-message"></div>
+                        <button type="submit" class="btn btn-primary btn-full">Register</button>
+                    </form>
+                </div>
+                <div class="reg-students-area">
+                    <h3>Registered Students</h3>
+                    <p id="regStudentCount">Total students: 0</p>
+                    <div id="regStudentCards"></div>
                 </div>
             </div>
         </div>
@@ -231,7 +322,7 @@
                     <p>"<b>TECH-BRIDGE ACADEMY</b> has transformed my child's learning experience through quality education, dedicated teachers, and a nurturing environment. The school's commitment to academic excellence and character development has exceeded our expectations".
 "</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">Mr.Clement</div>
+                        <div class="author-avatar">Mr.</div>
                         <div class="author-info">
                             <h4>John Davidson</h4>
                             <span>CEO, TechCorp Ltd'/span>
@@ -308,18 +399,22 @@
                 <div class="contact-form-wrapper">
                     <form class="contact-form" id="contactForm">
                         <div class="form-group">
-                            <input type="text" placeholder="Your Name" required>
+                            <input type="text" id="contactName" placeholder="Your Name" required>
                         </div>
                         <div class="form-group">
-                            <input type="email" placeholder="Your Email" required>
+                            <input type="email" id="contactEmail" placeholder="Your Email" required>
                         </div>
                         <div class="form-group">
-                            <input type="text" placeholder="Subject">
+                            <input type="tel" id="contactPhone" placeholder="Your Phone Number" required>
                         </div>
                         <div class="form-group">
-                            <textarea rows="5" placeholder="Your Message" required></textarea>
+                            <input type="text" id="contactSubject" placeholder="Subject">
+                        </div>
+                        <div class="form-group">
+                            <textarea rows="5" id="contactMessage" placeholder="Your Message" required></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary btn-full">Send Message</button>
+                        <div id="contactSuccess" style="display:none; color:#27ae60; text-align:center; margin-top:12px; font-weight:600;"></div>
                     </form>
                 </div>
             </div>
@@ -347,6 +442,8 @@
                         <li><a href="#features">Features</a></li>
                         <li><a href="#about">About</a></li>
                         <li><a href="#services">Services</a></li>
+                        <li><a href="admission.html">Apply for Admission</a></li>
+                        <li><a href="login.html">Student/Teacher Portal</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
@@ -380,5 +477,42 @@
     </footer>
 
     <script src="script.js"></script>
+    <script>
+        emailjs.init({ publicKey: 'X8j9z5L6vj2GOKQiJ' });
+
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('contactName').value.trim();
+            const email = document.getElementById('contactEmail').value.trim();
+            const phone = document.getElementById('contactPhone').value.trim();
+            const subject = document.getElementById('contactSubject').value.trim() || 'New Message from Contact Form';
+            const message = document.getElementById('contactMessage').value.trim();
+
+            const btn = this.querySelector('button[type="submit"]');
+            btn.textContent = 'Sending...';
+            btn.disabled = true;
+
+            emailjs.send('default_service', 'template_xh0zn4k', {
+                subject: '[TBA Contact] ' + subject,
+                message: 'Name: ' + name + '\nEmail: ' + email + '\nPhone: ' + phone + '\n\n' + message,
+                from_name: name,
+                from_email: email
+            }).then(function(response) {
+                console.log('SUCCESS!', response.status, response.text);
+                const success = document.getElementById('contactSuccess');
+                success.style.display = 'block';
+                success.textContent = 'Message sent successfully! We will get back to you shortly.';
+                btn.textContent = 'Send Message';
+                btn.disabled = false;
+                document.getElementById('contactForm').reset();
+                setTimeout(() => { success.style.display = 'none'; }, 5000);
+            }).catch(function(err) {
+                console.log('FAILED...', err);
+                alert('Error: ' + JSON.stringify(err));
+                btn.textContent = 'Send Message';
+                btn.disabled = false;
+            });
+        });
+    </script>
 </body>
 </html>
