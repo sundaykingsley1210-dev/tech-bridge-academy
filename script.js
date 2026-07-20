@@ -64,6 +64,52 @@ const seniorSubjects = [
 const juniorMax = 13;
 const seniorMax = 9;
 
+// ==================== PASSWORD TOGGLE & STRENGTH ====================
+function toggleRegPassword(inputId, btn) {
+    let input = document.getElementById(inputId);
+    let eyeOpen = btn.querySelector(".reg-eye-open");
+    let eyeClosed = btn.querySelector(".reg-eye-closed");
+
+    if (input.type === "password") {
+        input.type = "text";
+        eyeOpen.style.display = "none";
+        eyeClosed.style.display = "inline";
+    } else {
+        input.type = "password";
+        eyeOpen.style.display = "inline";
+        eyeClosed.style.display = "none";
+    }
+}
+
+function checkPasswordStrength(password) {
+    let score = 0;
+
+    if (password.length >= 6) score++;
+    if (password.length >= 10) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 2) return { level: "weak", text: "Weak password", class: "reg-strength-weak" };
+    if (score <= 3) return { level: "fair", text: "Fair password", class: "reg-strength-fair" };
+    return { level: "strong", text: "Strong password", class: "reg-strength-strong" };
+}
+
+function updatePasswordStrength() {
+    let password = document.getElementById("regPassword").value;
+    let container = document.getElementById("regPasswordStrength");
+
+    if (password.length === 0) {
+        container.innerHTML = "";
+        return;
+    }
+
+    let strength = checkPasswordStrength(password);
+    container.innerHTML =
+        '<div class="reg-strength-bar ' + strength.class + '"><div class="reg-strength-fill"></div></div>' +
+        '<div class="reg-strength-text">' + strength.text + '</div>';
+}
+
 // ==================== STUDENT REGISTRATION ====================
 let registeredStudents = [];
 let currentAvatarData = null;
@@ -93,6 +139,9 @@ document.getElementById("regIdColor").addEventListener("input", function () {
     document.getElementById("regColorLabel").textContent = this.value;
     document.getElementById("regAvatarPreview").style.borderColor = this.value;
 });
+
+// Password strength live check
+document.getElementById("regPassword").addEventListener("input", updatePasswordStrength);
 
 // Render subjects based on class selection
 function renderSubjects() {

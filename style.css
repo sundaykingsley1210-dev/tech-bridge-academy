@@ -1268,6 +1268,87 @@ a {
     color: #27ae60;
 }
 
+.reg-password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.reg-password-wrapper input {
+    flex: 1;
+    padding-right: 45px;
+}
+
+.reg-toggle-pw {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px 6px;
+    line-height: 1;
+    border-radius: 6px;
+    transition: var(--transition);
+}
+
+.reg-toggle-pw:hover {
+    background: var(--gray-light);
+}
+
+.reg-password-strength {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-height: 20px;
+}
+
+.reg-strength-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--gray-light);
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.reg-strength-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s, background 0.3s;
+    width: 0;
+}
+
+.reg-strength-text {
+    font-size: 0.78rem;
+}
+
+.reg-strength-weak .reg-strength-fill {
+    width: 33%;
+    background: #e74c3c;
+}
+
+.reg-strength-fair .reg-strength-fill {
+    width: 66%;
+    background: #f39c12;
+}
+
+.reg-strength-strong .reg-strength-fill {
+    width: 100%;
+    background: #27ae60;
+}
+
+.reg-strength-weak .reg-strength-text {
+    color: #e74c3c;
+}
+
+.reg-strength-fair .reg-strength-text {
+    color: #f39c12;
+}
+
+.reg-strength-strong .reg-strength-text {
+    color: #27ae60;
+}
+
 .reg-students-area {
     flex: 1;
     min-width: 320px;
