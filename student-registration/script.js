@@ -1,7 +1,10 @@
 let registeredStudents = [];
 let currentAvatarData = null;
 
-// Avatar preview on file select
+// Create update overlay first so elements exist for event listeners
+createUpdateOverlay();
+
+// Avatar preview on file select (main form)
 document.getElementById("avatar").addEventListener("change", function () {
   let file = this.files[0];
   let preview = document.getElementById("avatarPreview");
@@ -15,14 +18,34 @@ document.getElementById("avatar").addEventListener("change", function () {
     reader.readAsDataURL(file);
   } else {
     currentAvatarData = null;
-    preview.innerHTML = "<span>No photo selected</span>";
+    preview.innerHTML = '<span>No photo selected</span>';
   }
 });
 
-// Color picker live update
+// Color picker live update on avatar preview border (main form)
 document.getElementById("idColor").addEventListener("input", function () {
   document.getElementById("colorLabel").textContent = this.value;
   document.getElementById("avatarPreview").style.borderColor = this.value;
+});
+
+// Update avatar preview in the update form
+document.getElementById("updateAvatar").addEventListener("change", function () {
+  let file = this.files[0];
+  let preview = document.getElementById("updateAvatarPreview");
+
+  if (file) {
+    let reader = new FileReader();
+    reader.onload = function (e) {
+      preview.innerHTML = '<img src="' + e.target.result + '" alt="Photo">';
+      preview.setAttribute("data-new-avatar", e.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Update color picker in the update form
+document.getElementById("updateColor").addEventListener("input", function () {
+  document.getElementById("updateColorLabel").textContent = this.value;
 });
 
 function getFormValues() {
@@ -157,22 +180,18 @@ function validateForm(values) {
   return true;
 }
 
-function displayStudent(student) {
-  let studentCards = document.getElementById("studentCards");
-  let studentCount = document.getElementById("studentCount");
-  let cardIndex = registeredStudents.length;
-
-  let card = document.createElement("div");
-  card.classList.add("student-card");
-  card.setAttribute("data-index", cardIndex);
-
-  let avatarHTML = student.avatar
+function buildIdCardHTML(student, forPrint) {
+  var avatarHTML = student.avatar
     ? '<img src="' + student.avatar + '" alt="Photo">'
     : "<span>No Photo</span>";
 
-  card.innerHTML =
+  var colorBorder = forPrint
+    ? "border:3px solid rgba(255,255,255,0.6);"
+    : "border:3px solid " + student.idColor + ";";
+
+  return (
     '<div class="id-card" style="background-color: ' + student.idColor + ';">' +
-      '<div class="avatar-box">' + avatarHTML + "</div>" +
+      '<div class="avatar-box" style="' + colorBorder + '">' + avatarHTML + "</div>" +
       '<div class="card-name">' + student.fullName + "</div>" +
       '<div class="card-course">' + student.course + " - " + student.faculty + "</div>" +
       '<div class="card-details">' +
@@ -183,12 +202,30 @@ function displayStudent(student) {
         "<p><strong>Age:</strong> " + student.age + "</p>" +
         "<p><strong>Faculty:</strong> " + student.faculty + "</p>" +
       "</div>" +
-    "</div>" +
+    "</div>"
+  );
+}
+
+function buildCardActionsHTML(index) {
+  return (
     '<div class="card-actions">' +
-      '<button class="btn-update" onclick="openUpdateForm(' + cardIndex + ')">Update</button>' +
-      '<button class="btn-print" onclick="printStudentCard(' + cardIndex + ')">Print</button>' +
+      '<button class="btn-update" onclick="openUpdateForm(' + index + ')">Update</button>' +
+      '<button class="btn-print" onclick="printStudentCard(' + index + ')">Print</button>' +
       '<button class="btn-remove" onclick="removeStudent(this)">Remove</button>' +
-    "</div>";
+    "</div>"
+  );
+}
+
+function displayStudent(student) {
+  var studentCards = document.getElementById("studentCards");
+  var studentCount = document.getElementById("studentCount");
+  var cardIndex = registeredStudents.length;
+
+  var card = document.createElement("div");
+  card.classList.add("student-card");
+  card.setAttribute("data-index", cardIndex);
+
+  card.innerHTML = buildIdCardHTML(student, false) + buildCardActionsHTML(cardIndex);
 
   studentCards.appendChild(card);
   registeredStudents.push(student);
@@ -196,18 +233,17 @@ function displayStudent(student) {
 }
 
 function removeStudent(button) {
-  let card = button.closest(".student-card");
-  let index = parseInt(card.getAttribute("data-index"));
+  var card = button.closest(".student-card");
+  var index = parseInt(card.getAttribute("data-index"));
 
   registeredStudents.splice(index, 1);
   card.remove();
 
-  // Re-index remaining cards
-  let cards = document.querySelectorAll(".student-card");
+  var cards = document.querySelectorAll(".student-card");
   cards.forEach(function (c, i) {
     c.setAttribute("data-index", i);
-    let updateBtn = c.querySelector(".btn-update");
-    let printBtn = c.querySelector(".btn-print");
+    var updateBtn = c.querySelector(".btn-update");
+    var printBtn = c.querySelector(".btn-print");
     if (updateBtn) updateBtn.setAttribute("onclick", "openUpdateForm(" + i + ")");
     if (printBtn) printBtn.setAttribute("onclick", "printStudentCard(" + i + ")");
   });
@@ -216,8 +252,8 @@ function removeStudent(button) {
 }
 
 function openUpdateForm(index) {
-  let student = registeredStudents[index];
-  let overlay = document.getElementById("updateOverlay");
+  var student = registeredStudents[index];
+  var overlay = document.getElementById("updateOverlay");
 
   document.getElementById("updateIndex").value = index;
   document.getElementById("updateFullName").value = student.fullName;
@@ -231,7 +267,8 @@ function openUpdateForm(index) {
   document.getElementById("updateColor").value = student.idColor;
   document.getElementById("updateColorLabel").textContent = student.idColor;
 
-  let updatePreview = document.getElementById("updateAvatarPreview");
+  var updatePreview = document.getElementById("updateAvatarPreview");
+  updatePreview.removeAttribute("data-new-avatar");
   if (student.avatar) {
     updatePreview.innerHTML = '<img src="' + student.avatar + '" alt="Photo">';
   } else {
@@ -245,31 +282,11 @@ function closeUpdateForm() {
   document.getElementById("updateOverlay").classList.remove("active");
 }
 
-// Update avatar preview in the update form
-document.getElementById("updateAvatar").addEventListener("change", function () {
-  let file = this.files[0];
-  let preview = document.getElementById("updateAvatarPreview");
-
-  if (file) {
-    let reader = new FileReader();
-    reader.onload = function (e) {
-      preview.innerHTML = '<img src="' + e.target.result + '" alt="Photo">';
-      preview.setAttribute("data-new-avatar", e.target.result);
-    };
-    reader.readAsDataURL(file);
-  }
-});
-
-// Update color picker in the update form
-document.getElementById("updateColor").addEventListener("input", function () {
-  document.getElementById("updateColorLabel").textContent = this.value;
-});
-
 function saveUpdate() {
-  let index = parseInt(document.getElementById("updateIndex").value);
-  let student = registeredStudents[index];
+  var index = parseInt(document.getElementById("updateIndex").value);
+  var student = registeredStudents[index];
 
-  let newAvatar = document.getElementById("updateAvatarPreview").getAttribute("data-new-avatar");
+  var newAvatar = document.getElementById("updateAvatarPreview").getAttribute("data-new-avatar");
 
   student.fullName = document.getElementById("updateFullName").value.trim();
   student.email = document.getElementById("updateEmail").value.trim();
@@ -285,50 +302,25 @@ function saveUpdate() {
     student.avatar = newAvatar;
   }
 
-  // Refresh the card display
   refreshCard(index);
   closeUpdateForm();
 }
 
 function refreshCard(index) {
-  let student = registeredStudents[index];
-  let card = document.querySelector('.student-card[data-index="' + index + '"]');
+  var student = registeredStudents[index];
+  var card = document.querySelector('.student-card[data-index="' + index + '"]');
 
-  let avatarHTML = student.avatar
-    ? '<img src="' + student.avatar + '" alt="Photo">'
-    : "<span>No Photo</span>";
-
-  card.innerHTML =
-    '<div class="id-card" style="background-color: ' + student.idColor + ';">' +
-      '<div class="avatar-box">' + avatarHTML + "</div>" +
-      '<div class="card-name">' + student.fullName + "</div>" +
-      '<div class="card-course">' + student.course + " - " + student.faculty + "</div>" +
-      '<div class="card-details">' +
-        "<p><strong>Email:</strong> " + student.email + "</p>" +
-        "<p><strong>Phone:</strong> " + student.phone + "</p>" +
-        "<p><strong>Gmail:</strong> " + student.gmail + "</p>" +
-        "<p><strong>Address:</strong> " + student.address + "</p>" +
-        "<p><strong>Age:</strong> " + student.age + "</p>" +
-        "<p><strong>Faculty:</strong> " + student.faculty + "</p>" +
-      "</div>" +
-    "</div>" +
-    '<div class="card-actions">' +
-      '<button class="btn-update" onclick="openUpdateForm(' + index + ')">Update</button>' +
-      '<button class="btn-print" onclick="printStudentCard(' + index + ')">Print</button>' +
-      '<button class="btn-remove" onclick="removeStudent(this)">Remove</button>' +
-    "</div>";
+  card.innerHTML = buildIdCardHTML(student, false) + buildCardActionsHTML(index);
 }
 
 function printStudentCard(index) {
-  let student = registeredStudents[index];
+  var student = registeredStudents[index];
 
-  let printWindow = window.open("", "_blank", "width=400,height=500");
-
-  let avatarSection = student.avatar
+  var avatarSection = student.avatar
     ? '<img src="' + student.avatar + '" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,0.6);display:block;margin:0 auto 14px;">'
     : "";
 
-  let html =
+  var html =
     "<!DOCTYPE html><html><head><title>Student ID Card</title>" +
     "<style>" +
     "body{font-family:Segoe UI,Tahoma,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f0f0f0;}" +
@@ -352,18 +344,23 @@ function printStudentCard(index) {
     "<p><strong>Age:</strong> " + student.age + "</p>" +
     "<p><strong>Faculty:</strong> " + student.faculty + "</p>" +
     "</div></div>" +
-    "<script>setTimeout(function(){window.print();},500);<\/script>" +
+    "<script>setTimeout(function(){window.print();window.close();},600);<\/script>" +
     "</body></html>";
 
-  printWindow.document.write(html);
-  printWindow.document.close();
+  var printWindow = window.open("", "_blank", "width=400,height=500");
+  if (printWindow) {
+    printWindow.document.write(html);
+    printWindow.document.close();
+  } else {
+    alert("Please allow popups to print the student ID card.");
+  }
 }
 
 function handleSubmit(event) {
   event.preventDefault();
 
-  let values = getFormValues();
-  let isValid = validateForm(values);
+  var values = getFormValues();
+  var isValid = validateForm(values);
 
   if (isValid) {
     displayStudent(values);
@@ -374,11 +371,11 @@ function handleSubmit(event) {
     document.getElementById("avatarPreview").style.borderColor = "#4a6fa5";
 
     setTimeout(function () {
-      let message = document.getElementById("message");
+      var message = document.getElementById("message");
       message.textContent = "Registration Successful!";
       message.className = "message success";
 
-      let inputs = document.querySelectorAll("#registrationForm input, #registrationForm select");
+      var inputs = document.querySelectorAll("#registrationForm input, #registrationForm select");
       inputs.forEach(function (input) {
         input.classList.remove("success");
       });
@@ -386,9 +383,8 @@ function handleSubmit(event) {
   }
 }
 
-// Create update overlay HTML
 function createUpdateOverlay() {
-  let overlay = document.createElement("div");
+  var overlay = document.createElement("div");
   overlay.id = "updateOverlay";
   overlay.classList.add("update-overlay");
 
@@ -415,7 +411,7 @@ function createUpdateOverlay() {
           '<option value="Science">Science</option>' +
           '<option value="Commercial">Commercial</option>' +
         "</select></div>" +
-      '<div class="form-group"><label>Photo</label><input type="file" id="updateAvatar" accept="image/*" capture="environment">' +
+      '<div class="form-group"><label>Photo</label><input type="file" id="updateAvatar" accept="image/*">' +
         '<div class="avatar-preview" id="updateAvatarPreview"><span>No Photo</span></div></div>' +
       '<div class="form-group"><label>ID Color</label>' +
         '<div class="color-picker-row"><input type="color" id="updateColor" value="#4a6fa5"><span id="updateColorLabel">#4a6fa5</span></div></div>' +
@@ -432,5 +428,4 @@ function createUpdateOverlay() {
   });
 }
 
-createUpdateOverlay();
 document.getElementById("registrationForm").addEventListener("submit", handleSubmit);
