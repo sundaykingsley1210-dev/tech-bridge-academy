@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - TECH-BRIDGE ACADEMY</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <style>
+        .dashboard{display:flex;min-height:100vh;background:#f1f3f5}
+        .sidebar{width:260px;background:linear-gradient(180deg,#1a1a2e 0%,#2d2d44 100%);color:#fff;padding:30px 20px;position:fixed;height:100vh;overflow-y:auto;z-index:100}
+        .sidebar-logo{text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,.1)}
+        .sidebar-logo img{height:40px}
+        .sidebar-logo p{font-size:.75rem;color:rgba(255,255,255,.5);margin-top:5px}
+        .sidebar-nav{list-style:none}
+        .sidebar-nav li{margin-bottom:5px}
+        .sidebar-nav a{display:flex;align-items:center;gap:12px;padding:12px 15px;border-radius:10px;color:rgba(255,255,255,.7);transition:var(--transition);font-weight:500;font-size:.9rem;cursor:pointer}
+        .sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(255,255,255,.1);color:#fff}
+        .sidebar-nav a.active{background:var(--gradient)}
+        .sidebar-nav a i{width:20px;text-align:center}
+        .main-content{flex:1;margin-left:260px;padding:30px}
+        .top-bar{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:20px 30px;border-radius:16px;box-shadow:0 2px 15px rgba(0,0,0,.05);margin-bottom:30px}
+        .top-bar h2{font-size:1.4rem;color:var(--dark)}
+        .user-info{display:flex;align-items:center;gap:12px}
+        .user-avatar{width:45px;height:45px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem}
+        .user-details h4{font-size:.95rem;color:var(--dark)}
+        .user-details span{font-size:.8rem;color:var(--gray)}
+        .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:30px}
+        .stat-card{background:#fff;padding:25px;border-radius:16px;box-shadow:0 2px 15px rgba(0,0,0,.05);position:relative;overflow:hidden}
+        .stat-card::after{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:0 0 0 80px;opacity:.1}
+        .stat-card:nth-child(1)::after{background:var(--primary)}
+        .stat-card:nth-child(2)::after{background:#ffd93d}
+        .stat-card:nth-child(3)::after{background:#38ef7d}
+        .stat-card:nth-child(4)::after{background:var(--accent)}
+        .stat-card h3{font-size:2rem;font-weight:800;color:var(--dark)}
+        .stat-card p{color:var(--gray);font-size:.85rem;margin-top:5px}
+        .stat-card i{font-size:1.5rem;color:var(--primary);margin-bottom:10px}
+        .card{background:#fff;border-radius:16px;box-shadow:0 2px 15px rgba(0,0,0,.05);overflow:hidden}
+        .card-header{padding:20px 25px;border-bottom:1px solid #e9ecef;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+        .card-header h3{font-size:1.1rem;color:var(--dark)}
+        .card-body{padding:25px}
+        .filter-bar{display:flex;gap:8px;flex-wrap:wrap}
+        .filter-btn{padding:8px 14px;border:2px solid #e9ecef;background:#fff;border-radius:8px;font-family:inherit;font-weight:600;font-size:.8rem;cursor:pointer;transition:var(--transition);color:var(--gray)}
+        .filter-btn.active{border-color:var(--primary);color:var(--primary);background:#f0f3ff}
+        .search-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+        .search-input{padding:10px 16px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem;min-width:250px;transition:var(--transition)}
+        .search-input:focus{outline:none;border-color:var(--primary)}
+        .search-count{font-size:.8rem;color:var(--gray);white-space:nowrap}
+        .app-list{display:flex;flex-direction:column;gap:15px;max-height:600px;overflow-y:auto}
+        .app-item{padding:20px;background:#f8f9fa;border-radius:14px;border-left:4px solid var(--primary);transition:var(--transition)}
+        .app-item:hover{transform:translateX(3px);background:#fff;box-shadow:var(--shadow)}
+        .app-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;flex-wrap:wrap;gap:10px}
+        .app-item h4{font-size:1.05rem;color:var(--dark);margin-bottom:3px}
+        .meta{font-size:.82rem;color:var(--gray);display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+        .meta span{display:flex;align-items:center;gap:5px}
+        .status-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600}
+        .status-pending{background:#fff3cd;color:#856404}
+        .status-exam{background:#cce5ff;color:#004085}
+        .status-admitted{background:#d4edda;color:#155724}
+        .status-rejected{background:#f8d7da;color:#721c24}
+        .status-completed{background:#e2d9f3;color:#5a2d82}
+        .app-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+        .btn-action{padding:9px 18px;border:none;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px}
+        .btn-accept{background:#d4edda;color:#155724}.btn-accept:hover{background:#155724;color:#fff}
+        .btn-reject{background:#f8d7da;color:#721c24}.btn-reject:hover{background:#721c24;color:#fff}
+        .btn-admit{background:#cce5ff;color:#004085}.btn-admit:hover{background:#004085;color:#fff}
+        .btn-view{background:#e2d9f3;color:#5a2d82}.btn-view:hover{background:#5a2d82;color:#fff}
+        .btn-exam{background:var(--gradient);color:#fff}.btn-exam:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(102,126,234,.4)}
+        .no-data{text-align:center;padding:50px;color:var(--gray)}
+        .no-data i{font-size:3rem;margin-bottom:15px;display:block;opacity:.3}
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;justify-content:center;align-items:center}
+        .modal-overlay.active{display:flex}
+        .modal{background:#fff;border-radius:20px;width:100%;max-width:650px;max-height:90vh;overflow-y:auto;margin:20px;animation:fadeIn .3s ease}
+        .modal-header{padding:25px 30px;border-bottom:1px solid #e9ecef;display:flex;justify-content:space-between;align-items:center}
+        .modal-header h3{font-size:1.3rem;color:var(--dark)}
+        .modal-close{background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)}
+        .modal-close:hover{color:var(--dark)}
+        .modal-body{padding:30px}
+        .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+        .detail-item{padding:12px;background:#f8f9fa;border-radius:10px}
+        .detail-item label{font-size:.75rem;color:var(--gray);display:block;margin-bottom:3px}
+        .detail-item p{font-weight:600;color:var(--dark);margin:0}
+        .mobile-toggle{display:none;background:var(--gradient);color:#fff;border:none;padding:10px 15px;border-radius:10px;font-size:1.2rem;cursor:pointer;position:fixed;top:15px;left:15px;z-index:200}
+        .fee-table{width:100%;border-collapse:collapse}
+        .fee-table th{text-align:left;padding:12px 15px;background:#f8f9fa;font-weight:600;font-size:.85rem;color:var(--gray);border-radius:8px}
+        .fee-table td{padding:14px 15px;border-bottom:1px solid #f1f3f5;font-size:.9rem}
+        .fee-table tr:last-child td{border-bottom:none}
+        .fee-table tr:hover{background:#f8f9fa}
+        .fee-input{width:120px;padding:8px 12px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem;font-weight:600;text-align:right}
+        .fee-input:focus{outline:none;border-color:var(--primary)}
+        .btn-save-fee{background:var(--gradient);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer;transition:var(--transition)}
+        .btn-save-fee:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(102,126,234,.3)}
+        .btn-mark-paid{background:#d4edda;color:#155724;border:none;padding:6px 12px;border-radius:6px;font-weight:600;font-size:.78rem;cursor:pointer}
+        .btn-mark-paid:hover{background:#155724;color:#fff}
+        .btn-mark-unpaid{background:#f8d7da;color:#721c24;border:none;padding:6px 12px;border-radius:6px;font-weight:600;font-size:.78rem;cursor:pointer}
+        .btn-mark-unpaid:hover{background:#721c24;color:#fff}
+        .fee-status{display:inline-block;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+        .fee-paid{background:#d4edda;color:#155724}
+        .fee-unpaid{background:#f8d7da;color:#721c24}
+        @keyframes fadeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+        @media(max-width:1024px){.stat-cards{grid-template-columns:repeat(2,1fr)}}
+        @media(max-width:768px){.mobile-toggle{display:block}.sidebar{transform:translateX(-100%);transition:var(--transition)}.sidebar.open{transform:translateX(0)}.main-content{margin-left:0;padding:80px 15px 15px}.stat-cards{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+
+    <div class="dashboard">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <img src="logo.svg" alt="TBA">
+                <p>Admin Portal</p>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a class="active" onclick="showSection(this, 'overviewSection')"><i class="fa-solid fa-grid-2"></i> Overview</a></li>
+                <li><a onclick="showSection(this, 'applicationsSection')"><i class="fa-solid fa-file-lines"></i> Applications</a></li>
+                <li><a onclick="showSection(this, 'approvedSection')"><i class="fa-solid fa-circle-check"></i> Approved</a></li>
+                <li><a onclick="showSection(this, 'admittedSection')"><i class="fa-solid fa-user-check"></i> Admitted</a></li>
+                <li><a onclick="showSection(this, 'feesSection')"><i class="fa-solid fa-money-bill-wave"></i> Fees</a></li>
+                <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Home</a></li>
+                <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar">
+                <div>
+                    <h2 id="greeting">Good Morning</h2>
+                    <p style="color:var(--gray);font-size:.85rem">Manage Admission Applications</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-details" style="text-align:right">
+                        <h4 id="adminName">Admin</h4>
+                        <span>Administrator</span>
+                    </div>
+                    <div class="user-avatar" id="avatarInitials">A</div>
+                </div>
+            </div>
+
+            <!-- Overview Section -->
+            <div id="overviewSection">
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <h3 id="totalApps">0</h3>
+                        <p>Total Applications</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-clock"></i>
+                        <h3 id="pendingApps">0</h3>
+                        <p>Pending Review</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <h3 id="approvedApps">0</h3>
+                        <p>Approved</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-user-check"></i>
+                        <h3 id="admittedApps">0</h3>
+                        <p>Admitted</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        <h3 id="totalApps2">0</h3>
+                        <p>Total Applications</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Applications Section -->
+            <div id="applicationsSection">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-file-lines"></i> Applications</h3>
+                        <div class="search-bar">
+                            <input type="text" class="search-input" id="searchInput" placeholder="Search by name, phone, email, or ID..." oninput="handleSearch()">
+                            <span class="search-count" id="searchCount"></span>
+                        </div>
+                        <div class="filter-bar">
+                            <button class="filter-btn active" onclick="filterApps('all', this)">All</button>
+                            <button class="filter-btn" onclick="filterApps('Pending', this)">Pending</button>
+                            <button class="filter-btn" onclick="filterApps('Approved', this)">Approved</button>
+                            <button class="filter-btn" onclick="filterApps('Admitted', this)">Admitted</button>
+                            <button class="filter-btn" onclick="filterApps('Rejected', this)">Rejected</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="app-list" id="appList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approved Section -->
+            <div id="approvedSection" style="display:none">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-circle-check"></i> Approved Applicants</h3>
+                        <div class="search-bar">
+                            <input type="text" class="search-input" id="approvedSearchInput" placeholder="Search approved applicants..." oninput="handleApprovedSearch()">
+                            <span class="search-count" id="approvedSearchCount"></span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="app-list" id="approvedList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admitted Section -->
+            <div id="admittedSection" style="display:none">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-user-check"></i> Admitted Students</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="app-list" id="admittedList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fees Section -->
+            <div id="feesSection" style="display:none">
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-pen-to-square"></i> Exam Results</h3>
+                        <div class="filter-bar">
+                            <button class="filter-btn active" onclick="filterExamResults('all', this)">All</button>
+                            <button class="filter-btn" onclick="filterExamResults('passed', this)">Passed</button>
+                            <button class="filter-btn" onclick="filterExamResults('failed', this)">Failed</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="app-list" id="examResultsList"></div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-money-bill-wave"></i> Fee Management</h3>
+                    </div>
+                    <div class="card-body">
+                        <p style="color:var(--gray);font-size:.88rem;margin-bottom:20px">Set term fees per class. Students will see these amounts on their dashboards.</p>
+                        <table class="fee-table">
+                            <thead><tr><th>Class</th><th>Fee Amount (₦)</th><th>Action</th></tr></thead>
+                            <tbody id="feeTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-calendar-days"></i> Exam Schedule (Per Class)</h3>
+                    </div>
+                    <div class="card-body">
+                        <p style="color:var(--gray);font-size:.88rem;margin-bottom:20px">Set exam dates and times for each class. Students will see this on their dashboards.</p>
+                        <table class="fee-table">
+                            <thead><tr><th>Class</th><th>Exam Date</th><th>Exam Time</th><th>Action</th></tr></thead>
+                            <tbody id="examScheduleBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-receipt"></i> Student Payments</h3>
+                        <div class="filter-bar">
+                            <button class="filter-btn active" onclick="filterPayments('all', this)">All</button>
+                            <button class="filter-btn" onclick="filterPayments('paid', this)">Paid</button>
+                            <button class="filter-btn" onclick="filterPayments('unpaid', this)">Unpaid</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="app-list" id="paymentList"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- View Modal -->
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Application Details</h3>
+                <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="viewModalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem('tba_currentUser'));
+        if (!currentUser || currentUser.role !== 'admin') { window.location.href = 'login.html'; }
+
+        emailjs.init({ publicKey: 'X8j9z5L6vj2GOKQiJ' });
+
+        let currentFilter = 'all';
+        let searchQuery = '';
+        let approvedSearchQuery = '';
+        let paymentFilter = 'all';
+        let examResultFilter = 'all';
+        const feeClasses = ['Nursery 1','Nursery 2','Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Primary 6','JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+
+        function init() {
+            seedApplications();
+            seedFees();
+            const hour = new Date().getHours();
+            const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+            document.getElementById('greeting').textContent = `${greeting}, Admin!`;
+            document.getElementById('adminName').textContent = currentUser.name;
+            document.getElementById('avatarInitials').textContent = 'AD';
+            renderApps();
+            renderApprovedList();
+            renderAdmittedList();
+            renderFeeTable();
+            renderExamSchedule();
+            renderPayments();
+            renderExamResults();
+            updateStats();
+        }
+
+        function seedFees() {
+            let fees = JSON.parse(localStorage.getItem('tba_fees'));
+            if (!fees) {
+                fees = {
+                    'JSS 1': 45000, 'JSS 2': 45000, 'JSS 3': 50000,
+                    'SSS 1': 55000, 'SSS 2': 55000, 'SSS 3': 60000,
+                    'Nursery 1': 35000, 'Nursery 2': 35000,
+                    'Primary 1': 38000, 'Primary 2': 38000, 'Primary 3': 40000,
+                    'Primary 4': 40000, 'Primary 5': 42000, 'Primary 6': 42000
+                };
+                localStorage.setItem('tba_fees', JSON.stringify(fees));
+            }
+        }
+
+        function seedApplications() {
+            let apps = JSON.parse(localStorage.getItem('tba_applications'));
+            if (!apps || apps.length === 0) {
+                apps = [
+                    { id:'TBA-001', firstName:'Chinedu', lastName:'Okafor', dob:'2012-05-15', gender:'Male', classApplying:'JSS 1', prevSchool:'Royal International School', parentName:'Mr. Okafor', relationship:'Father', parentPhone:'08012345678', parentEmail:'okafor@email.com', address:'12 Palm Avenue, Aba', dateSubmitted:'2026-06-20T10:00:00Z', status:'Pending' },
+                    { id:'TBA-002', firstName:'Ngozi', lastName:'Eze', dob:'2010-08-22', gender:'Female', classApplying:'JSS 3', prevSchool:'Grace Academy', parentName:'Mrs. Eze', relationship:'Mother', parentPhone:'08098765432', parentEmail:'eze.ngozi@email.com', address:'45 Oak Street, Aba', dateSubmitted:'2026-06-21T14:30:00Z', status:'Pending' },
+                    { id:'TBA-003', firstName:'Emeka', lastName:'Adeyemi', dob:'2009-03-10', gender:'Male', classApplying:'SSS 1', prevSchool:'Federal Govt College', parentName:'Mr. Adeyemi', relationship:'Father', parentPhone:'08055551234', parentEmail:'adeyemi@email.com', address:'78 Pine Road, Aba', dateSubmitted:'2026-06-18T09:15:00Z', status:'Pending' },
+                ];
+                localStorage.setItem('tba_applications', JSON.stringify(apps));
+            }
+        }
+
+        function renderApps() {
+            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            const container = document.getElementById('appList');
+            let filtered = currentFilter === 'all' ? apps : apps.filter(a => a.status === currentFilter);
+
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                filtered = filtered.filter(a =>
+                    (a.firstName + ' ' + a.lastName).toLowerCase().includes(q) ||
+                    (a.parentName || '').toLowerCase().includes(q) ||
+                    (a.parentPhone || '').toLowerCase().includes(q) ||
+                    (a.parentEmail || '').toLowerCase().includes(q) ||
+                    (a.id || '').toLowerCase().includes(q) ||
+                    (a.classApplying || '').toLowerCase().includes(q)
+                );
+            }
+
+            document.getElementById('searchCount').textContent = filtered.length + ' result(s)';
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="no-data"><i class="fa-solid fa-inbox"></i><p>No applications found</p></div>';
+                return;
+            }
+
+            container.innerHTML = filtered.slice().reverse().map(a => {
+                const sc = {'Pending':'status-pending','Approved':'status-exam','Admitted':'status-admitted','Rejected':'status-rejected'}[a.status]||'status-pending';
+
+                let actions = '';
+                if (a.status === 'Pending') {
+                    actions = `
+                        <button class="btn-action btn-view" onclick="viewApp('${a.id}')"><i class="fa-solid fa-eye"></i> View</button>
+                        <button class="btn-action btn-accept" onclick="approveApp('${a.id}')"><i class="fa-solid fa-check"></i> Approve</button>
+                        <button class="btn-action btn-reject" onclick="declineApp('${a.id}')"><i class="fa-solid fa-times"></i> Decline</button>
+                    `;
+                } else if (a.status === 'Approved') {
+                    actions = `
+                        <button class="btn-action btn-view" onclick="viewApp('${a.id}')"><i class="fa-solid fa-eye"></i> View</button>
+                        <button class="btn-action btn-admit" onclick="finalAdmit('${a.id}')"><i class="fa-solid fa-user-check"></i> Admit</button>
+                        <button class="btn-action btn-reject" onclick="declineApp('${a.id}')"><i class="fa-solid fa-times"></i> Decline</button>
+                    `;
+                } else {
+                    actions = `<button class="btn-action btn-view" onclick="viewApp('${a.id}')"><i class="fa-solid fa-eye"></i> View</button>`;
+                }
+
+                return `
+                <div class="app-item">
+                    <div class="app-header">
+                        <div>
+                            <h4>${a.firstName} ${a.lastName}</h4>
+                            <div class="meta">
+                                <span><i class="fa-solid fa-layer-group"></i> ${a.classApplying}</span>
+                                <span><i class="fa-solid fa-venus-mars"></i> ${a.gender}</span>
+                                <span><i class="fa-solid fa-calendar"></i> ${new Date(a.dateSubmitted).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        <span class="status-badge ${sc}">${a.status}</span>
+                    </div>
+                    <div class="meta">
+                        <span><i class="fa-solid fa-user"></i> ${a.parentName}</span>
+                        <span><i class="fa-solid fa-phone"></i> ${a.parentPhone}</span>
+                    </div>
+                    <div class="app-actions">${actions}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function viewApp(id) {
+            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            const a = apps.find(x => x.id === id);
+            if (!a) return;
+            document.getElementById('viewModalBody').innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item"><label>Reference</label><p>${a.id}</p></div>
+                    <div class="detail-item"><label>Status</label><p>${a.status}</p></div>
+                    <div class="detail-item"><label>Student Name</label><p>${a.firstName} ${a.lastName}</p></div>
+                    <div class="detail-item"><label>Date of Birth</label><p>${a.dob}</p></div>
+                    <div class="detail-item"><label>Gender</label><p>${a.gender}</p></div>
+                    <div class="detail-item"><label>Class Applying</label><p>${a.classApplying}</p></div>
+                    <div class="detail-item"><label>Previous School</label><p>${a.prevSchool||'N/A'}</p></div>
+                    <div class="detail-item"><label>Date Applied</label><p>${new Date(a.dateSubmitted).toLocaleString()}</p></div>
+                </div>
+                <h4 style="margin-bottom:12px;color:var(--dark)"><i class="fa-solid fa-user"></i> Parent Info</h4>
+                <div class="detail-grid">
+                    <div class="detail-item"><label>Full Name</label><p>${a.parentName}</p></div>
+                    <div class="detail-item"><label>Relationship</label><p>${a.relationship}</p></div>
+                    <div class="detail-item"><label>Phone</label><p>${a.parentPhone}</p></div>
+                    <div class="detail-item"><label>Email</label><p>${a.parentEmail}</p></div>
+                </div>
+                <div class="detail-item" style="margin-top:12px"><label>Address</label><p>${a.address}</p></div>
+            `;
+            document.getElementById('viewModal').classList.add('active');
+        }
+
+        function sendEmail(toEmail, subject, message, fromName) {
+            emailjs.send('service_sq45hkp', 'template_xh0zn4k', {
+                to_email: toEmail,
+                subject: subject,
+                message: message,
+                from_name: fromName || 'TECH-BRIDGE Academy',
+                from_email: 'techbridgeacademy64@gmail.com'
+            }).catch(err => console.log('Email send failed:', err));
+        }
+
+        function approveApp(id) {
+            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            const a = apps.find(x => x.id === id);
+            if (!a) return;
+
+            if (!confirm('Approve ' + a.firstName + ' ' + a.lastName + '\'s application?')) return;
+
+            const idx = apps.findIndex(x => x.id === id);
+            apps[idx].status = 'Approved';
+            apps[idx].approvedAt = new Date().toISOString();
+            localStorage.setItem('tba_applications', JSON.stringify(apps));
+
+            sendEmail(a.parentEmail, '[TBA] Application Approved — ' + a.firstName + ' ' + a.lastName,
+                'Dear ' + a.parentName + ',\n\nYour child ' + a.firstName + ' ' + a.lastName + '\'s application has been APPROVED.\n\nReference: ' + a.id + '\nClass: ' + a.classApplying + '\n\nPlease proceed for admission.\n\nTECH-BRIDGE Academy');
+
+            renderApps();
+            renderApprovedList();
+            renderAdmittedList();
+            updateStats();
+            alert(a.firstName + ' ' + a.lastName + '\'s application has been approved!');
+        }
+
+        function declineApp(id) {
+            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            const a = apps.find(x => x.id === id);
+            if (!a) return;
+
+            if (!confirm('Decline ' + a.firstName + ' ' + a.lastName + '\'s application?')) return;
+
+            const idx = apps.findIndex(x => x.id === id);
+            apps[idx].status = 'Rejected';
+            localStorage.setItem('tba_applications', JSON.stringify(apps));
+
+            sendEmail(a.parentEmail, '[TBA] Application Declined — ' + a.firstName + ' ' + a.lastName,
+                'Dear ' + a.parentName + ',\n\nWe regret to inform you that ' + a.firstName + ' ' + a.lastName + '\'s application was not successful at this time.\n\nReference: ' + a.id + '\n\nPlease contact us for more information.\n\nTECH-BRIDGE Academy');
+
+            renderApps();
+            renderApprovedList();
+            renderAdmittedList();
+            updateStats();
+            alert('Application declined.');
+        }
+
+        function finalAdmit(id) {
+            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            const a = apps.find(x => x.id === id);
+            if (!a) return;
+
+            if (!confirm('Admit ' + a.firstName + ' ' + a.lastName + ' into TECH-BRIDGE ACADEMY?')) return;
+
+            const idx = apps.findIndex(x => x.id === id);
+            apps[idx].status = 'Admitted';
+            apps[idx].admittedAt = new Date().toISOString();
+            localStorage.setItem('tba_applications', JSON.stringify(apps));
+
+            // Create student account
+            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            const newId = 'STU' + String(users.filter(u => u.role === 'student').length + 1).padStart(3, '0');
+            users.push({
+                id: newId,
+                email: a.parentEmail,
+                password: 'student123',
+                name: a.firstName + ' ' + a.lastName,
+                role: 'student',
+                class: a.classApplying,
+                gender: a.gender
+            });
+            localStorage.setItem('tba_users', JSON.stringify(users));
+
+            sendEmail(a.parentEmail, '[TBA] Admission Confirmed — ' + a.firstName + ' ' + a.lastName,
+                'Dear ' + a.parentName + ',\n\nCongratulations! ' + a.firstName + ' ' + a.lastName + ' has been ADMITTED into TECH-BRIDGE Academy.\n\nStudent ID: ' + newId + '\nClass: ' + a.classApplying + '\nLogin Email: ' + a.parentEmail + '\nPassword: student123\n\nPlease change the password after first login.\n\nWelcome to TECH-BRIDGE Academy!');
+
+            renderApps();
+            renderApprovedList();
+            renderAdmittedList();
+            updateStats();
+            alert(a.firstName + ' ' + a.lastName + ' has been admitted!\nStudent ID: ' + newId + '\nLogin: ' + a.parentEmail + ' / student123');
+        }
+
+        function filterApps(status, btn) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderApps();
+        }
+
+        function handleApprovedSearch() {
+            approvedSearchQuery = document.getElementById('approvedSearchInput').value;
+            renderApprovedList();
+        }
+
+        function renderApprovedList() {
+            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            const approved = apps.filter(a => a.status === 'Approved');
+            const container = document.getElementById('approvedList');
+
+            let filtered = approved;
+            if (approvedSearchQuery.trim()) {
+                const q = approvedSearchQuery.toLowerCase();
+                filtered = approved.filter(a =>
+                    (a.firstName + ' ' + a.lastName).toLowerCase().includes(q) ||
+                    (a.parentName || '').toLowerCase().includes(q) ||
+                    (a.parentPhone || '').toLowerCase().includes(q) ||
+                    (a.id || '').toLowerCase().includes(q) ||
+                    (a.classApplying || '').toLowerCase().includes(q)
+                );
+            }
+
+            document.getElementById('approvedSearchCount').textContent = filtered.length + ' result(s)';
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="no-data"><i class="fa-solid fa-circle-check"></i><p>No approved applicants found</p></div>';
+                return;
+            }
+
+            container.innerHTML = filtered.slice().reverse().map(a => `
+                <div class="app-item" style="border-left-color:#38ef7d">
+                    <div class="app-header">
+                        <div>
+                            <h4>${a.firstName} ${a.lastName}</h4>
+                            <div class="meta">
+                                <span><i class="fa-solid fa-layer-group"></i> ${a.classApplying}</span>
+                                <span><i class="fa-solid fa-venus-mars"></i> ${a.gender}</span>
+                                <span><i class="fa-solid fa-calendar"></i> ${new Date(a.dateSubmitted).toLocaleDateString()}</span>
+                                <span><i class="fa-solid fa-clock"></i> Approved ${a.approvedAt ? new Date(a.approvedAt).toLocaleDateString() : ''}</span>
+                            </div>
+                        </div>
+                        <span class="status-badge status-exam">Approved</span>
+                    </div>
+                    <div class="meta">
+                        <span><i class="fa-solid fa-user"></i> ${a.parentName}</span>
+                        <span><i class="fa-solid fa-phone"></i> ${a.parentPhone}</span>
+                        <span><i class="fa-solid fa-envelope"></i> ${a.parentEmail}</span>
+                        <span><i class="fa-solid fa-location-dot"></i> ${a.address}</span>
+                    </div>
+                    <div class="app-actions">
+                        <button class="btn-action btn-view" onclick="viewApp('${a.id}')"><i class="fa-solid fa-eye"></i> View Details</button>
+                        <button class="btn-action btn-admit" onclick="finalAdmit('${a.id}')"><i class="fa-solid fa-user-check"></i> Admit Student</button>
+                        <button class="btn-action btn-reject" onclick="declineApp('${a.id}')"><i class="fa-solid fa-times"></i> Decline</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAdmittedList() {
+            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            const admitted = apps.filter(a => a.status === 'Admitted');
+            const container = document.getElementById('admittedList');
+
+            if (admitted.length === 0) {
+                container.innerHTML = '<div class="no-data"><i class="fa-solid fa-user-check"></i><p>No admitted students yet</p></div>';
+                return;
+            }
+
+            container.innerHTML = admitted.slice().reverse().map(a => `
+                <div class="app-item" style="border-left-color:#27ae60">
+                    <div class="app-header">
+                        <div>
+                            <h4>${a.firstName} ${a.lastName}</h4>
+                            <div class="meta">
+                                <span><i class="fa-solid fa-layer-group"></i> ${a.classApplying}</span>
+                                <span><i class="fa-solid fa-venus-mars"></i> ${a.gender}</span>
+                                <span><i class="fa-solid fa-clock"></i> Admitted ${a.admittedAt ? new Date(a.admittedAt).toLocaleDateString() : ''}</span>
+                            </div>
+                        </div>
+                        <span class="status-badge status-admitted">Admitted</span>
+                    </div>
+                    <div class="meta">
+                        <span><i class="fa-solid fa-user"></i> ${a.parentName}</span>
+                        <span><i class="fa-solid fa-phone"></i> ${a.parentPhone}</span>
+                    </div>
+                    <div class="app-actions">
+                        <button class="btn-action btn-view" onclick="viewApp('${a.id}')"><i class="fa-solid fa-eye"></i> View Details</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value;
+            renderApps();
+        }
+
+        function updateStats() {
+            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            document.getElementById('totalApps').textContent = apps.length;
+            document.getElementById('pendingApps').textContent = apps.filter(a => a.status === 'Pending').length;
+            document.getElementById('approvedApps').textContent = apps.filter(a => a.status === 'Approved').length;
+            document.getElementById('admittedApps').textContent = apps.filter(a => a.status === 'Admitted').length;
+            document.getElementById('totalApps2').textContent = apps.length;
+        }
+
+        function renderFeeTable() {
+            const fees = JSON.parse(localStorage.getItem('tba_fees') || '{}');
+            const c = document.getElementById('feeTableBody');
+            c.innerHTML = feeClasses.map(cls => `
+                <tr>
+                    <td><strong>${cls}</strong></td>
+                    <td><input type="number" class="fee-input" id="fee_${cls.replace(/\s/g,'_')}" value="${fees[cls] || 0}" min="0"></td>
+                    <td><button class="btn-save-fee" onclick="saveFee('${cls}')"><i class="fa-solid fa-save"></i> Save</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function saveFee(cls) {
+            const val = parseInt(document.getElementById('fee_'+cls.replace(/\s/g,'_')).value) || 0;
+            let fees = JSON.parse(localStorage.getItem('tba_fees') || '{}');
+            fees[cls] = val;
+            localStorage.setItem('tba_fees', JSON.stringify(fees));
+            renderPayments();
+            alert(cls + ' fee updated to ₦' + val.toLocaleString());
+        }
+
+        function renderExamSchedule() {
+            const schedule = JSON.parse(localStorage.getItem('tba_exam_schedule') || '{}');
+            const c = document.getElementById('examScheduleBody');
+            const classes = ['JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+            c.innerHTML = classes.map(cls => {
+                const s = schedule[cls] || {};
+                const dateVal = s.date || '';
+                const timeVal = s.time || '10:00';
+                return `
+                <tr>
+                    <td><strong>${cls}</strong></td>
+                    <td><input type="date" class="fee-input" id="examDate_${cls.replace(/\s/g,'_')}" value="${dateVal}" style="width:160px"></td>
+                    <td><input type="time" class="fee-input" id="examTime_${cls.replace(/\s/g,'_')}" value="${timeVal}" style="width:120px"></td>
+                    <td><button class="btn-save-fee" onclick="saveExamSchedule('${cls}')"><i class="fa-solid fa-save"></i> Save</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function saveExamSchedule(cls) {
+            const date = document.getElementById('examDate_'+cls.replace(/\s/g,'_')).value;
+            const time = document.getElementById('examTime_'+cls.replace(/\s/g,'_')).value;
+            if (!date) { alert('Please select an exam date'); return; }
+            let schedule = JSON.parse(localStorage.getItem('tba_exam_schedule') || '{}');
+            schedule[cls] = { date, time };
+            localStorage.setItem('tba_exam_schedule', JSON.stringify(schedule));
+            alert(cls + ' exam scheduled for ' + date + ' at ' + time);
+        }
+
+        function renderPayments() {
+            const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            const payments = JSON.parse(localStorage.getItem('tba_payments') || '{}');
+            const fees = JSON.parse(localStorage.getItem('tba_fees') || '{}');
+            const students = users.filter(u => u.role === 'student');
+            const c = document.getElementById('paymentList');
+
+            let filtered = students.map(s => {
+                const isPaid = payments[s.id] === true;
+                const fee = fees[s.class] || 0;
+                return { ...s, isPaid, fee };
+            });
+
+            if (paymentFilter === 'paid') filtered = filtered.filter(s => s.isPaid);
+            else if (paymentFilter === 'unpaid') filtered = filtered.filter(s => !s.isPaid);
+
+            if (!filtered.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-receipt"></i><p>No students found</p></div>'; return; }
+
+            c.innerHTML = filtered.map(s => `
+                <div class="app-item">
+                    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
+                        <div>
+                            <h4>${s.name}</h4>
+                            <div class="meta">
+                                <span><i class="fa-solid fa-id-card"></i> ${s.id}</span>
+                                <span><i class="fa-solid fa-layer-group"></i> ${s.class}</span>
+                                <span><i class="fa-solid fa-money-bill-wave"></i> ₦${s.fee.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <span class="fee-status ${s.isPaid?'fee-paid':'fee-unpaid'}">${s.isPaid?'Paid':'Unpaid'}</span>
+                            ${s.isPaid
+                                ? `<button class="btn-mark-unpaid" onclick="togglePayment('${s.id}',false)"><i class="fa-solid fa-times"></i> Mark Unpaid</button>`
+                                : `<button class="btn-mark-paid" onclick="togglePayment('${s.id}',true)"><i class="fa-solid fa-check"></i> Mark Paid</button>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function togglePayment(studentId, paid) {
+            let payments = JSON.parse(localStorage.getItem('tba_payments') || '{}');
+            payments[studentId] = paid;
+            localStorage.setItem('tba_payments', JSON.stringify(payments));
+            renderPayments();
+        }
+
+        function filterPayments(status, btn) {
+            paymentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderPayments();
+        }
+
+        function renderExamResults() {
+            const results = JSON.parse(localStorage.getItem('tba_exam_results') || '[]');
+            const c = document.getElementById('examResultsList');
+            let filtered = results;
+            if (examResultFilter === 'passed') filtered = results.filter(r => r.passed);
+            else if (examResultFilter === 'failed') filtered = results.filter(r => !r.passed);
+
+            if (!filtered.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-pen-to-square"></i><p>No exam results yet</p></div>'; return; }
+
+            c.innerHTML = filtered.slice().reverse().map((r, idx) => {
+                const status = r.adminStatus || 'pending';
+                let actions = '';
+                if (status === 'pending') {
+                    actions = `
+                        <button class="btn-action btn-admit" onclick="acceptExamResult('${r.studentId}','${r.class}',${idx})"><i class="fa-solid fa-user-check"></i> Accept</button>
+                        <button class="btn-action btn-reject" onclick="rejectExamResult('${r.studentId}','${r.class}',${idx})"><i class="fa-solid fa-times"></i> Reject</button>
+                    `;
+                } else if (status === 'accepted') {
+                    actions = `<span class="fee-status fee-paid">Accepted</span>`;
+                } else {
+                    actions = `<span class="fee-status fee-unpaid">Rejected</span>`;
+                }
+
+                return `
+                <div class="app-item" style="border-left-color:${r.passed ? '#38ef7d' : '#e53e3e'}">
+                    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
+                        <div>
+                            <h4>${r.studentName}</h4>
+                            <div class="meta">
+                                <span><i class="fa-solid fa-id-card"></i> ${r.studentId}</span>
+                                <span><i class="fa-solid fa-layer-group"></i> ${r.class}</span>
+                                <span><i class="fa-solid fa-calendar"></i> ${new Date(r.date).toLocaleDateString()}</span>
+                                <span><i class="fa-solid fa-clock"></i> ${new Date(r.date).toLocaleTimeString()}</span>
+                            </div>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="font-size:1.5rem;font-weight:800;color:${r.passed ? '#155724' : '#721c24'}">${r.score}/${r.total}</div>
+                            <div style="font-size:.85rem;color:${r.passed ? '#155724' : '#721c24'}">${r.percentage}%</div>
+                            <span class="fee-status ${r.passed ? 'fee-paid' : 'fee-unpaid'}" style="margin-top:5px">${r.passed ? 'PASSED' : 'FAILED'}</span>
+                        </div>
+                    </div>
+                    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                        ${actions}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function acceptExamResult(studentId, classUsed, idx) {
+            if (!confirm('Accept this student\'s exam result?')) return;
+            let results = JSON.parse(localStorage.getItem('tba_exam_results') || '[]');
+            const rIdx = results.findIndex(r => r.studentId === studentId && r.class === classUsed);
+            if (rIdx !== -1) {
+                results[rIdx].adminStatus = 'accepted';
+                localStorage.setItem('tba_exam_results', JSON.stringify(results));
+            }
+            renderExamResults();
+            alert('Exam result accepted!');
+        }
+
+        function rejectExamResult(studentId, classUsed, idx) {
+            if (!confirm('Reject this student\'s exam result?')) return;
+            let results = JSON.parse(localStorage.getItem('tba_exam_results') || '[]');
+            const rIdx = results.findIndex(r => r.studentId === studentId && r.class === classUsed);
+            if (rIdx !== -1) {
+                results[rIdx].adminStatus = 'rejected';
+                localStorage.setItem('tba_exam_results', JSON.stringify(results));
+            }
+            renderExamResults();
+            alert('Exam result rejected.');
+        }
+
+        function filterExamResults(status, btn) {
+            examResultFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderExamResults();
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        function showSection(el, sectionId) {
+            document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+            el.classList.add('active');
+
+            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'feesSection'];
+            sections.forEach(id => {
+                const sec = document.getElementById(id);
+                if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
+            });
+
+            // Re-render when switching sections
+            if (sectionId === 'approvedSection') renderApprovedList();
+            if (sectionId === 'admittedSection') renderAdmittedList();
+        }
+        function logout() { localStorage.removeItem('tba_currentUser'); window.location.href = 'login.html'; }
+
+        document.getElementById('mobileToggle').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); });
+        document.querySelectorAll('.modal-overlay').forEach(m => { m.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); }); });
+
+        init();
+    </script>
+</body>
+</html>
