@@ -525,10 +525,10 @@ a {
 }
 
 .director-wrapper {
-    display: grid;
-    grid-template-columns: 1fr 1.3fr;
-    gap: 60px;
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    gap: 40px;
 }
 
 .director-image-col {
@@ -603,6 +603,11 @@ a {
     font-size: 0.9rem;
 }
 
+.director-info-col {
+    text-align: center;
+    max-width: 700px;
+}
+
 .director-info-col h2 {
     font-size: 2.5rem;
     font-weight: 800;
@@ -619,6 +624,8 @@ a {
 
 .director-quote {
     margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
 }
 
 .director-text {
@@ -642,6 +649,7 @@ a {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    align-items: center;
 }
 
 .director-sig-line {
