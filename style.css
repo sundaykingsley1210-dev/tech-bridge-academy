@@ -961,11 +961,12 @@ a {
     justify-content: center;
     transition: var(--transition);
     color: white;
-    font-weight: bold;
+    font-size: 1.1rem;
 }
 
 .social-links a:hover {
     background: var(--accent);
+    transform: translateY(-3px);
 }
 
 .newsletter-form {
