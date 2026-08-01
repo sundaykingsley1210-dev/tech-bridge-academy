@@ -548,8 +548,8 @@ function handleRegSubmit(event) {
         document.getElementById("registrationForm").reset();
         currentAvatarData = null;
         document.getElementById("regAvatarPreview").innerHTML = "<span>No photo selected</span>";
-        document.getElementById("regColorLabel").textContent = "#667eea";
-        document.getElementById("regAvatarPreview").style.borderColor = "#667eea";
+        document.getElementById("regColorLabel").textContent = "#1e40af";
+        document.getElementById("regAvatarPreview").style.borderColor = "#1e40af";
         renderSubjects(); // Reset subjects
 
         setTimeout(function () {
@@ -602,7 +602,7 @@ function createRegOverlay() {
             '<div class="reg-form-group"><label>Photo</label><input type="file" id="regUpdateAvatar" accept="image/*">' +
                 '<div class="reg-avatar-preview" id="regUpdateAvatarPreview"><span>No Photo</span></div></div>' +
             '<div class="reg-form-group"><label>ID Color</label>' +
-                '<div class="reg-color-row"><input type="color" id="regUpdateColor" value="#667eea"><span id="regUpdateColorLabel">#667eea</span></div></div>' +
+                '<div class="reg-color-row"><input type="color" id="regUpdateColor" value="#1e40af"><span id="regUpdateColorLabel">#1e40af</span></div></div>' +
             '<div class="reg-btn-row">' +
                 '<button class="reg-btn-save" onclick="saveRegUpdate()">Save</button>' +
                 '<button class="reg-btn-cancel" onclick="closeRegUpdateForm()">Cancel</button>' +
