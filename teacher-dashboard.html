@@ -552,14 +552,19 @@
 
         function syncTimetableToStudents() {
             const all = getTeacherTimetable();
+            const allClasses = ['JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
             const byClass = {};
             all.forEach(e => {
                 if (!byClass[e.cls]) byClass[e.cls] = [];
                 byClass[e.cls].push({ time: e.period, subject: e.subject, teacher: e.teacher, day: e.day });
             });
-            Object.keys(byClass).forEach(cls => {
-                byClass[cls].sort((a, b) => a.time.localeCompare(b.time));
-                localStorage.setItem('tba_timetable_' + cls, JSON.stringify(byClass[cls]));
+            allClasses.forEach(cls => {
+                if (byClass[cls] && byClass[cls].length) {
+                    byClass[cls].sort((a, b) => a.time.localeCompare(b.time));
+                    localStorage.setItem('tba_timetable_' + cls, JSON.stringify(byClass[cls]));
+                } else {
+                    localStorage.removeItem('tba_timetable_' + cls);
+                }
             });
         }
 

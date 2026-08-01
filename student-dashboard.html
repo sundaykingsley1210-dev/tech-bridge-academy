@@ -353,19 +353,9 @@
             ]
         };
 
-        const defaultTimetable = [
-            { time: '8:00 AM', subject: 'Mathematics', teacher: 'Mr. Obi' },
-            { time: '9:00 AM', subject: 'English Language', teacher: 'Mrs. Abdul' },
-            { time: '10:00 AM', subject: 'Break', teacher: '' },
-            { time: '10:30 AM', subject: 'Basic Science / Physics', teacher: 'Mr. Eze' },
-            { time: '11:30 AM', subject: 'ICT / Computer Science', teacher: 'Mr. Kings' },
-            { time: '12:30 PM', subject: 'Social Studies / Economics', teacher: 'Mrs. Dan' },
-            { time: '1:30 PM', subject: 'Closing', teacher: '' },
-        ];
-
         function getTimetable() {
             const saved = localStorage.getItem('tba_timetable_' + currentUser.class);
-            return saved ? JSON.parse(saved) : defaultTimetable;
+            return saved ? JSON.parse(saved) : [];
         }
 
         function init() {
