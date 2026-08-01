@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Card Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .controls {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            width: 320px;
+        }
+
+        .controls h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(17, 153, 142, 0.4);
+        }
+
+        .preview-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 320px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .preview-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            color: white;
+            overflow: hidden;
+            border: 4px solid #fff;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .student-name {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .student-message {
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.6;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-picker-wrapper input[type="color"] {
+            width: 50px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .color-picker-wrapper input[type="text"] {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <h2>Student Card Builder</h2>
+
+            <div class="form-group">
+                <label for="studentInput">Student Name</label>
+                <input type="text" id="studentInput" placeholder="Enter your name">
+            </div>
+
+            <div class="form-group">
+                <label for="imageUrlInput">Avatar URL (optional)</label>
+                <input type="text" id="imageUrlInput" placeholder="https://example.com/photo.jpg">
+            </div>
+
+            <div class="form-group">
+                <label for="bgColorInput">Background Color</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="bgColorInput" value="#ffffff">
+                    <input type="text" id="bgColorHexInput" placeholder="#ffffff" value="#ffffff">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="colorInput">Accent Color</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="colorInput" value="#667eea">
+                    <input type="text" id="colorHexInput" placeholder="#667eea" value="#667eea">
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="updateNameBtn">Update Greeting</button>
+            <button class="btn btn-success" id="changeColorBtn">Apply Colors</button>
+        </div>
+
+        <div class="preview-card" id="previewCard">
+            <div class="avatar" id="studentAvatar">👤</div>
+            <div class="student-name" id="studentName">Student Name Here</div>
+            <div class="student-message" id="studentMessage">Enter your details to see a preview</div>
+        </div>
+    </div>
+
+    <script>
+        const studentInput = document.getElementById("studentInput");
+        const colorInput = document.getElementById("colorInput");
+        const colorHexInput = document.getElementById("colorHexInput");
+        const bgColorInput = document.getElementById("bgColorInput");
+        const bgColorHexInput = document.getElementById("bgColorHexInput");
+        const imageUrlInput = document.getElementById("imageUrlInput");
+        const studentAvatar = document.getElementById("studentAvatar");
+        const studentName = document.getElementById("studentName");
+        const studentMessage = document.getElementById("studentMessage");
+        const updateNameBtn = document.getElementById("updateNameBtn");
+        const changeColorBtn = document.getElementById("changeColorBtn");
+        const previewCard = document.getElementById("previewCard");
+
+        // Live update name as you type
+        studentInput.addEventListener("input", function() {
+            if (studentInput.value.trim() === "") {
+                studentName.textContent = "Student Name Here";
+            } else {
+                studentName.textContent = studentInput.value;
+            }
+        });
+
+        // Update greeting message on button click
+        updateNameBtn.addEventListener("click", function() {
+            if (studentInput.value.trim() === "") {
+                studentMessage.textContent = "Enter Your Name";
+            } else {
+                studentMessage.textContent = "Hello, my name is " + studentInput.value + ". Welcome To School.";
+            }
+        });
+
+        // Apply colors to card
+        changeColorBtn.addEventListener("click", function() {
+            var accentColor = colorInput.value;
+            var bgColor = bgColorInput.value;
+            previewCard.style.background = bgColor;
+            previewCard.style.boxShadow = "0 10px 40px " + accentColor + "40";
+            studentAvatar.style.background = "linear-gradient(135deg, " + accentColor + " 0%, " + accentColor + "99 100%)";
+            colorHexInput.value = accentColor;
+            bgColorHexInput.value = bgColor;
+        });
+
+        // Sync hex input with accent color picker
+        colorInput.addEventListener("input", function() {
+            colorHexInput.value = colorInput.value;
+        });
+
+        // Sync hex input with background color picker
+        bgColorInput.addEventListener("input", function() {
+            bgColorHexInput.value = bgColorInput.value;
+        });
+
+        // Change avatar image from URL
+        imageUrlInput.addEventListener("input", function() {
+            var url = imageUrlInput.value.trim();
+            if (url) {
+                studentAvatar.innerHTML = '<img src="' + url + '" alt="Student Avatar">';
+            } else {
+                studentAvatar.innerHTML = "👤";
+            }
+        });
+    </script>
+</body>
+</html>

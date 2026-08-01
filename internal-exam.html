@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal Exam - TECH-BRIDGE ACADEMY</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
+    <style>
+        body{background:#f1f3f5;font-family:'Inter',sans-serif}
+        .exam-container{max-width:800px;margin:0 auto;padding:30px 20px}
+        .exam-header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:40px;border-radius:20px;margin-bottom:30px;text-align:center}
+        .exam-header img{height:50px;margin-bottom:15px}
+        .exam-header h1{font-size:1.8rem;margin-bottom:10px}
+        .exam-header p{opacity:.85}
+        .exam-timer{display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.2);padding:12px 25px;border-radius:30px;font-size:1.3rem;font-weight:700;margin-top:20px}
+        .exam-timer i{font-size:1.1rem}
+        .exam-info{background:#fff;padding:30px;border-radius:16px;box-shadow:0 2px 15px rgba(0,0,0,.05);margin-bottom:25px}
+        .exam-info h2{font-size:1.3rem;color:var(--dark);margin-bottom:15px}
+        .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+        .info-item{padding:12px 15px;background:#f8f9fa;border-radius:10px}
+        .info-item label{font-size:.75rem;color:var(--gray);display:block;margin-bottom:3px}
+        .info-item p{font-weight:600;color:var(--dark);margin:0;font-size:.95rem}
+        .exam-rules{padding:20px;background:#fff3cd;border-radius:12px;margin-top:20px}
+        .exam-rules h4{color:#856404;margin-bottom:10px;font-size:.95rem}
+        .exam-rules ul{margin:0;padding-left:20px;color:#856404;font-size:.88rem}
+        .exam-rules li{margin-bottom:5px}
+        .question-card{background:#fff;padding:30px;border-radius:16px;box-shadow:0 2px 15px rgba(0,0,0,.05);margin-bottom:20px}
+        .question-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+        .question-num{background:var(--gradient);color:#fff;padding:6px 14px;border-radius:20px;font-weight:700;font-size:.85rem}
+        .question-text{font-size:1.05rem;color:var(--dark);line-height:1.6;margin-bottom:20px;font-weight:500}
+        .options{display:flex;flex-direction:column;gap:10px}
+        .option{display:flex;align-items:center;gap:12px;padding:14px 18px;background:#f8f9fa;border-radius:10px;cursor:pointer;transition:var(--transition);border:2px solid transparent}
+        .option:hover{background:#f0f3ff;border-color:var(--primary)}
+        .option.selected{background:#e8f4fd;border-color:var(--primary)}
+        .option input[type="radio"]{width:18px;height:18px;accent-color:var(--primary)}
+        .option label{cursor:pointer;font-size:.95rem;color:var(--dark);flex:1}
+        .exam-actions{display:flex;gap:15px;justify-content:center;margin-top:30px}
+        .btn-submit-exam{background:linear-gradient(135deg,#38ef7d 0%,#11998e 100%);color:#fff;border:none;padding:16px 40px;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:var(--transition)}
+        .btn-submit-exam:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(56,239,125,.4)}
+        .btn-back{background:#f1f3f5;color:var(--dark);border:none;padding:16px 30px;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;transition:var(--transition)}
+        .btn-back:hover{background:#e9ecef}
+        .progress-bar{width:100%;height:8px;background:#e9ecef;border-radius:10px;margin-bottom:25px;overflow:hidden}
+        .progress-fill{height:100%;background:var(--gradient);border-radius:10px;transition:width .3s ease}
+        .result-card{text-align:center;padding:50px 30px}
+        .result-card .result-icon{font-size:5rem;margin-bottom:20px}
+        .result-card h2{font-size:2rem;color:var(--dark);margin-bottom:10px}
+        .result-card .score{font-size:3rem;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:20px 0}
+        .result-card p{color:var(--gray);font-size:1rem;line-height:1.6;max-width:500px;margin:0 auto 20px}
+        .result-card .verdict{padding:15px 25px;border-radius:12px;font-weight:700;font-size:1.1rem;display:inline-block;margin-bottom:20px}
+        .verdict-pass{background:#d4edda;color:#155724}
+        .verdict-fail{background:#f8d7da;color:#721c24}
+        .locked-page{text-align:center;padding:80px 30px}
+        .locked-page i{font-size:5rem;color:var(--gray);opacity:.3;margin-bottom:20px}
+        .locked-page h2{color:var(--dark);margin-bottom:10px}
+        .locked-page p{color:var(--gray);max-width:400px;margin:0 auto}
+        .class-select-card{background:#fff;padding:40px;border-radius:16px;box-shadow:0 2px 15px rgba(0,0,0,.05);text-align:center}
+        .class-select-card h2{color:var(--dark);margin-bottom:10px}
+        .class-select-card p{color:var(--gray);margin-bottom:25px}
+        .class-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:500px;margin:0 auto}
+        .class-btn{padding:16px;border:2px solid #e9ecef;border-radius:12px;background:#fff;font-family:inherit;font-weight:700;font-size:1rem;color:var(--dark);cursor:pointer;transition:var(--transition)}
+        .class-btn:hover{border-color:var(--primary);background:#f0f3ff;transform:translateY(-2px)}
+        @media(max-width:600px){.info-grid{grid-template-columns:1fr}.exam-header{padding:30px 20px}.exam-header h1{font-size:1.4rem}.class-grid{grid-template-columns:repeat(2,1fr)}}
+    </style>
+</head>
+<body>
+    <div class="exam-container">
+        <div id="examContent"></div>
+    </div>
+
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem('tba_currentUser'));
+
+        const examBank = {
+            'JSS 1': [
+                { q: 'What is the capital of Nigeria?', options: ['Lagos', 'Abuja', 'Kano', 'Port Harcourt'], answer: 1 },
+                { q: 'Simplify: 2x + 3x = ?', options: ['6x', '5x', '4x', '7x'], answer: 1 },
+                { q: 'Which planet is known as the Blue Planet?', options: ['Mars', 'Venus', 'Earth', 'Jupiter'], answer: 2 },
+                { q: 'What is the opposite of "hot"?', options: ['Warm', 'Cold', 'Cool', 'Mild'], answer: 1 },
+                { q: 'Photosynthesis occurs in which part of the plant?', options: ['Root', 'Stem', 'Leaf', 'Flower'], answer: 2 },
+                { q: 'What is 10% of 50?', options: ['5', '10', '15', '20'], answer: 0 },
+                { q: 'Which of these is a verb?', options: ['Beautiful', 'Run', 'Quickly', 'House'], answer: 1 },
+                { q: 'How many states are in Nigeria?', options: ['35', '36', '37', '38'], answer: 1 },
+                { q: 'What is theplural of "child"?', options: ['Childs', 'Childes', 'Children', 'Childern'], answer: 2 },
+                { q: 'Which gas do humans breathe in?', options: ['Carbon Dioxide', 'Nitrogen', 'Oxygen', 'Hydrogen'], answer: 2 },
+                { q: 'What is 7 × 8?', options: ['54', '56', '58', '64'], answer: 1 },
+                { q: 'Which continent is Nigeria in?', options: ['Asia', 'Europe', 'Africa', 'South America'], answer: 2 },
+                { q: 'What is the past tense of "go"?', options: ['Goed', 'Went', 'Gone', 'Going'], answer: 1 },
+                { q: 'Which organ pumps blood in the human body?', options: ['Lungs', 'Brain', 'Heart', 'Liver'], answer: 2 },
+                { q: 'What is H₂O commonly known as?', options: ['Salt', 'Sugar', 'Water', 'Air'], answer: 2 },
+                { q: 'How many weeks are in a year?', options: ['48', '50', '52', '54'], answer: 2 },
+                { q: 'What color do you get when you mix red and white?', options: ['Purple', 'Orange', 'Pink', 'Brown'], answer: 2 },
+                { q: 'Which animal is known as the King of the Jungle?', options: ['Tiger', 'Lion', 'Elephant', 'Leopard'], answer: 1 },
+                { q: 'What is the shape of a ball?', options: ['Square', 'Triangle', 'Circle', 'Rectangle'], answer: 2 },
+                { q: 'How many days are in a week?', options: ['5', '6', '7', '8'], answer: 2 },
+            ],
+            'JSS 2': [
+                { q: 'Solve: 3x + 7 = 22. What is x?', options: ['3', '4', '5', '6'], answer: 2 },
+                { q: 'What is the formula for the area of a rectangle?', options: ['L + W', 'L × W', '2(L + W)', 'L ÷ W'], answer: 1 },
+                { q: 'Which organelle is the powerhouse of the cell?', options: ['Nucleus', 'Ribosome', 'Mitochondria', 'Chloroplast'], answer: 2 },
+                { q: 'What is the plural of "mouse"?', options: ['Mouses', 'Mice', 'Mices', 'Mouse'], answer: 1 },
+                { q: 'Which planet is closest to the Sun?', options: ['Venus', 'Earth', 'Mercury', 'Mars'], answer: 2 },
+                { q: 'Simplify: 4(x + 2)', options: ['4x + 2', '4x + 6', '4x + 8', 'x + 8'], answer: 2 },
+                { q: 'What is the function of white blood cells?', options: ['Carry oxygen', 'Fight infection', 'Clot blood', 'Digest food'], answer: 1 },
+                { q: 'Who wrote "Things Fall Apart"?', options: ['Wole Soyinka', 'Chinua Achebe', 'Ngugi wa Thiong\'o', 'Ben Okri'], answer: 1 },
+                { q: 'What is the square root of 81?', options: ['7', '8', '9', '10'], answer: 2 },
+                { q: 'Which sentence is correct?', options: ['He go school', 'He goes to school', 'He going school', 'He went school'], answer: 1 },
+                { q: 'What is the chemical symbol for Gold?', options: ['Go', 'Gd', 'Au', 'Ag'], answer: 2 },
+                { q: 'How many chromosomes do humans have?', options: ['23', '44', '46', '48'], answer: 2 },
+                { q: 'What is a noun?', options: ['A doing word', 'A describing word', 'A naming word', 'A connecting word'], answer: 2 },
+                { q: 'What is 3/4 as a decimal?', options: ['0.34', '0.75', '0.50', '0.25'], answer: 1 },
+                { q: 'Which layer of the atmosphere do we live in?', options: ['Stratosphere', 'Troposphere', 'Mesosphere', 'Thermosphere'], answer: 1 },
+                { q: 'What is the largest organ in the human body?', options: ['Heart', 'Liver', 'Skin', 'Brain'], answer: 2 },
+                { q: 'What does CPU stand for?', options: ['Central Processing Unit', 'Computer Personal Unit', 'Central Program Utility', 'Core Processing Unit'], answer: 0 },
+                { q: 'What is the plural of "woman"?', options: ['Womans', 'Women', 'Womens', 'Woman'], answer: 1 },
+                { q: 'Which rock is formed from cooled lava?', options: ['Sedimentary', 'Metamorphic', 'Igneous', 'Limestone'], answer: 2 },
+                { q: 'What is the value of Pi (π) to 2 decimal places?', options: ['3.12', '3.14', '3.16', '3.18'], answer: 1 },
+            ],
+            'JSS 3': [
+                { q: 'Solve: 2x² = 50. What is x?', options: ['5', '10', '25', '50'], answer: 0 },
+                { q: 'What is the quadratic formula used for?', options: ['Finding area', 'Solving x² equations', 'Finding volume', 'Drawing graphs'], answer: 1 },
+                { q: 'Which blood group is the universal donor?', options: ['A+', 'B+', 'AB+', 'O-'], answer: 3 },
+                { q: 'What is the chemical formula for Table Salt?', options: ['KCl', 'NaCl', 'CaCl₂', 'MgCl₂'], answer: 1 },
+                { q: 'Who was the first president of Nigeria?', options: ['Nnamdi Azikiwe', 'Obafemi Awolowo', 'Ahmadu Bello', 'Tafawa Balewa'], answer: 0 },
+                { q: 'What is the slope formula?', options: ['y₁ - x₁', '(y₂ - y₁)/(x₂ - x₁)', 'x₂ + y₂', '2x + y'], answer: 1 },
+                { q: 'Which process do plant cells use to make food?', options: ['Respiration', 'Fermentation', 'Photosynthesis', 'Decomposition'], answer: 2 },
+                { q: 'What is the main language of literature?', options: ['Prose', 'Poetry', 'Drama', 'All of the above'], answer: 3 },
+                { q: 'What is the SI unit of force?', options: ['Joule', 'Newton', 'Watt', 'Pascal'], answer: 1 },
+                { q: 'Simplify: (x + 3)(x - 3)', options: ['x² + 9', 'x² - 9', 'x² - 6', 'x² + 6x'], answer: 1 },
+                { q: 'What is an isotope?', options: ['Same atoms different elements', 'Same element different neutrons', 'Different protons', 'Different electrons'], answer: 1 },
+                { q: 'What is the function of the kidney?', options: ['Filter blood', 'Pump blood', 'Digest food', 'Produce insulin'], answer: 0 },
+                { q: 'What is the simile in: "He runs like a cheetah"?', options: ['He', 'runs', 'like', 'cheetah'], answer: 2 },
+                { q: 'What is the perimeter of a square with side 5cm?', options: ['10cm', '15cm', '20cm', '25cm'], answer: 2 },
+                { q: 'Which vitamin is produced when exposed to sunlight?', options: ['Vitamin A', 'Vitamin B', 'Vitamin C', 'Vitamin D'], answer: 3 },
+                { q: 'What is the distance formula?', options: ['√[(x₂-x₁)² + (y₂-y₁)²]', 'x₂ + y₂', '(x₁ + x₂)/2', '2πr'], answer: 0 },
+                { q: 'What is the boiling point of water in Celsius?', options: ['90°C', '95°C', '100°C', '110°C'], answer: 2 },
+                { q: 'Which figure of speech is "The wind whispered"?', options: ['Simile', 'Metaphor', 'Personification', 'Hyperbole'], answer: 2 },
+                { q: 'What is the LCM of 4 and 6?', options: ['10', '12', '24', '48'], answer: 1 },
+                { q: 'What is the function of the large intestine?', options: ['Absorb nutrients', 'Absorb water', 'Digest protein', 'Produce bile'], answer: 1 },
+            ],
+            'SSS 1': [
+                { q: 'If f(x) = 2x + 3, what is f(5)?', options: ['10', '13', '15', '18'], answer: 1 },
+                { q: 'What is the derivative of x²?', options: ['x', '2x', 'x²', '2x²'], answer: 1 },
+                { q: 'Which law states that F = ma?', options: ['Newton\'s 1st Law', 'Newton\'s 2nd Law', 'Newton\'s 3rd Law', 'Law of Gravitation'], answer: 1 },
+                { q: 'What is the pH of a neutral solution?', options: ['0', '5', '7', '14'], answer: 2 },
+                { q: 'What is the SI unit of electric current?', options: ['Volt', 'Ohm', 'Ampere', 'Watt'], answer: 2 },
+                { q: 'Solve: log₂(8) = ?', options: ['2', '3', '4', '8'], answer: 1 },
+                { q: 'Which gas is most abundant in Earth\'s atmosphere?', options: ['Oxygen', 'Carbon Dioxide', 'Nitrogen', 'Argon'], answer: 2 },
+                { q: 'What is the value of sin(90°)?', options: ['0', '0.5', '1', '-1'], answer: 2 },
+                { q: 'Which organelle contains DNA?', options: ['Ribosome', 'Golgi apparatus', 'Nucleus', 'Lysosome'], answer: 2 },
+                { q: 'What is the molecular formula of glucose?', options: ['C₆H₁₂O₆', 'C₁₂H₂₂O₁₁', 'CH₄', 'C₂H₅OH'], answer: 0 },
+                { q: 'What is the integral of 2x?', options: ['x', 'x² + C', '2', '2x + C'], answer: 1 },
+                { q: 'Which gas causes the greenhouse effect?', options: ['Oxygen', 'Nitrogen', 'Carbon Dioxide', 'Hydrogen'], answer: 2 },
+                { q: 'What is the cosine of 0°?', options: ['0', '0.5', '1', '-1'], answer: 2 },
+                { q: 'What is Avogadro\'s number approximately?', options: ['6.02 × 10²³', '3.14 × 10²³', '6.02 × 10²²', '1.6 × 10⁻¹⁹'], answer: 0 },
+                { q: 'Which economic system is mixed?', options: ['Capitalism', 'Socialism', 'Command', 'Mixed economy'], answer: 3 },
+                { q: 'What is the SI unit of pressure?', options: ['Pascal', 'Joule', 'Newton', 'Watt'], answer: 0 },
+                { q: 'What is the HCF of 12 and 18?', options: ['3', '6', '9', '12'], answer: 1 },
+                { q: 'Who proposed the theory of relativity?', options: ['Newton', 'Einstein', 'Hawking', 'Bohr'], answer: 1 },
+                { q: 'What is the oxidation state of Oxygen in most compounds?', options: ['+1', '+2', '-1', '-2'], answer: 3 },
+                { q: 'What is the primary function of the liver?', options: ['Filter toxins', 'Produce insulin', 'Store glucose', 'All of the above'], answer: 3 },
+            ],
+            'SSS 2': [
+                { q: 'What is the determinant of a 2x2 matrix [[a,b],[c,d]]?', options: ['ab - cd', 'ad - bc', 'ac - bd', 'ad + bc'], answer: 1 },
+                { q: 'What is the limit of (sin x)/x as x approaches 0?', options: ['0', '1', '∞', 'undefined'], answer: 1 },
+                { q: 'What is Ohm\'s Law?', options: ['V = IR', 'P = IV', 'F = ma', 'E = mc²'], answer: 0 },
+                { q: 'Which type of bond involves sharing of electrons?', options: ['Ionic', 'Covalent', 'Metallic', 'Hydrogen'], answer: 1 },
+                { q: 'What is the second law of thermodynamics about?', options: ['Energy conservation', 'Entropy increase', 'Wave motion', 'Electric charge'], answer: 1 },
+                { q: 'Solve: ∫cos(x)dx = ?', options: ['sin(x) + C', '-sin(x) + C', 'cos(x) + C', '-cos(x) + C'], answer: 0 },
+                { q: 'What is the atomic number of Iron?', options: ['24', '26', '28', '30'], answer: 1 },
+                { q: 'In which year did Nigeria gain independence?', options: ['1957', '1960', '1963', '1970'], answer: 1 },
+                { q: 'What is the speed of light approximately?', options: ['3 × 10⁶ m/s', '3 × 10⁸ m/s', '3 × 10¹⁰ m/s', '3 × 10⁴ m/s'], answer: 1 },
+                { q: 'What is the cross product of two parallel vectors?', options: ['Zero vector', 'Unit vector', 'Scalar', 'Undefined'], answer: 0 },
+                { q: 'Which acid is found in vinegar?', options: ['Hydrochloric acid', 'Sulfuric acid', 'Acetic acid', 'Citric acid'], answer: 2 },
+                { q: 'What is the principal quantum number?', options: ['n', 'l', 'm', 's'], answer: 0 },
+                { q: 'What is the SI unit of energy?', options: ['Newton', 'Joule', 'Watt', 'Pascal'], answer: 1 },
+                { q: 'Which economic concept describes supply and demand equilibrium?', options: ['Inflation', 'Market price', 'Deflation', 'Recession'], answer: 1 },
+                { q: 'What is the chemical formula for sulfuric acid?', options: ['HCl', 'HNO₃', 'H₂SO₄', 'H₃PO₄'], answer: 2 },
+                { q: 'What is the dot product of [1,0] and [0,1]?', options: ['0', '1', '2', '-1'], answer: 0 },
+                { q: 'What is the half-life of Carbon-14?', options: ['1,730 years', '5,730 years', '10,730 years', '15,730 years'], answer: 1 },
+                { q: 'Which literary device is "The world is a stage"?', options: ['Simile', 'Metaphor', 'Hyperbole', 'Alliteration'], answer: 1 },
+                { q: 'What is the normal boiling point of ethanol?', options: ['68°C', '78°C', '88°C', '100°C'], answer: 1 },
+                { q: 'What is the time complexity of binary search?', options: ['O(n)', 'O(n²)', 'O(log n)', 'O(1)'], answer: 2 },
+            ],
+            'SSS 3': [
+                { q: 'What is the derivative of ln(x)?', options: ['1/x', 'x', 'ln(x)', 'eˣ'], answer: 0 },
+                { q: 'What is the eigenvalue equation?', options: ['Av = λv', 'Av = v', 'λA = v', 'Av = 0'], answer: 0 },
+                { q: 'What is the formula for kinetic energy?', options: ['mgh', '½mv²', 'mv', 'mg'], answer: 1 },
+                { q: 'What is Le Chatelier\'s principle about?', options: ['Chemical equilibrium', 'Energy conservation', 'Wave motion', 'Atomic structure'], answer: 0 },
+                { q: 'What is the integral of eˣ?', options: ['eˣ + C', 'xeˣ + C', 'eˣ/x + C', 'ln(eˣ) + C'], answer: 0 },
+                { q: 'What is the charge of an electron?', options: ['1.6 × 10⁻¹⁹ C', '-1.6 × 10⁻¹⁹ C', '0 C', '3.2 × 10⁻¹⁹ C'], answer: 1 },
+                { q: 'What is the Heisenberg Uncertainty Principle?', options: ['Energy is quantized', 'Cannot know position and momentum exactly', 'Electrons orbit in shells', 'Light is a wave'], answer: 1 },
+                { q: 'What is the fundamental theorem of calculus?', options: ['∫f(x)dx = F(b) - F(a)', 'd/dx f(x) = f\'(x)', 'Both A and B', 'None'], answer: 2 },
+                { q: 'What is the SI unit of luminous intensity?', options: ['Lumen', 'Lux', 'Candela', 'Watt'], answer: 2 },
+                { q: 'Which subatomic particle was discovered by James Chadwick?', options: ['Proton', 'Electron', 'Neutron', 'Positron'], answer: 2 },
+                { q: 'What is the entropy change in an isolated system?', options: ['Always increases', 'Always decreases', 'Stays constant', 'Can be anything'], answer: 0 },
+                { q: 'What is the Laplace transform of f(t) = e^(at)?', options: ['1/(s-a)', '1/(s+a)', 'a/(s-a)', 's/(s-a)'], answer: 0 },
+                { q: 'What is the work done by a force?', options: ['F × d', 'F/d', 'F + d', 'F - d'], answer: 0 },
+                { q: 'Which international organization was founded in 1945?', options: ['AU', 'UN', 'EU', 'NATO'], answer: 1 },
+                { q: 'What is the IUPAC name for NaCl?', options: ['Sodium chloride', 'Sodium chlorate', 'Sodium hypochlorite', 'Sodium chlorite'], answer: 0 },
+                { q: 'What is the cross-sectional area of a cylinder?', options: ['πr²', '2πr', '2πrh', 'πrl'], answer: 0 },
+                { q: 'What is the primary source of energy in stars?', options: ['Chemical reaction', 'Nuclear fission', 'Nuclear fusion', 'Gravitational collapse'], answer: 2 },
+                { q: 'What is the principle of superposition?', options: ['Waves add algebraically', 'Energy is conserved', 'Momentum is conserved', 'Charge is conserved'], answer: 0 },
+                { q: 'What is the chemical formula for calcium carbonate?', options: ['CaO', 'CaCO₃', 'Ca(OH)₂', 'CaCl₂'], answer: 1 },
+                { q: 'What is the time dilation formula?', options: ['t\' = t/√(1-v²/c²)', 't\' = t√(1-v²/c²)', 't\' = t(1-v²/c²)', 't\' = t/(1-v²/c²)'], answer: 0 },
+            ]
+        };
+
+        let currentQuestion = 0;
+        let answers = {};
+        let timerInterval;
+        let timeLeft = 30 * 60;
+        let currentExam = null;
+        let selectedClass = null;
+
+        function init() {
+            if (!currentUser || currentUser.role !== 'student') {
+                showClassSelect();
+                return;
+            }
+            showClassSelect();
+        }
+
+        function showClassSelect() {
+            const classes = Object.keys(examBank);
+            document.getElementById('examContent').innerHTML = `
+                <div class="exam-header">
+                    <img src="logo.svg" alt="TBA">
+                    <h1>Internal Examination</h1>
+                    <p>TECH-BRIDGE ACADEMY</p>
+                </div>
+                <div class="class-select-card">
+                    <h2><i class="fa-solid fa-graduation-cap"></i> Select Your Class</h2>
+                    <p>Choose your class to begin the examination. Each class has different questions.</p>
+                    <div class="class-grid">
+                        ${classes.map(cls => `
+                            <button class="class-btn" onclick="startClassExam('${cls}')">${cls}</button>
+                        `).join('')}
+                    </div>
+                </div>`;
+        }
+
+        function startClassExam(cls) {
+            selectedClass = cls;
+            currentExam = examBank[cls];
+            currentQuestion = 0;
+            answers = {};
+            timeLeft = 30 * 60;
+            renderExamIntro();
+        }
+
+        function renderExamIntro() {
+            document.getElementById('examContent').innerHTML = `
+                <div class="exam-header">
+                    <img src="logo.svg" alt="TBA">
+                    <h1>Internal Examination</h1>
+                    <p>TECH-BRIDGE ACADEMY</p>
+                    <div class="exam-timer"><i class="fa-solid fa-clock"></i> 30 Minutes | ${currentExam.length} Questions</div>
+                </div>
+                <div class="exam-info">
+                    <h2><i class="fa-solid fa-circle-info"></i> Exam Information</h2>
+                    <div class="info-grid">
+                        <div class="info-item"><label>Student</label><p>${currentUser ? currentUser.name : 'Guest'}</p></div>
+                        <div class="info-item"><label>Student ID</label><p>${currentUser ? currentUser.id : 'N/A'}</p></div>
+                        <div class="info-item"><label>Class</label><p>${selectedClass}</p></div>
+                        <div class="info-item"><label>Duration</label><p>30 Minutes</p></div>
+                        <div class="info-item"><label>Total Questions</label><p>${currentExam.length}</p></div>
+                        <div class="info-item"><label>Pass Mark</label><p>60%</p></div>
+                    </div>
+                    <div class="exam-rules">
+                        <h4><i class="fa-solid fa-triangle-exclamation"></i> Exam Rules</h4>
+                        <ul>
+                            <li>This exam has ${currentExam.length} multiple choice questions</li>
+                            <li>You have 30 minutes to complete the exam</li>
+                            <li>The exam will auto-submit when time runs out</li>
+                            <li>You can only take this exam once per class</li>
+                            <li>Do not refresh or close the page during the exam</li>
+                            <li>A score of 60% or above is required to pass</li>
+                        </ul>
+                    </div>
+                    <div class="exam-actions">
+                        <button class="btn-submit-exam" onclick="beginExam()"><i class="fa-solid fa-play"></i> Start Exam</button>
+                        <button class="btn-back" onclick="showClassSelect()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    </div>
+                </div>`;
+        }
+
+        function beginExam() {
+            currentQuestion = 0;
+            answers = {};
+            timeLeft = 30 * 60;
+            renderQuestion();
+            startTimer();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const mins = Math.floor(timeLeft / 60);
+                const secs = timeLeft % 60;
+                const timerEl = document.getElementById('examTimer');
+                if (timerEl) {
+                    timerEl.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+                }
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        function renderQuestion() {
+            const q = currentExam[currentQuestion];
+            const progress = ((currentQuestion + 1) / currentExam.length) * 100;
+            const answered = Object.keys(answers).length;
+
+            document.getElementById('examContent').innerHTML = `
+                <div class="exam-header" style="padding:25px 30px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px">
+                        <div>
+                            <h1 style="font-size:1.3rem;margin-bottom:3px">Internal Exam — ${selectedClass}</h1>
+                            <p style="font-size:.85rem">${currentUser ? currentUser.name : 'Guest'} | ${currentUser ? currentUser.id : 'N/A'}</p>
+                        </div>
+                        <div class="exam-timer" style="margin-top:0;font-size:1.1rem;padding:10px 20px">
+                            <i class="fa-solid fa-clock"></i> <span id="examTimer">${String(Math.floor(timeLeft/60)).padStart(2,'0')}:${String(timeLeft%60).padStart(2,'0')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:20px;font-size:.85rem;color:var(--gray)">
+                    <span>Question ${currentQuestion + 1} of ${currentExam.length}</span>
+                    <span>${answered} answered</span>
+                </div>
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="question-num">Q${currentQuestion + 1}</span>
+                    </div>
+                    <div class="question-text">${q.q}</div>
+                    <div class="options">
+                        ${q.options.map((opt, i) => `
+                            <div class="option ${answers[currentQuestion] === i ? 'selected' : ''}" onclick="selectOption(${i})">
+                                <input type="radio" name="q${currentQuestion}" id="opt${i}" ${answers[currentQuestion] === i ? 'checked' : ''}>
+                                <label for="opt${i}">${opt}</label>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="exam-actions" style="justify-content:space-between">
+                    <button class="btn-back" onclick="prevQuestion()" ${currentQuestion === 0 ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>
+                        <i class="fa-solid fa-arrow-left"></i> Previous
+                    </button>
+                    <div style="display:flex;gap:10px">
+                        ${currentQuestion < currentExam.length - 1
+                            ? `<button class="btn-submit-exam" onclick="nextQuestion()" style="padding:14px 30px;font-size:.95rem">Next <i class="fa-solid fa-arrow-right"></i></button>`
+                            : `<button class="btn-submit-exam" onclick="submitExam()" style="padding:14px 30px;font-size:.95rem;background:linear-gradient(135deg,#38ef7d 0%,#11998e 100%)"><i class="fa-solid fa-paper-plane"></i> Submit Exam</button>`
+                        }
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:center;gap:8px;margin-top:25px;flex-wrap:wrap">
+                    ${currentExam.map((_, i) => `
+                        <button onclick="goToQuestion(${i})" style="width:36px;height:36px;border-radius:8px;border:2px solid ${answers[i] !== undefined ? 'var(--primary)' : '#e9ecef'};background:${answers[i] !== undefined ? 'var(--gradient)' : '#fff'};color:${answers[i] !== undefined ? '#fff' : 'var(--gray)'};font-weight:600;font-size:.8rem;cursor:pointer;transition:var(--transition)">${i + 1}</button>
+                    `).join('')}
+                </div>`;
+        }
+
+        function selectOption(idx) {
+            answers[currentQuestion] = idx;
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < currentExam.length - 1) {
+                currentQuestion++;
+                renderQuestion();
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion();
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function goToQuestion(idx) {
+            currentQuestion = idx;
+            renderQuestion();
+            window.scrollTo(0, 0);
+        }
+
+        function submitExam() {
+            clearInterval(timerInterval);
+            const unanswered = currentExam.length - Object.keys(answers).length;
+            if (unanswered > 0 && timeLeft > 0) {
+                if (!confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`)) {
+                    startTimer();
+                    return;
+                }
+            }
+
+            let score = 0;
+            currentExam.forEach((q, i) => {
+                if (answers[i] === q.answer) score++;
+            });
+
+            const percentage = Math.round((score / currentExam.length) * 100);
+            const passed = percentage >= 60;
+
+            const result = {
+                studentId: currentUser ? currentUser.id : 'guest',
+                studentName: currentUser ? currentUser.name : 'Guest',
+                class: selectedClass,
+                score: score,
+                total: currentExam.length,
+                percentage: percentage,
+                passed: passed,
+                date: new Date().toISOString()
+            };
+
+            let examResults = JSON.parse(localStorage.getItem('tba_exam_results') || '[]');
+            examResults.push(result);
+            localStorage.setItem('tba_exam_results', JSON.stringify(examResults));
+
+            showResult(score, percentage, passed);
+        }
+
+        function showResult(score, percentage, passed) {
+            document.getElementById('examContent').innerHTML = `
+                <div class="exam-header">
+                    <img src="logo.svg" alt="TBA">
+                    <h1>Exam Complete!</h1>
+                </div>
+                <div class="exam-info">
+                    <div class="result-card">
+                        <div class="result-icon">${passed ? '&#127881;' : '&#128203;'}</div>
+                        <h2>${passed ? 'Congratulations!' : 'Exam Completed'}</h2>
+                        <div class="score">${score} / ${currentExam.length}</div>
+                        <p>${passed
+                            ? `You scored ${percentage}% which is above the required 60%. Well done!`
+                            : `You scored ${percentage}% which is below the required 60%. Keep studying and try again!`
+                        }</p>
+                        <div class="verdict ${passed ? 'verdict-pass' : 'verdict-fail'}">
+                            ${passed ? 'PASSED' : 'BELOW CUT-OFF'}
+                        </div>
+                        <div class="info-grid" style="max-width:400px;margin:20px auto 0;text-align:left">
+                            <div class="info-item"><label>Student</label><p>${currentUser ? currentUser.name : 'Guest'}</p></div>
+                            <div class="info-item"><label>Class</label><p>${selectedClass}</p></div>
+                            <div class="info-item"><label>Score</label><p>${score}/${currentExam.length}</p></div>
+                            <div class="info-item"><label>Percentage</label><p>${percentage}%</p></div>
+                        </div>
+                        <div class="exam-actions" style="margin-top:30px">
+                            <button class="btn-submit-exam" onclick="showClassSelect()"><i class="fa-solid fa-arrow-left"></i> Back to Classes</button>
+                            ${currentUser ? `<a href="student-dashboard.html" class="btn-back" style="text-decoration:none">Go to Dashboard</a>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        init();
+    </script>
+</body>
+</html>
