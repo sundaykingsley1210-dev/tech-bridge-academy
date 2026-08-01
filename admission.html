@@ -340,6 +340,20 @@
                             <span class="error-message">Address is required</span>
                         </div>
 
+                        <p class="form-section-title" style="margin-top: 25px;">Login Details (for Student Portal)</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Student Email (for login) *</label>
+                                <input type="email" id="studentEmail" placeholder="e.g. john@student.com" required>
+                                <span class="error-message">Valid email is required</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Password (for login) *</label>
+                                <input type="password" id="studentPassword" placeholder="Create a password" minlength="6" required>
+                                <span class="error-message">Password must be at least 6 characters</span>
+                            </div>
+                        </div>
+
                         <button type="submit" class="btn-submit">
                             <i class="fa-solid fa-paper-plane"></i> Submit Application
                         </button>
@@ -431,6 +445,8 @@
                 parentPhone: document.getElementById('parentPhone').value,
                 parentEmail: document.getElementById('parentEmail').value,
                 address: document.getElementById('address').value,
+                studentEmail: document.getElementById('studentEmail').value,
+                studentPassword: document.getElementById('studentPassword').value,
                 dateSubmitted: new Date().toISOString(),
                 status: 'Pending'
             };

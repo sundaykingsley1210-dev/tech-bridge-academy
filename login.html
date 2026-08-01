@@ -173,25 +173,6 @@
             font-size: 0.85rem;
             margin-top: 10px;
         }
-        .demo-credentials {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            color: var(--gray);
-        }
-        .demo-credentials h4 {
-            color: var(--dark);
-            margin-bottom: 8px;
-            font-size: 0.85rem;
-        }
-        .demo-credentials code {
-            background: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
         .back-home {
             position: absolute;
             top: 20px;
@@ -251,29 +232,14 @@
                         <label id="nameLabel">Full Name</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-id-card"></i>
-                            <input type="text" id="loginName" placeholder="Enter your full name" required>
+                            <input type="text" id="loginName" placeholder="Enter your full name">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label id="emailLabel">Student ID or Email</label>
+                        <label id="emailLabel">Email Address</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-user"></i>
-                            <input type="text" id="loginEmail" placeholder="e.g. student@tba.edu.ng" required>
-                        </div>
-                    </div>
-                    <div class="form-group" id="classGroup">
-                        <label>Select Your Class</label>
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-layer-group"></i>
-                            <select id="loginClass" required style="width:100%;padding:14px 15px 14px 45px;border:2px solid #e9ecef;border-radius:12px;font-family:inherit;font-size:0.95rem;transition:var(--transition);appearance:none;background:white url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22><path fill=%22%23999%22 d=%22M6 8L1 3h10z%22/></svg>') no-repeat right 15px center">
-                                <option value="">Select Class</option>
-                                <option>JSS 1</option>
-                                <option>JSS 2</option>
-                                <option>JSS 3</option>
-                                <option>SSS 1</option>
-                                <option>SSS 2</option>
-                                <option>SSS 3</option>
-                            </select>
+                            <input type="email" id="loginEmail" placeholder="Enter your email" required>
                         </div>
                     </div>
                     <div class="form-group">
@@ -288,16 +254,10 @@
                     </button>
                 </form>
 
-                <div class="demo-credentials">
-                    <h4>Demo Accounts (for testing):</h4>
-                    <p><strong>Student:</strong> <code>student@tba.edu.ng</code> / <code>student123</code></p>
-                    <p><strong>Teacher:</strong> <code>teacher@tba.edu.ng</code> / <code>teacher123</code></p>
-                    <p><strong>Admin:</strong> <code>admin@tba.edu.ng</code> / <code>admin123</code></p>
-                    <p style="margin-top:10px"><a href="#" onclick="resetAllData()" style="color:#e53e3e;font-size:.75rem">Reset All Demo Data</a></p>
-                </div>
-
                 <div class="login-footer">
                     <a href="admission.html">New Student? Apply for Admission</a>
+                    <p style="margin-top:8px"><a href="#" onclick="showTeacherReg()" style="color:var(--primary);font-weight:600;font-size:.9rem">New Teacher? Register Here</a></p>
+                    <p id="adminRegLink" style="margin-top:8px;display:none"><a href="#" onclick="showAdminReg()" style="color:var(--primary);font-weight:600;font-size:.9rem">Setup Admin Account</a></p>
                     <p>Having trouble? Contact <a href="https://wa.me/2348039392007" style="color: var(--accent);">Support</a></p>
                 </div>
             </div>
@@ -307,13 +267,153 @@
     <script>
         let currentRole = 'student';
 
+        // Teacher Registration Modal
+        document.body.insertAdjacentHTML('beforeend', `
+        <div id="teacherRegModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;justify-content:center;align-items:center">
+            <div style="background:#fff;border-radius:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;margin:20px;animation:fadeIn .3s ease">
+                <div style="padding:25px 30px;border-bottom:1px solid #e9ecef;display:flex;justify-content:space-between;align-items:center">
+                    <h3 style="font-size:1.3rem;color:var(--dark)">Teacher Registration</h3>
+                    <button onclick="closeTeacherReg()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)">&times;</button>
+                </div>
+                <div style="padding:30px">
+                    <form id="teacherRegForm" onsubmit="handleTeacherReg(event)">
+                        <div style="margin-bottom:18px">
+                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Full Name *</label>
+                            <input type="text" id="trName" placeholder="Enter your full name" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                        </div>
+                        <div style="margin-bottom:18px">
+                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Email Address *</label>
+                            <input type="email" id="trEmail" placeholder="Enter your email" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                        </div>
+                        <div style="margin-bottom:18px">
+                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Subject *</label>
+                            <input type="text" id="trSubject" placeholder="e.g. Mathematics" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                        </div>
+                        <div style="margin-bottom:18px">
+                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Phone Number</label>
+                            <input type="tel" id="trPhone" placeholder="e.g. 08012345678" style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                        </div>
+                        <div style="margin-bottom:18px">
+                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Password *</label>
+                            <input type="password" id="trPassword" placeholder="Create a password (min 6 chars)" minlength="6" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                        </div>
+                        <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-user-plus"></i> Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>`);
+
+        function showTeacherReg() {
+            document.getElementById('teacherRegModal').style.display = 'flex';
+        }
+        function closeTeacherReg() {
+            document.getElementById('teacherRegModal').style.display = 'none';
+        }
+        function handleTeacherReg(e) {
+            e.preventDefault();
+            const name = document.getElementById('trName').value.trim();
+            const email = document.getElementById('trEmail').value.trim();
+            const subject = document.getElementById('trSubject').value.trim();
+            const phone = document.getElementById('trPhone').value.trim();
+            const password = document.getElementById('trPassword').value;
+            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            if (users.some(u => u.email === email)) {
+                alert('This email is already registered. Please login.');
+                return;
+            }
+            const newId = 'TCH' + String(users.filter(u => u.role === 'teacher').length + 1).padStart(3, '0');
+            users.push({
+                id: newId,
+                email: email,
+                password: password,
+                name: name,
+                role: 'teacher',
+                subject: subject,
+                phone: phone
+            });
+            localStorage.setItem('tba_users', JSON.stringify(users));
+            alert('Registration successful! You can now login with your email and password.');
+            closeTeacherReg();
+            document.getElementById('teacherRegForm').reset();
+        }
+
+        // Admin Registration Modal
+        document.body.insertAdjacentHTML('beforeend', `
+        <div id="adminRegModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;justify-content:center;align-items:center">
+            <div style="background:#fff;border-radius:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;margin:20px;animation:fadeIn .3s ease">
+                <div style="padding:25px 30px;border-bottom:1px solid #e9ecef;display:flex;justify-content:space-between;align-items:center">
+                    <h3 style="font-size:1.3rem;color:var(--dark)">Admin Registration</h3>
+                    <button onclick="closeAdminReg()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)">&times;</button>
+                </div>
+                <div style="padding:30px">
+                    <form id="adminRegForm" onsubmit="handleAdminReg(event)">
+                        <div style="margin-bottom:18px">
+                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Full Name *</label>
+                            <input type="text" id="arName" placeholder="Enter your full name" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                        </div>
+                        <div style="margin-bottom:18px">
+                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Email Address *</label>
+                            <input type="email" id="arEmail" placeholder="Enter admin email" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                        </div>
+                        <div style="margin-bottom:18px">
+                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Password *</label>
+                            <input type="password" id="arPassword" placeholder="Create a password (min 6 chars)" minlength="6" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                        </div>
+                        <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-shield-halved"></i> Create Admin Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>`);
+
+        function showAdminReg() {
+            document.getElementById('adminRegModal').style.display = 'flex';
+        }
+        function closeAdminReg() {
+            document.getElementById('adminRegModal').style.display = 'none';
+        }
+        function handleAdminReg(e) {
+            e.preventDefault();
+            const name = document.getElementById('arName').value.trim();
+            const email = document.getElementById('arEmail').value.trim();
+            const password = document.getElementById('arPassword').value;
+            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            if (users.some(u => u.role === 'admin')) {
+                alert('Admin account already exists.');
+                return;
+            }
+            if (users.some(u => u.email === email)) {
+                alert('This email is already registered.');
+                return;
+            }
+            users.push({
+                id: 'ADM001',
+                email: email,
+                password: password,
+                name: name,
+                role: 'admin'
+            });
+            localStorage.setItem('tba_users', JSON.stringify(users));
+            alert('Admin account created! You can now login.');
+            closeAdminReg();
+            document.getElementById('adminRegForm').reset();
+            document.getElementById('adminRegLink').style.display = 'none';
+        }
+
+        // Show admin registration link if no admin exists
+        (function() {
+            const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            if (!users.some(u => u.role === 'admin')) {
+                document.getElementById('adminRegLink').style.display = 'block';
+            }
+        })();
+
         function switchRole(role) {
             currentRole = role;
             document.getElementById('studentBtn').classList.toggle('active', role === 'student');
             document.getElementById('teacherBtn').classList.toggle('active', role === 'teacher');
             document.getElementById('adminBtn').classList.toggle('active', role === 'admin');
-            const labels = { student: 'Student ID or Email', teacher: 'Teacher ID or Email', admin: 'Admin Email' };
-            const placeholders = { student: 'e.g. student@tba.edu.ng', teacher: 'e.g. teacher@tba.edu.ng', admin: 'e.g. admin@tba.edu.ng' };
+            const labels = { student: 'Email Address', teacher: 'Email Address', admin: 'Admin Email' };
+            const placeholders = { student: 'Enter your email', teacher: 'Enter your email', admin: 'Enter admin email' };
             const icons = { student: 'fa-user', teacher: 'fa-chalkboard-user', admin: 'fa-shield-halved' };
             document.getElementById('emailLabel').textContent = labels[role];
             document.getElementById('loginEmail').placeholder = placeholders[role];
@@ -321,44 +421,13 @@
             document.getElementById('loginError').style.display = 'none';
 
             const nameGroup = document.getElementById('nameGroup');
-            const classGroup = document.getElementById('classGroup');
             if (role === 'admin') {
                 nameGroup.style.display = 'none';
-                classGroup.style.display = 'none';
-            } else if (role === 'teacher') {
-                nameGroup.style.display = 'block';
-                classGroup.style.display = 'none';
-                const nameLabels = { student: 'Student Full Name', teacher: 'Teacher Full Name' };
-                const namePlaceholders = { student: 'Enter your full name', teacher: 'Enter your full name' };
-                document.getElementById('nameLabel').textContent = nameLabels[role];
-                document.getElementById('loginName').placeholder = namePlaceholders[role];
             } else {
                 nameGroup.style.display = 'block';
-                classGroup.style.display = 'block';
-                document.getElementById('nameLabel').textContent = 'Student Full Name';
-                document.getElementById('loginName').placeholder = 'Enter your full name';
+                document.getElementById('nameLabel').textContent = role === 'teacher' ? 'Teacher Full Name' : 'Student Full Name';
+                document.getElementById('loginName').placeholder = role === 'teacher' ? 'Enter your full name' : 'Enter your full name';
             }
-        }
-
-        function seedDemoUsers() {
-            let users = JSON.parse(localStorage.getItem('tba_users')) || [];
-
-            const demoUsers = [
-                { id: 'STU001', email: 'student@tba.edu.ng', password: 'student123', name: 'Adebayo Johnson', role: 'student', class: 'JSS 2', gender: 'Male' },
-                { id: 'STU002', email: 'ama@student.tba.edu.ng', password: 'student123', name: 'Amaka Nwosu', role: 'student', class: 'SSS 1', gender: 'Female' },
-                { id: 'TCH001', email: 'teacher@tba.edu.ng', password: 'teacher123', name: 'Mr. Chukwuemeka Obi', role: 'teacher', subject: 'Mathematics' },
-                { id: 'TCH002', email: 'fatima@teacher.tba.edu.ng', password: 'teacher123', name: 'Mrs. Fatima Abdul', role: 'teacher', subject: 'English Language' },
-                { id: 'ADM001', email: 'admin@tba.edu.ng', password: 'admin123', name: 'Admin Pa-Kings', role: 'admin' }
-            ];
-
-            demoUsers.forEach(demo => {
-                const exists = users.some(u => u.email === demo.email);
-                if (!exists) {
-                    users.push(demo);
-                }
-            });
-
-            localStorage.setItem('tba_users', JSON.stringify(users));
         }
 
         function handleLogin(e) {
@@ -366,14 +435,7 @@
             const name = document.getElementById('loginName').value.trim();
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
-            const loginClass = document.getElementById('loginClass').value;
             const errorEl = document.getElementById('loginError');
-
-            if (currentRole === 'student' && !loginClass) {
-                errorEl.textContent = 'Please select your class.';
-                errorEl.style.display = 'block';
-                return;
-            }
 
             const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
             let user = users.find(u => u.email === email && u.password === password && u.role === currentRole);
@@ -381,12 +443,6 @@
             if (user) {
                 if (currentRole !== 'admin' && name) {
                     user.name = name;
-                    const userIndex = users.findIndex(u => u.email === email);
-                    users[userIndex] = user;
-                    localStorage.setItem('tba_users', JSON.stringify(users));
-                }
-                if (currentRole === 'student' && loginClass) {
-                    user.class = loginClass;
                     const userIndex = users.findIndex(u => u.email === email);
                     users[userIndex] = user;
                     localStorage.setItem('tba_users', JSON.stringify(users));
@@ -400,24 +456,6 @@
             }
         }
 
-        function resetAllData() {
-            if (confirm('This will clear all demo data and reset. Continue?')) {
-                localStorage.removeItem('tba_users');
-                localStorage.removeItem('tba_currentUser');
-                localStorage.removeItem('tba_applications');
-                localStorage.removeItem('tba_assignments');
-                localStorage.removeItem('tba_submissions');
-                localStorage.removeItem('tba_notifications');
-                localStorage.removeItem('tba_fees');
-                localStorage.removeItem('tba_payments');
-                localStorage.removeItem('tba_exam_results');
-                localStorage.removeItem('tba_exam_schedule');
-                seedDemoUsers();
-                alert('All data reset! Demo accounts restored.');
-            }
-        }
-
-        seedDemoUsers();
     </script>
 </body>
 </html>

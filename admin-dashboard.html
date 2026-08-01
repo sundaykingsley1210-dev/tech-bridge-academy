@@ -532,10 +532,12 @@
             // Create student account
             let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
             const newId = 'STU' + String(users.filter(u => u.role === 'student').length + 1).padStart(3, '0');
+            const loginEmail = a.studentEmail || a.parentEmail;
+            const loginPassword = a.studentPassword || 'student123';
             users.push({
                 id: newId,
-                email: a.parentEmail,
-                password: 'student123',
+                email: loginEmail,
+                password: loginPassword,
                 name: a.firstName + ' ' + a.lastName,
                 role: 'student',
                 class: a.classApplying,
@@ -544,13 +546,13 @@
             localStorage.setItem('tba_users', JSON.stringify(users));
 
             sendEmail(a.parentEmail, '[TBA] Admission Confirmed — ' + a.firstName + ' ' + a.lastName,
-                'Dear ' + a.parentName + ',\n\nCongratulations! ' + a.firstName + ' ' + a.lastName + ' has been ADMITTED into TECH-BRIDGE Academy.\n\nStudent ID: ' + newId + '\nClass: ' + a.classApplying + '\nLogin Email: ' + a.parentEmail + '\nPassword: student123\n\nPlease change the password after first login.\n\nWelcome to TECH-BRIDGE Academy!');
+                'Dear ' + a.parentName + ',\n\nCongratulations! ' + a.firstName + ' ' + a.lastName + ' has been ADMITTED into TECH-BRIDGE Academy.\n\nStudent ID: ' + newId + '\nClass: ' + a.classApplying + '\nLogin Email: ' + loginEmail + '\nPassword: ' + loginPassword + '\n\nPlease keep your login details safe.\n\nWelcome to TECH-BRIDGE Academy!');
 
             renderApps();
             renderApprovedList();
             renderAdmittedList();
             updateStats();
-            alert(a.firstName + ' ' + a.lastName + ' has been admitted!\nStudent ID: ' + newId + '\nLogin: ' + a.parentEmail + ' / student123');
+            alert(a.firstName + ' ' + a.lastName + ' has been admitted!\nStudent ID: ' + newId + '\nLogin: ' + loginEmail);
         }
 
         function filterApps(status, btn) {
