@@ -124,6 +124,7 @@
                 <li><a onclick="showSection(this)"><i class="fa-solid fa-users"></i> Students</a></li>
                 <li><a onclick="showSection(this)"><i class="fa-solid fa-inbox"></i> Submissions</a></li>
                 <li><a onclick="showSection(this)"><i class="fa-solid fa-calendar-days"></i> Timetable</a></li>
+                <li><a onclick="showSection(this)"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
             </ul>
@@ -250,6 +251,29 @@
                         </div>
                     </div>
                 </div>
+                <div class="card" style="grid-column:span 2">
+                    <div class="card-header"><h3><i class="fa-solid fa-chart-bar"></i> Upload Student Results</h3><span class="status-badge status-active" id="resultCount">0</span></div>
+                    <div class="card-body">
+                        <form id="resultForm" onsubmit="addResult(event)">
+                            <div class="form-row">
+                                <div class="form-group"><label>Class *</label><select id="resClass" required><option value="">Select Class</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
+                                <div class="form-group"><label>Subject *</label><input type="text" id="resSubject" placeholder="e.g. Mathematics" required></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label>CA1 (20 marks) *</label><input type="number" id="resCA1" min="0" max="20" required></div>
+                                <div class="form-group"><label>CA2 (20 marks) *</label><input type="number" id="resCA2" min="0" max="20" required></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label>Exam (60 marks) *</label><input type="number" id="resExam" min="0" max="60" required></div>
+                                <div class="form-group" style="display:flex;align-items:flex-end"><button type="submit" class="btn-create" style="width:100%;justify-content:center"><i class="fa-solid fa-plus"></i> Add Result</button></div>
+                            </div>
+                        </form>
+                        <div style="margin-top:20px">
+                            <h4 style="margin-bottom:10px;color:var(--dark)">Uploaded Results</h4>
+                            <div class="assignment-list" id="resultList"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -295,7 +319,7 @@
         function selectAllClasses() { document.querySelectorAll('.class-cb').forEach(cb => cb.checked = true); }
         function deselectAllClasses() { document.querySelectorAll('.class-cb').forEach(cb => cb.checked = false); }
 
-        function renderAll() { renderAssignments(); renderStudents(); renderSubmissions(); renderSentNotifs(); renderNotifBadge(); renderTimetableList(); updateStats(); }
+        function renderAll() { renderAssignments(); renderStudents(); renderSubmissions(); renderSentNotifs(); renderNotifBadge(); renderTimetableList(); renderResultList(); updateStats(); }
 
         function addQuestion() {
             questionCount++;
@@ -591,6 +615,104 @@
                         html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-top:4px;background:#fff;border-radius:6px;border-left:3px solid var(--accent)"><div><span style="font-weight:600;font-size:.85rem;color:var(--primary)">' + e.period + '</span> — <span style="font-weight:600;color:var(--dark)">' + e.subject + '</span> <span style="font-size:.8rem;color:var(--gray)">(' + e.teacher + ')</span></div><button class="btn-delete" onclick="deleteTimetableEntry(\'' + e.id + '\')" style="padding:4px 10px;font-size:.75rem"><i class="fa-solid fa-trash"></i></button></div>';
                     });
                     html += '</div>';
+                });
+                html += '</div>';
+            });
+            c.innerHTML = html;
+        }
+
+        function getTeacherResults() {
+            return JSON.parse(localStorage.getItem('tba_teacher_results') || '[]');
+        }
+
+        function saveTeacherResults(data) {
+            localStorage.setItem('tba_teacher_results', JSON.stringify(data));
+        }
+
+        function calcGrade(total) {
+            if (total >= 70) return 'A';
+            if (total >= 60) return 'B';
+            if (total >= 50) return 'C';
+            if (total >= 40) return 'D';
+            return 'F';
+        }
+
+        function addResult(e) {
+            e.preventDefault();
+            const ca1 = parseInt(document.getElementById('resCA1').value);
+            const ca2 = parseInt(document.getElementById('resCA2').value);
+            const exam = parseInt(document.getElementById('resExam').value);
+            const total = ca1 + ca2 + exam;
+            const grade = calcGrade(total);
+
+            const entry = {
+                id: 'RES-' + Date.now().toString(36).toUpperCase(),
+                cls: document.getElementById('resClass').value,
+                subject: document.getElementById('resSubject').value,
+                ca1: ca1,
+                ca2: ca2,
+                exam: exam,
+                total: total,
+                grade: grade,
+                teacherName: currentUser.name,
+                createdAt: new Date().toISOString()
+            };
+
+            const all = getTeacherResults();
+            all.push(entry);
+            saveTeacherResults(all);
+            syncResultsToStudents();
+            document.getElementById('resultForm').reset();
+            renderResultList();
+            alert('Result added! Total: ' + total + ' (' + grade + ')');
+        }
+
+        function deleteResult(id) {
+            if (!confirm('Delete this result?')) return;
+            let all = getTeacherResults();
+            all = all.filter(e => e.id !== id);
+            saveTeacherResults(all);
+            syncResultsToStudents();
+            renderResultList();
+        }
+
+        function syncResultsToStudents() {
+            const all = getTeacherResults();
+            const byClass = {};
+            all.forEach(e => {
+                if (!byClass[e.cls]) byClass[e.cls] = [];
+                byClass[e.cls].push({ subject: e.subject, ca1: e.ca1, ca2: e.ca2, exam: e.exam, total: e.total, grade: e.grade });
+            });
+            const allClasses = ['JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+            allClasses.forEach(cls => {
+                if (byClass[cls] && byClass[cls].length) {
+                    localStorage.setItem('tba_results_' + cls, JSON.stringify(byClass[cls]));
+                } else {
+                    localStorage.removeItem('tba_results_' + cls);
+                }
+            });
+        }
+
+        function renderResultList() {
+            const all = getTeacherResults();
+            const c = document.getElementById('resultList');
+            document.getElementById('resultCount').textContent = all.length;
+            if (!all.length) {
+                c.innerHTML = '<div class="no-data"><i class="fa-solid fa-chart-bar"></i><p>No results uploaded yet. Add results above.</p></div>';
+                return;
+            }
+            const grouped = {};
+            all.forEach(e => {
+                if (!grouped[e.cls]) grouped[e.cls] = [];
+                grouped[e.cls].push(e);
+            });
+            let html = '';
+            Object.keys(grouped).sort().forEach(cls => {
+                html += '<div style="margin-bottom:15px"><h4 style="color:var(--primary);margin-bottom:8px;font-size:.95rem"><i class="fa-solid fa-layer-group"></i> ' + cls + '</h4>';
+                grouped[cls].forEach(e => {
+                    const gc = e.grade==='A'?'#155724':e.grade==='B'?'#004085':e.grade==='C'?'#856404':'#721c24';
+                    const bg = e.grade==='A'?'#d4edda':e.grade==='B'?'#cce5ff':e.grade==='C'?'#fff3cd':'#f8d7da';
+                    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;margin-bottom:6px;background:#fff;border-radius:8px;border-left:3px solid var(--accent)"><div><strong style="color:var(--dark)">' + e.subject + '</strong> <span style="font-size:.8rem;color:var(--gray)">CA1: ' + e.ca1 + ' | CA2: ' + e.ca2 + ' | Exam: ' + e.exam + '</span></div><div style="display:flex;align-items:center;gap:10px"><span style="font-weight:700;color:' + gc + ';background:' + bg + ';padding:3px 10px;border-radius:12px;font-size:.8rem">' + e.total + ' (' + e.grade + ')</span><button class="btn-delete" onclick="deleteResult(\'' + e.id + '\')" style="padding:4px 10px;font-size:.75rem"><i class="fa-solid fa-trash"></i></button></div></div>';
                 });
                 html += '</div>';
             });

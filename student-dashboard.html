@@ -332,26 +332,18 @@
 
         let notifFilter = 'all';
 
-        const studentResults = {
-            'JSS 2': [
-                { subject: 'Mathematics', ca1: 18, ca2: 20, exam: 58, total: 96, grade: 'A' },
-                { subject: 'English Language', ca1: 16, ca2: 18, exam: 52, total: 86, grade: 'B' },
-                { subject: 'Basic Science', ca1: 17, ca2: 19, exam: 54, total: 90, grade: 'A' },
-                { subject: 'Social Studies', ca1: 15, ca2: 17, exam: 48, total: 80, grade: 'B' },
-                { subject: 'ICT', ca1: 19, ca2: 20, exam: 56, total: 95, grade: 'A' },
-                { subject: 'Civic Education', ca1: 14, ca2: 16, exam: 45, total: 75, grade: 'C' },
-                { subject: 'Agricultural Science', ca1: 16, ca2: 18, exam: 50, total: 84, grade: 'B' },
-            ],
-            'SSS 1': [
-                { subject: 'Mathematics', ca1: 17, ca2: 19, exam: 55, total: 91, grade: 'A' },
-                { subject: 'English Language', ca1: 15, ca2: 17, exam: 50, total: 82, grade: 'B' },
-                { subject: 'Physics', ca1: 16, ca2: 18, exam: 52, total: 86, grade: 'B' },
-                { subject: 'Chemistry', ca1: 18, ca2: 19, exam: 56, total: 93, grade: 'A' },
-                { subject: 'Biology', ca1: 14, ca2: 16, exam: 48, total: 78, grade: 'C' },
-                { subject: 'Computer Science', ca1: 19, ca2: 20, exam: 58, total: 97, grade: 'A' },
-                { subject: 'Economics', ca1: 15, ca2: 17, exam: 50, total: 82, grade: 'B' },
-            ]
-        };
+        function getResults() {
+            const saved = localStorage.getItem('tba_results_' + currentUser.class);
+            return saved ? JSON.parse(saved) : [];
+        }
+
+        function calcGrade(total) {
+            if (total >= 70) return 'A';
+            if (total >= 60) return 'B';
+            if (total >= 50) return 'C';
+            if (total >= 40) return 'D';
+            return 'F';
+        }
 
         function getTimetable() {
             const saved = localStorage.getItem('tba_timetable_' + currentUser.class);
@@ -379,8 +371,12 @@
         }
 
         function renderResults() {
-            const results = studentResults[currentUser.class] || studentResults['JSS 2'];
+            const results = getResults();
             const tbody = document.getElementById('resultsBody');
+            if (!results.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--gray)"><i class="fa-solid fa-chart-bar" style="font-size:2rem;display:block;margin-bottom:10px;opacity:.3"></i>No results available yet. Your teacher will upload them soon.</td></tr>';
+                return;
+            }
             tbody.innerHTML = results.map(r => {
                 const gradeClass = r.grade === 'A' ? 'grade-a' : r.grade === 'B' ? 'grade-b' : r.grade === 'C' ? 'grade-c' : 'grade-d';
                 return `<tr>
@@ -668,10 +664,14 @@
         }
 
         function updateStats() {
-            const results = studentResults[currentUser.class] || studentResults['JSS 2'];
-            const avg = Math.round(results.reduce((a, b) => a + b.total, 0) / results.length);
-            document.getElementById('avgScore').textContent = avg + '%';
-            document.getElementById('classPosition').textContent = '3rd';
+            const results = getResults();
+            if (results.length) {
+                const avg = Math.round(results.reduce((a, b) => a + b.total, 0) / results.length);
+                document.getElementById('avgScore').textContent = avg + '%';
+            } else {
+                document.getElementById('avgScore').textContent = '--';
+            }
+            document.getElementById('classPosition').textContent = '--';
 
             const fees = JSON.parse(localStorage.getItem('tba_fees') || '{}');
             const payments = JSON.parse(localStorage.getItem('tba_payments') || '{}');
