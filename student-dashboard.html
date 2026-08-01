@@ -359,6 +359,9 @@
                 return;
             }
             const avg = Math.round(results.reduce((a, b) => a + b.total, 0) / results.length);
+            const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + currentUser.class) || '{}');
+            const myPosition = posData.positions ? posData.positions[currentUser.id] : null;
+            const positionText = myPosition ? myPosition + ordinalSuffix(myPosition) : 'Not set';
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <!DOCTYPE html>
@@ -392,7 +395,9 @@
                         <div><strong>Student Name:</strong> ${currentUser.name}</div>
                         <div><strong>Student ID:</strong> ${currentUser.id}</div>
                         <div><strong>Class:</strong> ${currentUser.class}</div>
+                        <div><strong>Class Position:</strong> ${positionText}</div>
                         <div><strong>Average Score:</strong> ${avg}%</div>
+                        <div><strong>Term:</strong> ${posData.term || 'N/A'}</div>
                     </div>
                     <table>
                         <thead><tr><th>Subject</th><th>CA1 (20)</th><th>CA2 (20)</th><th>Exam (60)</th><th>Total (100)</th><th>Grade</th></tr></thead>
