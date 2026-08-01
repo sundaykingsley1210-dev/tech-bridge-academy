@@ -338,6 +338,12 @@
             return saved ? JSON.parse(saved) : [];
         }
 
+        function ordinalSuffix(n) {
+            const s = ['th', 'st', 'nd', 'rd'];
+            const v = n % 100;
+            return (s[(v - 20) % 10] || s[v] || s[0]);
+        }
+
         function calcGrade(total) {
             if (total >= 70) return 'A';
             if (total >= 60) return 'B';
@@ -733,7 +739,9 @@
             } else {
                 document.getElementById('avgScore').textContent = '--';
             }
-            document.getElementById('classPosition').textContent = '--';
+            const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + currentUser.class) || '{}');
+            const myPosition = posData.positions ? posData.positions[currentUser.id] : null;
+            document.getElementById('classPosition').textContent = myPosition ? myPosition + ordinalSuffix(myPosition) : '--';
 
             const fees = JSON.parse(localStorage.getItem('tba_fees') || '{}');
             const payments = JSON.parse(localStorage.getItem('tba_payments') || '{}');

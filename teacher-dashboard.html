@@ -274,6 +274,17 @@
                         </div>
                     </div>
                 </div>
+                <div class="card" style="grid-column:span 2">
+                    <div class="card-header"><h3><i class="fa-solid fa-trophy"></i> Class Positions</h3></div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group"><label>Select Class *</label><select id="posClass" required onchange="loadPositionStudents()"><option value="">Select Class</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
+                            <div class="form-group"><label>Term</label><select id="posTerm"><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div>
+                        </div>
+                        <div id="positionStudentList" style="margin-top:15px"></div>
+                        <button id="savePositionBtn" style="display:none;margin-top:15px;background:var(--gradient);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-weight:600;font-size:.9rem;cursor:pointer;width:100%" onclick="saveClassPositions()"><i class="fa-solid fa-save"></i> Save All Positions</button>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -717,6 +728,36 @@
                 html += '</div>';
             });
             c.innerHTML = html;
+        }
+
+        function loadPositionStudents() {
+            const cls = document.getElementById('posClass').value;
+            const c = document.getElementById('positionStudentList');
+            const btn = document.getElementById('savePositionBtn');
+            if (!cls) { c.innerHTML = ''; btn.style.display = 'none'; return; }
+            const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            const students = users.filter(u => u.role === 'student' && u.class === cls);
+            const saved = JSON.parse(localStorage.getItem('tba_class_positions_' + cls) || '{}');
+            if (!students.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-users"></i><p>No students in this class yet</p></div>'; btn.style.display = 'none'; return; }
+            btn.style.display = 'block';
+            c.innerHTML = '<div style="display:grid;gap:10px">' + students.map(s => {
+                const pos = saved.positions ? (saved.positions[s.id] || '') : '';
+                return '<div style="display:flex;align-items:center;gap:15px;padding:12px;background:#f8f9fa;border-radius:10px;border-left:3px solid var(--accent)"><div style="width:40px;height:40px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.85rem">' + s.name.split(' ').map(n=>n[0]).join('') + '</div><div style="flex:1"><strong style="color:var(--dark)">' + s.name + '</strong><br><span style="font-size:.8rem;color:var(--gray)">' + s.id + '</span></div><div style="display:flex;align-items:center;gap:8px"><label style="font-size:.85rem;font-weight:600;color:var(--gray)">Position:</label><input type="number" class="pos-input" data-sid="' + s.id + '" min="1" max="100" value="' + pos + '" placeholder="-" style="width:70px;padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem;font-weight:600;text-align:center"></div></div>';
+            }).join('') + '</div>';
+        }
+
+        function saveClassPositions() {
+            const cls = document.getElementById('posClass').value;
+            const term = document.getElementById('posTerm').value;
+            if (!cls) return alert('Please select a class');
+            const positions = {};
+            document.querySelectorAll('.pos-input').forEach(inp => {
+                const sid = inp.dataset.sid;
+                const val = inp.value.trim();
+                if (val) positions[sid] = parseInt(val);
+            });
+            localStorage.setItem('tba_class_positions_' + cls, JSON.stringify({ term, positions }));
+            alert('Class positions saved for ' + cls + '!');
         }
 
         // Profile form handler
