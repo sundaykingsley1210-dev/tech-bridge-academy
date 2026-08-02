@@ -505,16 +505,13 @@
             const email = document.getElementById('arEmail').value.trim();
             const password = document.getElementById('arPassword').value;
             let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
-            if (users.some(u => u.role === 'admin')) {
-                alert('Admin account already exists.');
-                return;
-            }
             if (users.some(u => u.email === email)) {
                 alert('This email is already registered.');
                 return;
             }
+            const adminCount = users.filter(u => u.role === 'admin').length;
             users.push({
-                id: 'ADM001',
+                id: 'ADM' + String(adminCount + 1).padStart(3, '0'),
                 email: email,
                 password: password,
                 name: name,
@@ -527,13 +524,8 @@
             document.getElementById('adminRegLink').style.display = 'none';
         }
 
-        // Show admin registration link if no admin exists
-        (function() {
-            const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
-            if (!users.some(u => u.role === 'admin')) {
-                document.getElementById('adminRegLink').style.display = 'block';
-            }
-        })();
+        // Show admin registration link
+        document.getElementById('adminRegLink').style.display = 'block';
 
         function switchRole(role) {
             currentRole = role;
