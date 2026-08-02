@@ -549,9 +549,8 @@
                 nameGroup.style.display = 'none';
                 classGroup.style.display = 'none';
             } else if (role === 'teacher') {
-                nameGroup.style.display = 'block';
+                nameGroup.style.display = 'none';
                 classGroup.style.display = 'none';
-                document.getElementById('nameLabel').textContent = 'Teacher Full Name *';
             } else {
                 nameGroup.style.display = 'block';
                 classGroup.style.display = 'block';
@@ -570,11 +569,6 @@
             const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
 
             if (currentRole === 'student') {
-                if (!name) {
-                    errorEl.textContent = 'Please enter your full name.';
-                    errorEl.style.display = 'block';
-                    return;
-                }
                 if (!selectedClass) {
                     errorEl.textContent = 'Please select your class.';
                     errorEl.style.display = 'block';
@@ -594,11 +588,6 @@
                     errorEl.style.display = 'block';
                 }
             } else if (currentRole === 'teacher') {
-                if (!name) {
-                    errorEl.textContent = 'Please enter your full name.';
-                    errorEl.style.display = 'block';
-                    return;
-                }
                 let user = users.find(u =>
                     u.email === email &&
                     u.password === password &&
