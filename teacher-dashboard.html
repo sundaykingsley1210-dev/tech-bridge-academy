@@ -119,12 +119,12 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo"><img src="logo.svg" alt="TBA"><p>Teacher Portal</p></div>
             <ul class="sidebar-nav">
-                <li><a class="active" onclick="showSection(this)"><i class="fa-solid fa-grid-2"></i> Overview</a></li>
-                <li><a onclick="showSection(this)"><i class="fa-solid fa-book"></i> Assignments</a></li>
-                <li><a onclick="showSection(this)"><i class="fa-solid fa-users"></i> Students</a></li>
-                <li><a onclick="showSection(this)"><i class="fa-solid fa-inbox"></i> Submissions</a></li>
-                <li><a onclick="showSection(this)"><i class="fa-solid fa-calendar-days"></i> Timetable</a></li>
-                <li><a onclick="showSection(this)"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
+                <li><a class="active" onclick="showSection(this, 'overviewSection')"><i class="fa-solid fa-grid-2"></i> Overview</a></li>
+                <li><a onclick="showSection(this, 'assignmentsSection')"><i class="fa-solid fa-book"></i> Assignments</a></li>
+                <li><a onclick="showSection(this, 'studentsSection')"><i class="fa-solid fa-users"></i> Students</a></li>
+                <li><a onclick="showSection(this, 'submissionsSection')"><i class="fa-solid fa-inbox"></i> Submissions</a></li>
+                <li><a onclick="showSection(this, 'timetableSection')"><i class="fa-solid fa-calendar-days"></i> Timetable</a></li>
+                <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
             </ul>
@@ -145,144 +145,177 @@
                     <div class="user-avatar" id="avatarInitials">T</div>
                 </div>
             </div>
-            <div class="stat-cards">
-                <div class="stat-card"><i class="fa-solid fa-book"></i><h3 id="totalAssignments">0</h3><p>Assignments</p></div>
-                <div class="stat-card"><i class="fa-solid fa-users"></i><h3 id="totalStudents">0</h3><p>Students</p></div>
-                <div class="stat-card"><i class="fa-solid fa-inbox"></i><h3 id="totalSubmissions">0</h3><p>Submissions</p></div>
-                <div class="stat-card"><i class="fa-solid fa-clock"></i><h3 id="pendingReview">0</h3><p>Pending Review</p></div>
+            <!-- Overview Section -->
+            <div id="overviewSection">
+                <div class="stat-cards">
+                    <div class="stat-card"><i class="fa-solid fa-book"></i><h3 id="totalAssignments">0</h3><p>Assignments</p></div>
+                    <div class="stat-card"><i class="fa-solid fa-users"></i><h3 id="totalStudents">0</h3><p>Students</p></div>
+                    <div class="stat-card"><i class="fa-solid fa-inbox"></i><h3 id="totalSubmissions">0</h3><p>Submissions</p></div>
+                    <div class="stat-card"><i class="fa-solid fa-clock"></i><h3 id="pendingReview">0</h3><p>Pending Review</p></div>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="card" style="grid-column: span 2">
+                        <div class="card-header"><h3><i class="fa-solid fa-user-edit"></i> Teacher Profile</h3></div>
+                        <div class="card-body">
+                            <form id="profileForm">
+                                <div class="form-row">
+                                    <div class="form-group"><label>Full Name *</label><input type="text" id="teacherFullName" placeholder="Enter your full name" required></div>
+                                    <div class="form-group"><label>Subject *</label><input type="text" id="teacherSubjectInput" placeholder="Enter your subject" required></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>Email</label><input type="email" id="teacherEmail" placeholder="Enter your email"></div>
+                                    <div class="form-group"><label>Phone</label><input type="tel" id="teacherPhone" placeholder="Enter your phone number"></div>
+                                </div>
+                                <button type="submit" class="btn-create" style="margin-top:10px"><i class="fa-solid fa-save"></i> Save Profile</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="dashboard-grid">
-                <div class="card" style="grid-column: span 2">
-                    <div class="card-header"><h3><i class="fa-solid fa-user-edit"></i> Teacher Profile</h3></div>
-                    <div class="card-body">
-                        <form id="profileForm">
-                            <div class="form-row">
-                                <div class="form-group"><label>Full Name *</label><input type="text" id="teacherFullName" placeholder="Enter your full name" required></div>
-                                <div class="form-group"><label>Subject *</label><input type="text" id="teacherSubjectInput" placeholder="Enter your subject" required></div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group"><label>Email</label><input type="email" id="teacherEmail" placeholder="Enter your email"></div>
-                                <div class="form-group"><label>Phone</label><input type="tel" id="teacherPhone" placeholder="Enter your phone number"></div>
-                            </div>
-                            <button type="submit" class="btn-create" style="margin-top:10px"><i class="fa-solid fa-save"></i> Save Profile</button>
-                        </form>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header"><h3><i class="fa-solid fa-plus-circle"></i> Create Assignment</h3></div>
-                    <div class="card-body">
-                        <form id="assignmentForm">
-                            <div class="form-group"><label>Title *</label><input type="text" id="assignTitle" placeholder="e.g. Week 5 Homework" required></div>
-                            <div class="form-row">
-                                <div class="form-group"><label>Subject *</label><select id="assignSubject" required><option value="">Select</option><option>Mathematics</option><option>English Language</option><option>Basic Science</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>ICT</option><option>Social Studies</option><option>Economics</option></select></div>
-                                <div class="form-group"><label>Class *</label><select id="assignClass" required><option value="">Select</option><option>All Classes</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group"><label>Deadline *</label><input type="date" id="assignDeadline" required></div>
-                                <div class="form-group"><label>Max Score</label><input type="number" id="assignMaxScore" value="20" min="5" max="100"></div>
-                            </div>
-                            <div class="form-group"><label>Instructions</label><textarea id="assignDescription" rows="2" placeholder="Optional instructions..."></textarea></div>
-                            <label style="font-weight:600;font-size:.88rem;color:var(--dark);display:block;margin-bottom:8px">Questions *</label>
-                            <div class="questions-builder" id="questionsBuilder">
-                                <div class="question-entry" data-q="0">
-                                    <div class="q-header"><span class="q-num">Q1</span></div>
-                                    <div class="form-group"><textarea class="q-text" rows="2" placeholder="Type question here..." required></textarea></div>
+
+            <!-- Assignments Section -->
+            <div id="assignmentsSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fa-solid fa-plus-circle"></i> Create Assignment</h3></div>
+                        <div class="card-body">
+                            <form id="assignmentForm">
+                                <div class="form-group"><label>Title *</label><input type="text" id="assignTitle" placeholder="e.g. Week 5 Homework" required></div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>Subject *</label><select id="assignSubject" required><option value="">Select</option><option>Mathematics</option><option>English Language</option><option>Basic Science</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>ICT</option><option>Social Studies</option><option>Economics</option></select></div>
+                                    <div class="form-group"><label>Class *</label><select id="assignClass" required><option value="">Select</option><option>All Classes</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
                                 </div>
-                            </div>
-                            <button type="button" class="btn-add-q" onclick="addQuestion()"><i class="fa-solid fa-plus"></i> Add Question</button>
-                            <button type="submit" class="btn-create" style="width:100%;justify-content:center;padding:14px;margin-top:15px"><i class="fa-solid fa-paper-plane"></i> Post Assignment</button>
-                        </form>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header"><h3><i class="fa-solid fa-book"></i> My Assignments</h3><span class="status-badge status-active" id="assignmentCount">0</span></div>
-                    <div class="card-body"><div class="assignment-list" id="myAssignments"></div></div>
-                </div>
-                <div class="card">
-                    <div class="card-header"><h3><i class="fa-solid fa-users"></i> Students</h3></div>
-                    <div class="card-body"><div class="assignment-list" id="studentList"></div></div>
-                </div>
-                <div class="card">
-                    <div class="card-header"><h3><i class="fa-solid fa-inbox"></i> Submissions</h3></div>
-                    <div class="card-body"><div class="submissions-list" id="submissionsList"></div></div>
-                </div>
-                <div class="card">
-                    <div class="card-header"><h3><i class="fa-solid fa-paper-plane"></i> Send Notification</h3></div>
-                    <div class="card-body">
-                        <form id="notifForm" onsubmit="sendNotification(event)">
-                            <div class="form-group"><label>Title *</label><input type="text" id="notifTitle" placeholder="e.g. Holiday Notice" required></div>
-                            <div class="form-group">
-                                <label>Send To *</label>
-                                <div style="display:flex;gap:8px;margin-bottom:8px">
-                                    <button type="button" class="btn-create" style="padding:6px 12px;font-size:.8rem" onclick="selectAllClasses()">Select All</button>
-                                    <button type="button" style="padding:6px 12px;font-size:.8rem;background:#f1f3f5;border:2px solid #e9ecef;border-radius:8px;font-weight:600;cursor:pointer" onclick="deselectAllClasses()">Deselect All</button>
+                                <div class="form-row">
+                                    <div class="form-group"><label>Deadline *</label><input type="date" id="assignDeadline" required></div>
+                                    <div class="form-group"><label>Max Score</label><input type="number" id="assignMaxScore" value="20" min="5" max="100"></div>
                                 </div>
-                                <div id="classCheckboxes" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px;background:#f8f9fa;border-radius:10px;border:2px solid #e9ecef"></div>
-                            </div>
-                            <div class="form-group"><label>Message *</label><textarea id="notifMessage" rows="3" placeholder="Type your message..." required></textarea></div>
-                            <button type="submit" class="btn-create" style="width:100%;justify-content:center"><i class="fa-solid fa-paper-plane"></i> Send</button>
-                        </form>
+                                <div class="form-group"><label>Instructions</label><textarea id="assignDescription" rows="2" placeholder="Optional instructions..."></textarea></div>
+                                <label style="font-weight:600;font-size:.88rem;color:var(--dark);display:block;margin-bottom:8px">Questions *</label>
+                                <div class="questions-builder" id="questionsBuilder">
+                                    <div class="question-entry" data-q="0">
+                                        <div class="q-header"><span class="q-num">Q1</span></div>
+                                        <div class="form-group"><textarea class="q-text" rows="2" placeholder="Type question here..." required></textarea></div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-add-q" onclick="addQuestion()"><i class="fa-solid fa-plus"></i> Add Question</button>
+                                <button type="submit" class="btn-create" style="width:100%;justify-content:center;padding:14px;margin-top:15px"><i class="fa-solid fa-paper-plane"></i> Post Assignment</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fa-solid fa-book"></i> My Assignments</h3><span class="status-badge status-active" id="assignmentCount">0</span></div>
+                        <div class="card-body"><div class="assignment-list" id="myAssignments"></div></div>
                     </div>
                 </div>
-                <div class="card">
-                    <div class="card-header"><h3><i class="fa-solid fa-bell"></i> Sent Notifications</h3></div>
-                    <div class="card-body"><div class="assignment-list" id="sentNotifs"></div></div>
+            </div>
+
+            <!-- Students Section -->
+            <div id="studentsSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fa-solid fa-users"></i> Students</h3></div>
+                        <div class="card-body"><div class="assignment-list" id="studentList"></div></div>
+                    </div>
                 </div>
-                <div class="card" style="grid-column:span 2">
-                    <div class="card-header"><h3><i class="fa-solid fa-calendar-days"></i> Manage School Timetable</h3><span class="status-badge status-active" id="timetableCount">0</span></div>
-                    <div class="card-body">
-                        <form id="timetableForm" onsubmit="addTimetableEntry(event)">
-                            <div class="form-row">
-                                <div class="form-group"><label>Class *</label><select id="ttClass" required><option value="">Select Class</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
-                                <div class="form-group"><label>Day *</label><select id="ttDay" required><option value="">Select Day</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select></div>
+            </div>
+
+            <!-- Submissions & Notifications Section -->
+            <div id="submissionsSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fa-solid fa-inbox"></i> Submissions</h3></div>
+                        <div class="card-body"><div class="submissions-list" id="submissionsList"></div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fa-solid fa-paper-plane"></i> Send Notification</h3></div>
+                        <div class="card-body">
+                            <form id="notifForm" onsubmit="sendNotification(event)">
+                                <div class="form-group"><label>Title *</label><input type="text" id="notifTitle" placeholder="e.g. Holiday Notice" required></div>
+                                <div class="form-group">
+                                    <label>Send To *</label>
+                                    <div style="display:flex;gap:8px;margin-bottom:8px">
+                                        <button type="button" class="btn-create" style="padding:6px 12px;font-size:.8rem" onclick="selectAllClasses()">Select All</button>
+                                        <button type="button" style="padding:6px 12px;font-size:.8rem;background:#f1f3f5;border:2px solid #e9ecef;border-radius:8px;font-weight:600;cursor:pointer" onclick="deselectAllClasses()">Deselect All</button>
+                                    </div>
+                                    <div id="classCheckboxes" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px;background:#f8f9fa;border-radius:10px;border:2px solid #e9ecef"></div>
+                                </div>
+                                <div class="form-group"><label>Message *</label><textarea id="notifMessage" rows="3" placeholder="Type your message..." required></textarea></div>
+                                <button type="submit" class="btn-create" style="width:100%;justify-content:center"><i class="fa-solid fa-paper-plane"></i> Send</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fa-solid fa-bell"></i> Sent Notifications</h3></div>
+                        <div class="card-body"><div class="assignment-list" id="sentNotifs"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timetable Section -->
+            <div id="timetableSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card" style="grid-column:span 2">
+                        <div class="card-header"><h3><i class="fa-solid fa-calendar-days"></i> Manage School Timetable</h3><span class="status-badge status-active" id="timetableCount">0</span></div>
+                        <div class="card-body">
+                            <form id="timetableForm" onsubmit="addTimetableEntry(event)">
+                                <div class="form-row">
+                                    <div class="form-group"><label>Class *</label><select id="ttClass" required><option value="">Select Class</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
+                                    <div class="form-group"><label>Day *</label><select id="ttDay" required><option value="">Select Day</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>Period / Time *</label><input type="text" id="ttPeriod" placeholder="e.g. 8:00 AM - 9:00 AM" required></div>
+                                    <div class="form-group"><label>Subject *</label><input type="text" id="ttSubject" placeholder="e.g. Mathematics" required></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>Teacher Name</label><input type="text" id="ttTeacher" placeholder="e.g. Mr. Obi"></div>
+                                    <div class="form-group" style="display:flex;align-items:flex-end"><button type="submit" class="btn-create" style="width:100%;justify-content:center"><i class="fa-solid fa-plus"></i> Add to Timetable</button></div>
+                                </div>
+                            </form>
+                            <div style="margin-top:20px">
+                                <h4 style="margin-bottom:10px;color:var(--dark)">Current Timetable Entries</h4>
+                                <div class="assignment-list" id="timetableList"></div>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group"><label>Period / Time *</label><input type="text" id="ttPeriod" placeholder="e.g. 8:00 AM - 9:00 AM" required></div>
-                                <div class="form-group"><label>Subject *</label><input type="text" id="ttSubject" placeholder="e.g. Mathematics" required></div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group"><label>Teacher Name</label><input type="text" id="ttTeacher" placeholder="e.g. Mr. Obi"></div>
-                                <div class="form-group" style="display:flex;align-items:flex-end"><button type="submit" class="btn-create" style="width:100%;justify-content:center"><i class="fa-solid fa-plus"></i> Add to Timetable</button></div>
-                            </div>
-                        </form>
-                        <div style="margin-top:20px">
-                            <h4 style="margin-bottom:10px;color:var(--dark)">Current Timetable Entries</h4>
-                            <div class="assignment-list" id="timetableList"></div>
                         </div>
                     </div>
                 </div>
-                <div class="card" style="grid-column:span 2">
-                    <div class="card-header"><h3><i class="fa-solid fa-chart-bar"></i> Upload Student Results</h3><span class="status-badge status-active" id="resultCount">0</span></div>
-                    <div class="card-body">
-                        <form id="resultForm" onsubmit="addResult(event)">
-                            <div class="form-row">
-                                <div class="form-group"><label>Class *</label><select id="resClass" required><option value="">Select Class</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
-                                <div class="form-group"><label>Subject *</label><input type="text" id="resSubject" placeholder="e.g. Mathematics" required></div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card" style="grid-column:span 2">
+                        <div class="card-header"><h3><i class="fa-solid fa-chart-bar"></i> Upload Student Results</h3><span class="status-badge status-active" id="resultCount">0</span></div>
+                        <div class="card-body">
+                            <form id="resultForm" onsubmit="addResult(event)">
+                                <div class="form-row">
+                                    <div class="form-group"><label>Class *</label><select id="resClass" required><option value="">Select Class</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
+                                    <div class="form-group"><label>Subject *</label><input type="text" id="resSubject" placeholder="e.g. Mathematics" required></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>CA1 (20 marks) *</label><input type="number" id="resCA1" min="0" max="20" required></div>
+                                    <div class="form-group"><label>CA2 (20 marks) *</label><input type="number" id="resCA2" min="0" max="20" required></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>Exam (60 marks) *</label><input type="number" id="resExam" min="0" max="60" required></div>
+                                    <div class="form-group" style="display:flex;align-items:flex-end"><button type="submit" class="btn-create" style="width:100%;justify-content:center"><i class="fa-solid fa-plus"></i> Add Result</button></div>
+                                </div>
+                            </form>
+                            <div style="margin-top:20px">
+                                <h4 style="margin-bottom:10px;color:var(--dark)">Uploaded Results</h4>
+                                <div class="assignment-list" id="resultList"></div>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group"><label>CA1 (20 marks) *</label><input type="number" id="resCA1" min="0" max="20" required></div>
-                                <div class="form-group"><label>CA2 (20 marks) *</label><input type="number" id="resCA2" min="0" max="20" required></div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group"><label>Exam (60 marks) *</label><input type="number" id="resExam" min="0" max="60" required></div>
-                                <div class="form-group" style="display:flex;align-items:flex-end"><button type="submit" class="btn-create" style="width:100%;justify-content:center"><i class="fa-solid fa-plus"></i> Add Result</button></div>
-                            </div>
-                        </form>
-                        <div style="margin-top:20px">
-                            <h4 style="margin-bottom:10px;color:var(--dark)">Uploaded Results</h4>
-                            <div class="assignment-list" id="resultList"></div>
                         </div>
                     </div>
-                </div>
-                <div class="card" style="grid-column:span 2">
-                    <div class="card-header"><h3><i class="fa-solid fa-trophy"></i> Class Positions</h3></div>
-                    <div class="card-body">
-                        <div class="form-row">
-                            <div class="form-group"><label>Select Class *</label><select id="posClass" required onchange="loadPositionStudents()"><option value="">Select Class</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
-                            <div class="form-group"><label>Term</label><select id="posTerm"><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div>
+                    <div class="card" style="grid-column:span 2">
+                        <div class="card-header"><h3><i class="fa-solid fa-trophy"></i> Class Positions</h3></div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group"><label>Select Class *</label><select id="posClass" required onchange="loadPositionStudents()"><option value="">Select Class</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
+                                <div class="form-group"><label>Term</label><select id="posTerm"><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div>
+                            </div>
+                            <div id="positionStudentList" style="margin-top:15px"></div>
+                            <button id="savePositionBtn" style="display:none;margin-top:15px;background:var(--gradient);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-weight:600;font-size:.9rem;cursor:pointer;width:100%" onclick="saveClassPositions()"><i class="fa-solid fa-save"></i> Save All Positions</button>
                         </div>
-                        <div id="positionStudentList" style="margin-top:15px"></div>
-                        <button id="savePositionBtn" style="display:none;margin-top:15px;background:var(--gradient);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-weight:600;font-size:.9rem;cursor:pointer;width:100%" onclick="saveClassPositions()"><i class="fa-solid fa-save"></i> Save All Positions</button>
                     </div>
                 </div>
             </div>
@@ -543,7 +576,15 @@
         }
 
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        function showSection(el) { document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active')); el.classList.add('active'); }
+        function showSection(el, sectionId) {
+            document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
+            el.classList.add('active');
+            const sections = ['overviewSection','assignmentsSection','studentsSection','submissionsSection','timetableSection','resultsSection'];
+            sections.forEach(id => {
+                const sec = document.getElementById(id);
+                if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
+            });
+        }
         function logout() { localStorage.removeItem('tba_currentUser'); window.location.href = 'login.html'; }
         document.getElementById('mobileToggle').addEventListener('click', ()=>{ document.getElementById('sidebar').classList.toggle('open'); });
         document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('active')});});

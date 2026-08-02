@@ -173,7 +173,7 @@
             </div>
 
             <!-- Applications Section -->
-            <div id="applicationsSection">
+            <div id="applicationsSection" style="display:none">
                 <div class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-file-lines"></i> Applications</h3>
@@ -969,7 +969,7 @@
 
         function filterPaymentSubs(status, btn) {
             paymentSubFilter = status;
-            document.querySelectorAll('#paymentsSection .filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#feesSection .filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             renderPaymentSubs();
         }
