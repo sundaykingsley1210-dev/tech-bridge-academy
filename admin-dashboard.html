@@ -266,6 +266,38 @@
 
                 <div class="card" style="margin-top:25px">
                     <div class="card-header">
+                        <h3><i class="fa-solid fa-university"></i> School Bank Details</h3>
+                    </div>
+                    <div class="card-body">
+                        <p style="color:var(--gray);font-size:.88rem;margin-bottom:20px">These details will be shown to students/parents for payment.</p>
+                        <div class="form-row">
+                            <div class="form-group"><label>Bank Name *</label><input type="text" id="bankName" placeholder="e.g. GTBank" style="width:100%;padding:11px 14px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem"></div>
+                            <div class="form-group"><label>Account Name *</label><input type="text" id="bankAccountName" placeholder="e.g. TECH-BRIDGE Academy" style="width:100%;padding:11px 14px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Account Number *</label><input type="text" id="bankAccountNum" placeholder="e.g. 0123456789" style="width:100%;padding:11px 14px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem"></div>
+                            <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn-save-fee" onclick="saveBankDetails()" style="width:100%;justify-content:center"><i class="fa-solid fa-save"></i> Save Bank Details</button></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-paper-plane"></i> Payment Submissions</h3>
+                        <div class="filter-bar">
+                            <button class="filter-btn active" onclick="filterPaymentSubs('all', this)">All</button>
+                            <button class="filter-btn" onclick="filterPaymentSubs('pending', this)">Pending</button>
+                            <button class="filter-btn" onclick="filterPaymentSubs('approved', this)">Approved</button>
+                            <button class="filter-btn" onclick="filterPaymentSubs('rejected', this)">Rejected</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="app-list" id="paymentSubsList"></div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
                         <h3><i class="fa-solid fa-receipt"></i> Student Payments</h3>
                         <div class="filter-bar">
                             <button class="filter-btn active" onclick="filterPayments('all', this)">All</button>
@@ -342,6 +374,8 @@
             renderPayments();
             renderExamResults();
             renderAdminResults();
+            renderPaymentSubs();
+            loadBankDetails();
             updateStats();
         }
 
@@ -849,6 +883,82 @@
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             renderExamResults();
+        }
+
+        let paymentSubFilter = 'all';
+
+        function saveBankDetails() {
+            const details = {
+                bankName: document.getElementById('bankName').value.trim(),
+                accountName: document.getElementById('bankAccountName').value.trim(),
+                accountNumber: document.getElementById('bankAccountNum').value.trim()
+            };
+            if (!details.bankName || !details.accountName || !details.accountNumber) {
+                return alert('Please fill in all bank details');
+            }
+            localStorage.setItem('tba_bank_details', JSON.stringify(details));
+            alert('Bank details saved!');
+        }
+
+        function loadBankDetails() {
+            const d = JSON.parse(localStorage.getItem('tba_bank_details') || '{}');
+            if (d.bankName) document.getElementById('bankName').value = d.bankName;
+            if (d.accountName) document.getElementById('bankAccountName').value = d.accountName;
+            if (d.accountNumber) document.getElementById('bankAccountNum').value = d.accountNumber;
+        }
+
+        function renderPaymentSubs() {
+            const subs = JSON.parse(localStorage.getItem('tba_payment_submissions') || '[]');
+            const c = document.getElementById('paymentSubsList');
+            let filtered = subs;
+            if (paymentSubFilter === 'pending') filtered = subs.filter(s => s.status === 'pending');
+            else if (paymentSubFilter === 'approved') filtered = subs.filter(s => s.status === 'approved');
+            else if (paymentSubFilter === 'rejected') filtered = subs.filter(s => s.status === 'rejected');
+
+            if (!filtered.length) {
+                c.innerHTML = '<div class="no-data"><i class="fa-solid fa-paper-plane"></i><p>No payment submissions found</p></div>';
+                return;
+            }
+
+            c.innerHTML = filtered.slice().reverse().map(s => {
+                const sc = s.status === 'approved' ? 'status-admitted' : s.status === 'rejected' ? 'status-rejected' : 'status-pending';
+                const label = s.status.charAt(0).toUpperCase() + s.status.slice(1);
+                return '<div class="app-item" style="border-left-color:' + (s.status==='approved'?'#38ef7d':s.status==='rejected'?'#e53e3e':'#ffd93d') + '"><div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px"><div><h4>' + s.studentName + '</h4><div class="meta"><span><i class="fa-solid fa-id-card"></i> ' + s.studentId + '</span><span><i class="fa-solid fa-layer-group"></i> ' + s.studentClass + '</span><span><i class="fa-solid fa-hashtag"></i> Teller: ' + s.teller + '</span></div></div><span class="status-badge ' + sc + '">' + label + '</span></div><div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;font-size:.88rem;color:var(--gray)"><span><i class="fa-solid fa-money-bill-wave"></i> ₦' + s.amount.toLocaleString() + '</span><span><i class="fa-solid fa-university"></i> ' + s.bank + '</span><span><i class="fa-solid fa-calendar"></i> ' + new Date(s.payDate).toLocaleDateString() + '</span><span><i class="fa-solid fa-clock"></i> Submitted: ' + new Date(s.submittedAt).toLocaleDateString() + '</span></div>' + (s.status === 'pending' ? '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn-action btn-accept" onclick="approvePayment(\'' + s.id + '\')"><i class="fa-solid fa-check"></i> Approve</button><button class="btn-action btn-reject" onclick="rejectPayment(\'' + s.id + '\')"><i class="fa-solid fa-times"></i> Reject</button></div>' : '') + '</div>';
+            }).join('');
+        }
+
+        function approvePayment(id) {
+            if (!confirm('Confirm this payment? This will mark the student as paid.')) return;
+            let subs = JSON.parse(localStorage.getItem('tba_payment_submissions') || '[]');
+            const idx = subs.findIndex(s => s.id === id);
+            if (idx === -1) return;
+            subs[idx].status = 'approved';
+            localStorage.setItem('tba_payment_submissions', JSON.stringify(subs));
+            let payments = JSON.parse(localStorage.getItem('tba_payments') || '{}');
+            payments[subs[idx].studentId] = true;
+            localStorage.setItem('tba_payments', JSON.stringify(payments));
+            renderPaymentSubs();
+            renderPayments();
+            alert('Payment approved!');
+        }
+
+        function rejectPayment(id) {
+            const reason = prompt('Reason for rejection (optional):');
+            let subs = JSON.parse(localStorage.getItem('tba_payment_submissions') || '[]');
+            const idx = subs.findIndex(s => s.id === id);
+            if (idx === -1) return;
+            subs[idx].status = 'rejected';
+            subs[idx].reason = reason || 'Payment not verified';
+            localStorage.setItem('tba_payment_submissions', JSON.stringify(subs));
+            renderPaymentSubs();
+            alert('Payment rejected.');
+        }
+
+        function filterPaymentSubs(status, btn) {
+            paymentSubFilter = status;
+            document.querySelectorAll('#paymentsSection .filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderPaymentSubs();
         }
 
         let classResultFilter = 'all';

@@ -149,6 +149,7 @@
                 <li><a onclick="showSection(this)"><i class="fa-solid fa-book"></i> Assignments</a></li>
                 <li><a onclick="showSection(this)"><i class="fa-solid fa-paper-plane"></i> My Submissions</a></li>
                 <li><a onclick="showSection(this)"><i class="fa-solid fa-bell"></i> Notifications</a></li>
+                <li><a onclick="showSection(this)"><i class="fa-solid fa-money-bill-wave"></i> Payment History</a></li>
                 <li><a href="internal-exam.html"><i class="fa-solid fa-pen-to-square"></i> Take Exam</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Back to Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
@@ -239,7 +240,7 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <h3><i class="fa-solid fa-money-bill-wave"></i> Fee Status</h3>
+                        <h3><i class="fa-solid fa-money-bill-wave"></i> Fee & Payment</h3>
                     </div>
                     <div class="card-body" id="feeDetailsBody"></div>
                 </div>
@@ -274,6 +275,15 @@
                     </div>
                     <div class="card-body">
                         <div class="assignment-list" id="notifListCard"></div>
+                    </div>
+                </div>
+
+                <div class="card full-width">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-money-bill-wave"></i> Payment History</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="assignment-list" id="paymentHistoryList"></div>
                     </div>
                 </div>
 
@@ -440,6 +450,7 @@
             renderNotifications();
             renderNotifBadge();
             renderExamResults();
+            renderPaymentHistory();
             updateStats();
         }
 
@@ -574,6 +585,23 @@
                     </div>
                     <button class="btn-view-submission" onclick="viewMySubmission('${s.assignmentId}')"><i class="fa-solid fa-eye"></i> View Details & Feedback</button>
                 </div>`;
+            }).join('');
+        }
+
+        function renderPaymentHistory() {
+            const subs = JSON.parse(localStorage.getItem('tba_payment_submissions') || '[]');
+            const mySubs = subs.filter(s => s.studentId === currentUser.id);
+            const c = document.getElementById('paymentHistoryList');
+            if (!mySubs.length) {
+                c.innerHTML = '<div class="no-data"><i class="fa-solid fa-receipt"></i><p>No payment submissions yet</p></div>';
+                return;
+            }
+            c.innerHTML = mySubs.slice().reverse().map(s => {
+                const sc = s.status === 'approved' ? '#155724' : s.status === 'rejected' ? '#721c24' : '#856404';
+                const bg = s.status === 'approved' ? '#d4edda' : s.status === 'rejected' ? '#f8d7da' : '#fff3cd';
+                const label = s.status === 'approved' ? 'Confirmed' : s.status === 'rejected' ? 'Rejected' : 'Pending Review';
+                const icon = s.status === 'approved' ? 'fa-check-circle' : s.status === 'rejected' ? 'fa-times-circle' : 'fa-clock';
+                return '<div class="assignment-item" style="border-left-color:' + sc + '"><div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px"><div><h4>₦' + s.amount.toLocaleString() + ' Payment</h4><div class="meta"><span><i class="fa-solid fa-hashtag"></i> Teller: ' + s.teller + '</span><span><i class="fa-solid fa-university"></i> ' + s.bank + '</span><span><i class="fa-solid fa-calendar"></i> ' + new Date(s.payDate).toLocaleDateString() + '</span></div></div><div style="display:flex;align-items:center;gap:8px"><span style="padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:600;color:' + sc + ';background:' + bg + '"><i class="fa-solid ' + icon + '"></i> ' + label + '</span></div></div>' + (s.status === 'rejected' && s.reason ? '<p style="margin-top:8px;font-size:.85rem;color:#721c24"><i class="fa-solid fa-info-circle"></i> ' + s.reason + '</p>' : '') + '</div>';
             }).join('');
         }
 
@@ -755,14 +783,32 @@
             document.getElementById('feeStatus').textContent = isPaid ? 'Paid' : '₦' + fee.toLocaleString();
             document.getElementById('feeStatus').style.color = isPaid ? '#38ef7d' : '#e53e3e';
 
+            const myPaymentSubs = JSON.parse(localStorage.getItem('tba_payment_submissions') || '[]').filter(p => p.studentId === currentUser.id);
+            const latestSub = myPaymentSubs.length ? myPaymentSubs[myPaymentSubs.length - 1] : null;
+            const bankDetails = JSON.parse(localStorage.getItem('tba_bank_details') || '{}');
+
+            let paymentStatusHtml = '';
+            if (isPaid) {
+                paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#d4edda;border-radius:12px"><i class="fa-solid fa-check-circle" style="font-size:2rem;color:#155724;margin-bottom:8px;display:block"></i><strong style="color:#155724;font-size:1.1rem">Payment Confirmed</strong><p style="color:#155724;font-size:.85rem;margin-top:5px">Your payment has been verified. Thank you!</p></div>';
+            } else if (latestSub && latestSub.status === 'pending') {
+                paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#fff3cd;border-radius:12px"><i class="fa-solid fa-clock" style="font-size:2rem;color:#856404;margin-bottom:8px;display:block"></i><strong style="color:#856404;font-size:1.1rem">Payment Under Review</strong><p style="color:#856404;font-size:.85rem;margin-top:5px">Teller: ' + latestSub.teller + '<br>Submitted: ' + new Date(latestSub.date).toLocaleDateString() + '</p></div>';
+            } else if (latestSub && latestSub.status === 'rejected') {
+                paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#f8d7da;border-radius:12px"><i class="fa-solid fa-times-circle" style="font-size:2rem;color:#721c24;margin-bottom:8px;display:block"></i><strong style="color:#721c24;font-size:1.1rem">Payment Rejected</strong><p style="color:#721c24;font-size:.85rem;margin-top:5px">' + (latestSub.reason || 'Please contact bursary.') + '</p><p style="font-size:.8rem;color:#721c24;margin-top:5px">Teller: ' + latestSub.teller + '</p></div>';
+            } else {
+                paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#f8d7da;border-radius:12px"><i class="fa-solid fa-exclamation-circle" style="font-size:2rem;color:#721c24;margin-bottom:8px;display:block"></i><strong style="color:#721c24;font-size:1.1rem">Payment Pending</strong><p style="color:#721c24;font-size:.85rem;margin-top:5px">Fee: ₦' + fee.toLocaleString() + '</p></div>';
+            }
+
             const feeBody = document.getElementById('feeDetailsBody');
             feeBody.innerHTML = `
-                <div style="text-align:center;padding:10px 0">
-                    <div style="font-size:.85rem;color:var(--gray);margin-bottom:8px">Term Fee for ${currentUser.class}</div>
-                    <div style="font-size:2rem;font-weight:800;color:var(--dark);margin-bottom:10px">₦${fee.toLocaleString()}</div>
-                    <div style="display:inline-block;padding:6px 18px;border-radius:20px;font-weight:700;font-size:.9rem;${isPaid?'background:#d4edda;color:#155724':'background:#f8d7da;color:#721c24'}">${isPaid ? 'Payment Complete' : 'Payment Pending'}</div>
-                    ${!isPaid ? '<p style="margin-top:15px;font-size:.8rem;color:var(--gray)">Please visit the school bursary or contact administration to complete your payment.</p>' : '<p style="margin-top:15px;font-size:.8rem;color:#155724">Thank you! Your payment has been confirmed.</p>'}
+                ${paymentStatusHtml}
+                <div style="margin-top:20px;padding:15px;background:#f0f3ff;border-radius:12px;border-left:4px solid var(--primary)">
+                    <h4 style="color:var(--primary);margin-bottom:8px;font-size:.9rem"><i class="fa-solid fa-university"></i> School Bank Details</h4>
+                    <p style="font-size:.88rem;color:var(--dark);margin-bottom:4px"><strong>Bank:</strong> ${bankDetails.bankName || 'Not set'}</p>
+                    <p style="font-size:.88rem;color:var(--dark);margin-bottom:4px"><strong>Account Name:</strong> ${bankDetails.accountName || 'Not set'}</p>
+                    <p style="font-size:.88rem;color:var(--dark);margin-bottom:4px"><strong>Account Number:</strong> ${bankDetails.accountNumber || 'Not set'}</p>
+                    <p style="font-size:.85rem;color:var(--gray);margin-top:8px">Amount: <strong style="color:var(--dark)">₦${fee.toLocaleString()}</strong></p>
                 </div>
+                ${!isPaid ? '<div id="paymentFormArea" style="margin-top:20px"><h4 style="color:var(--dark);margin-bottom:10px;font-size:.9rem"><i class="fa-solid fa-paper-plane"></i> Submit Payment Proof</h4><form id="paymentForm" onsubmit="submitPayment(event)"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Teller/Ref Number *</label><input type="text" id="payTeller" required placeholder="e.g. 1234567890" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Amount Paid *</label><input type="number" id="payAmount" required min="1" placeholder="e.g. 45000" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Bank Name *</label><input type="text" id="payBank" required placeholder="e.g. GTBank" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Payment Date *</label><input type="date" id="payDate" required style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div></div><button type="submit" style="width:100%;margin-top:12px;padding:12px;background:var(--gradient);color:#fff;border:none;border-radius:10px;font-weight:600;font-size:.9rem;cursor:pointer"><i class="fa-solid fa-check"></i> Submit Payment</button></form></div>' : ''}
             `;
 
             const assignments = JSON.parse(localStorage.getItem('tba_assignments') || '[]');
@@ -822,6 +868,28 @@
         function showSection(el) {
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
+        }
+
+        function submitPayment(e) {
+            e.preventDefault();
+            const submission = {
+                id: 'PAY-' + Date.now().toString(36).toUpperCase(),
+                studentId: currentUser.id,
+                studentName: currentUser.name,
+                studentClass: currentUser.class,
+                teller: document.getElementById('payTeller').value.trim(),
+                amount: parseInt(document.getElementById('payAmount').value),
+                bank: document.getElementById('payBank').value.trim(),
+                payDate: document.getElementById('payDate').value,
+                submittedAt: new Date().toISOString(),
+                status: 'pending',
+                reason: null
+            };
+            let subs = JSON.parse(localStorage.getItem('tba_payment_submissions') || '[]');
+            subs.push(submission);
+            localStorage.setItem('tba_payment_submissions', JSON.stringify(subs));
+            alert('Payment proof submitted! Admin will verify shortly.');
+            updateStats();
         }
 
         function logout() {
