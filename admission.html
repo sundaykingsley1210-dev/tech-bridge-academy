@@ -349,7 +349,10 @@
                             </div>
                             <div class="form-group">
                                 <label>Password (for login) *</label>
-                                <input type="password" id="studentPassword" placeholder="Create a password" minlength="6" required>
+                                <div style="position:relative">
+                                    <input type="password" id="studentPassword" placeholder="Create a password" minlength="6" required style="width:100%;padding:12px 50px 12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                                    <i id="admissionEyeIcon" class="fa-solid fa-eye" onclick="toggleAdmissionPassword()" style="position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#1e40af;cursor:pointer;font-size:1.1rem"></i>
+                                </div>
                                 <span class="error-message">Password must be at least 6 characters</span>
                             </div>
                         </div>
@@ -367,8 +370,11 @@
         <div class="success-box">
             <div class="success-icon">✅</div>
             <h3>Application Submitted!</h3>
-            <p>Thank you for applying to TECH-BRIDGE ACADEMY. We have received your application and will contact you within 48 hours.</p>
+            <p>Thank you for applying to TECH-BRIDGE ACADEMY. Your account has been created.</p>
             <p style="font-size: 0.85rem; color: var(--gray);">Reference: <strong id="refNumber"></strong></p>
+            <p style="font-size: 0.95rem; color: var(--primary); font-weight: 600; margin: 15px 0;">You can now log in to your student portal!</p>
+            <a href="login.html" class="btn btn-primary" style="margin-bottom:10px">Login Now</a>
+            <br>
             <a href="index.html" class="btn btn-primary">Back to Home</a>
             <button onclick="closeSuccess()" class="btn btn-secondary" style="color: var(--dark); border-color: var(--gray-light);">Submit Another</button>
         </div>
@@ -455,6 +461,20 @@
             applications.push(application);
             localStorage.setItem('tba_applications', JSON.stringify(applications));
 
+            // Create student account immediately so they can login
+            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            const newId = 'STU' + String(users.filter(u => u.role === 'student').length + 1).padStart(3, '0');
+            users.push({
+                id: newId,
+                email: application.studentEmail,
+                password: application.studentPassword,
+                name: application.firstName + ' ' + application.lastName,
+                role: 'student',
+                class: application.classApplying,
+                gender: application.gender
+            });
+            localStorage.setItem('tba_users', JSON.stringify(users));
+
             // Send email notification to admin via EmailJS
             emailjs.send('service_sq45hkp', 'template_xh0zn4k', {
                 to_email: 'techbridgeacademy64@gmail.com',
@@ -471,6 +491,19 @@
 
         function closeSuccess() {
             document.getElementById('successOverlay').classList.remove('active');
+        }
+        function toggleAdmissionPassword() {
+            const input = document.getElementById('studentPassword');
+            const icon = document.getElementById('admissionEyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
         }
     </script>
 </body>

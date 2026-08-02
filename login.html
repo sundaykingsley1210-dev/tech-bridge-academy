@@ -131,6 +131,18 @@
             outline: none;
             border-color: var(--primary);
         }
+        .reset-link {
+            text-align: right;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+        .reset-link a {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .reset-link a:hover { text-decoration: underline; }
         .login-error {
             background: #fff5f5;
             color: #e53e3e;
@@ -229,25 +241,52 @@
                 <div class="login-error" id="loginError"></div>
                 <form id="loginForm" onsubmit="handleLogin(event)">
                     <div class="form-group" id="nameGroup">
-                        <label id="nameLabel">Full Name</label>
+                        <label id="nameLabel">Full Name *</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-id-card"></i>
-                            <input type="text" id="loginName" placeholder="Enter your full name">
+                            <input type="text" id="loginName" placeholder="Enter your full name" required>
+                        </div>
+                    </div>
+                    <div class="form-group" id="classGroup" style="display:block !important">
+                        <label>Your Class *</label>
+                        <div style="position:relative">
+                            <select id="loginClass" required style="width:100%;padding:14px 15px 14px 45px;border:2px solid #e9ecef;border-radius:12px;font-family:inherit;font-size:0.95rem;appearance:auto;background:#fff;display:block !important;visibility:visible !important;opacity:1 !important;height:auto !important;overflow:visible !important">
+                                <option value="">Select Class</option>
+                                <option value="Nursery 1">Nursery 1</option>
+                                <option value="Nursery 2">Nursery 2</option>
+                                <option value="Primary 1">Primary 1</option>
+                                <option value="Primary 2">Primary 2</option>
+                                <option value="Primary 3">Primary 3</option>
+                                <option value="Primary 4">Primary 4</option>
+                                <option value="Primary 5">Primary 5</option>
+                                <option value="Primary 6">Primary 6</option>
+                                <option value="JSS 1">JSS 1</option>
+                                <option value="JSS 2">JSS 2</option>
+                                <option value="JSS 3">JSS 3</option>
+                                <option value="SSS 1">SSS 1</option>
+                                <option value="SSS 2">SSS 2</option>
+                                <option value="SSS 3">SSS 3</option>
+                            </select>
+                            <i class="fa-solid fa-layer-group" style="position:absolute;left:15px;top:50%;transform:translateY(-50%);color:#999;pointer-events:none"></i>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label id="emailLabel">Email Address</label>
+                        <label id="emailLabel">Email Address *</label>
                         <div class="input-wrapper">
-                            <i class="fa-solid fa-user"></i>
+                            <i class="fa-solid fa-envelope"></i>
                             <input type="email" id="loginEmail" placeholder="Enter your email" required>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Password</label>
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                        <label>Password *</label>
+                        <div style="position:relative">
+                            <input type="password" id="loginPassword" placeholder="Enter your password" required style="width:100%;padding:14px 50px 14px 45px;border:2px solid #e9ecef;border-radius:12px;font-family:inherit;font-size:0.95rem;transition:var(--transition)">
+                            <i class="fa-solid fa-lock" style="position:absolute;left:15px;top:50%;transform:translateY(-50%);color:#999"></i>
+                            <i id="loginEyeIcon" class="fa-solid fa-eye" onclick="togglePassword('loginPassword','loginEyeIcon')" style="position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#1e40af;cursor:pointer;font-size:1.1rem"></i>
                         </div>
+                    </div>
+                    <div class="reset-link">
+                        <a onclick="showResetModal()">Forgot Password?</a>
                     </div>
                     <button type="submit" class="login-btn">
                         <i class="fa-solid fa-sign-in-alt"></i> Sign In
@@ -295,7 +334,10 @@
                         </div>
                         <div style="margin-bottom:18px">
                             <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Password *</label>
-                            <input type="password" id="trPassword" placeholder="Create a password (min 6 chars)" minlength="6" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                            <div style="position:relative">
+                                <input type="password" id="trPassword" placeholder="Create a password (min 6 chars)" minlength="6" required style="width:100%;padding:12px 50px 12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                                <i id="trEyeIcon" class="fa-solid fa-eye" onclick="togglePassword('trPassword','trEyeIcon')" style="position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#1e40af;cursor:pointer;font-size:1.1rem"></i>
+                            </div>
                         </div>
                         <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-user-plus"></i> Register</button>
                     </form>
@@ -308,6 +350,89 @@
         }
         function closeTeacherReg() {
             document.getElementById('teacherRegModal').style.display = 'none';
+        }
+
+        // Password visibility toggle
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Reset Password Modal
+        document.body.insertAdjacentHTML('beforeend', `
+        <div id="resetPasswordModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;justify-content:center;align-items:center">
+            <div style="background:#fff;border-radius:20px;width:100%;max-width:450px;max-height:90vh;overflow-y:auto;margin:20px;animation:fadeIn .3s ease">
+                <div style="padding:25px 30px;border-bottom:1px solid #e9ecef;display:flex;justify-content:space-between;align-items:center">
+                    <h3 style="font-size:1.3rem;color:var(--dark)">Reset Password</h3>
+                    <button onclick="closeResetModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)">&times;</button>
+                </div>
+                <div style="padding:30px">
+                    <p style="color:var(--gray);font-size:.9rem;margin-bottom:20px;text-align:center">Enter your email and select your role. The admin will approve your password reset. Your new password will be <strong>123456</strong>.</p>
+                    <form id="resetForm" onsubmit="handleResetRequest(event)">
+                        <div style="margin-bottom:18px">
+                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">I am a *</label>
+                            <select id="resetRole" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                                <option value="student">Student</option>
+                                <option value="teacher">Teacher</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom:18px">
+                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Your Email *</label>
+                            <input type="email" id="resetEmail" placeholder="Enter your email" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                        </div>
+                        <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-key"></i> Request Password Reset</button>
+                    </form>
+                </div>
+            </div>
+        </div>`);
+
+        function showResetModal() {
+            document.getElementById('resetPasswordModal').style.display = 'flex';
+        }
+        function closeResetModal() {
+            document.getElementById('resetPasswordModal').style.display = 'none';
+        }
+        function handleResetRequest(e) {
+            e.preventDefault();
+            const role = document.getElementById('resetRole').value;
+            const email = document.getElementById('resetEmail').value.trim();
+            let requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
+
+            const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            const user = users.find(u => u.email === email && u.role === role);
+            if (!user) {
+                alert('No ' + role + ' account found with this email.');
+                return;
+            }
+
+            const alreadyPending = requests.find(r => r.email === email && r.role === role && r.status === 'pending');
+            if (alreadyPending) {
+                alert('You already have a pending reset request. Please wait for admin approval.');
+                closeResetModal();
+                return;
+            }
+
+            requests.push({
+                id: 'RST' + Date.now().toString(36).toUpperCase(),
+                role: role,
+                name: user.name,
+                email: email,
+                status: 'pending',
+                requestedAt: new Date().toISOString()
+            });
+            localStorage.setItem('tba_password_resets', JSON.stringify(requests));
+            alert('Password reset request sent to admin. You will be able to login with password 123456 once approved.');
+            closeResetModal();
+            document.getElementById('resetForm').reset();
         }
         function handleTeacherReg(e) {
             e.preventDefault();
@@ -357,7 +482,10 @@
                         </div>
                         <div style="margin-bottom:18px">
                             <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Password *</label>
-                            <input type="password" id="arPassword" placeholder="Create a password (min 6 chars)" minlength="6" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                            <div style="position:relative">
+                                <input type="password" id="arPassword" placeholder="Create a password (min 6 chars)" minlength="6" required style="width:100%;padding:12px 50px 12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                                <i id="arEyeIcon" class="fa-solid fa-eye" onclick="togglePassword('arPassword','arEyeIcon')" style="position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#1e40af;cursor:pointer;font-size:1.1rem"></i>
+                            </div>
                         </div>
                         <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-shield-halved"></i> Create Admin Account</button>
                     </form>
@@ -412,21 +540,22 @@
             document.getElementById('studentBtn').classList.toggle('active', role === 'student');
             document.getElementById('teacherBtn').classList.toggle('active', role === 'teacher');
             document.getElementById('adminBtn').classList.toggle('active', role === 'admin');
-            const labels = { student: 'Email Address', teacher: 'Email Address', admin: 'Admin Email' };
-            const placeholders = { student: 'Enter your email', teacher: 'Enter your email', admin: 'Enter admin email' };
-            const icons = { student: 'fa-user', teacher: 'fa-chalkboard-user', admin: 'fa-shield-halved' };
-            document.getElementById('emailLabel').textContent = labels[role];
-            document.getElementById('loginEmail').placeholder = placeholders[role];
-            document.querySelector('#loginEmail').previousElementSibling.querySelector('i').className = 'fa-solid ' + icons[role];
             document.getElementById('loginError').style.display = 'none';
 
             const nameGroup = document.getElementById('nameGroup');
+            const classGroup = document.getElementById('classGroup');
+
             if (role === 'admin') {
                 nameGroup.style.display = 'none';
+                classGroup.style.display = 'none';
+            } else if (role === 'teacher') {
+                nameGroup.style.display = 'block';
+                classGroup.style.display = 'none';
+                document.getElementById('nameLabel').textContent = 'Teacher Full Name *';
             } else {
                 nameGroup.style.display = 'block';
-                document.getElementById('nameLabel').textContent = role === 'teacher' ? 'Teacher Full Name' : 'Student Full Name';
-                document.getElementById('loginName').placeholder = role === 'teacher' ? 'Enter your full name' : 'Enter your full name';
+                classGroup.style.display = 'block';
+                document.getElementById('nameLabel').textContent = 'Student Full Name *';
             }
         }
 
@@ -435,24 +564,66 @@
             const name = document.getElementById('loginName').value.trim();
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
+            const selectedClass = document.getElementById('loginClass').value;
             const errorEl = document.getElementById('loginError');
 
             const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
-            let user = users.find(u => u.email === email && u.password === password && u.role === currentRole);
 
-            if (user) {
-                if (currentRole !== 'admin' && name) {
-                    user.name = name;
-                    const userIndex = users.findIndex(u => u.email === email);
-                    users[userIndex] = user;
-                    localStorage.setItem('tba_users', JSON.stringify(users));
+            if (currentRole === 'student') {
+                if (!name) {
+                    errorEl.textContent = 'Please enter your full name.';
+                    errorEl.style.display = 'block';
+                    return;
                 }
-                localStorage.setItem('tba_currentUser', JSON.stringify(user));
-                const redirects = { student: 'student-dashboard.html', teacher: 'teacher-dashboard.html', admin: 'admin-dashboard.html' };
-                window.location.href = redirects[user.role];
+                if (!selectedClass) {
+                    errorEl.textContent = 'Please select your class.';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+                let user = users.find(u =>
+                    u.email === email &&
+                    u.password === password &&
+                    u.role === 'student' &&
+                    u.class === selectedClass
+                );
+                if (user) {
+                    localStorage.setItem('tba_currentUser', JSON.stringify(user));
+                    window.location.href = 'student-dashboard.html';
+                } else {
+                    errorEl.textContent = 'Invalid email, password, or class.';
+                    errorEl.style.display = 'block';
+                }
+            } else if (currentRole === 'teacher') {
+                if (!name) {
+                    errorEl.textContent = 'Please enter your full name.';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+                let user = users.find(u =>
+                    u.email === email &&
+                    u.password === password &&
+                    u.role === 'teacher'
+                );
+                if (user) {
+                    localStorage.setItem('tba_currentUser', JSON.stringify(user));
+                    window.location.href = 'teacher-dashboard.html';
+                } else {
+                    errorEl.textContent = 'Invalid email or password.';
+                    errorEl.style.display = 'block';
+                }
             } else {
-                errorEl.textContent = 'Invalid credentials. Please check your email and password.';
-                errorEl.style.display = 'block';
+                let user = users.find(u =>
+                    u.email === email &&
+                    u.password === password &&
+                    u.role === 'admin'
+                );
+                if (user) {
+                    localStorage.setItem('tba_currentUser', JSON.stringify(user));
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    errorEl.textContent = 'Invalid admin credentials.';
+                    errorEl.style.display = 'block';
+                }
             }
         }
 

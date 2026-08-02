@@ -120,6 +120,7 @@
                 <li><a onclick="showSection(this, 'admittedSection')"><i class="fa-solid fa-user-check"></i> Admitted</a></li>
                 <li><a onclick="showSection(this, 'feesSection')"><i class="fa-solid fa-money-bill-wave"></i> Fees</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
+                <li><a onclick="showSection(this, 'resetsSection')"><i class="fa-solid fa-key"></i> Password Resets</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
             </ul>
@@ -328,6 +329,18 @@
                     </div>
                     <div class="card-body">
                         <div id="adminResultsList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Resets Section -->
+            <div id="resetsSection" style="display:none">
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-key"></i> Password Reset Requests</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="resetsList"></div>
                     </div>
                 </div>
             </div>
@@ -1023,7 +1036,7 @@
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
 
-            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'feesSection', 'resultsSection'];
+            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'feesSection', 'resultsSection', 'resetsSection'];
             sections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -1033,6 +1046,74 @@
             if (sectionId === 'approvedSection') renderApprovedList();
             if (sectionId === 'admittedSection') renderAdmittedList();
             if (sectionId === 'resultsSection') renderAdminResults();
+            if (sectionId === 'resetsSection') renderResetsList();
+        }
+
+        function renderResetsList() {
+            const requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
+            const container = document.getElementById('resetsList');
+            if (requests.length === 0) {
+                container.innerHTML = '<div class="no-data"><i class="fa-solid fa-key"></i><p>No password reset requests</p></div>';
+                return;
+            }
+            container.innerHTML = requests.slice().reverse().map(r => `
+                <div class="app-item" style="border-left-color: ${r.status === 'pending' ? '#ffd93d' : r.status === 'approved' ? '#38ef7d' : '#e53e3e'}">
+                    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
+                        <div>
+                            <h4>${r.name}</h4>
+                            <div class="meta">
+                                <span><i class="fa-solid fa-envelope"></i> ${r.email}</span>
+                                <span><i class="fa-solid fa-${r.role === 'student' ? 'user-graduate' : 'chalkboard-user'}"></i> ${r.role.charAt(0).toUpperCase() + r.role.slice(1)}</span>
+                                <span><i class="fa-solid fa-clock"></i> ${new Date(r.requestedAt).toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <span class="status-badge ${r.status === 'pending' ? 'status-pending' : r.status === 'approved' ? 'status-admitted' : 'status-rejected'}">${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</span>
+                    </div>
+                    ${r.status === 'pending' ? `
+                        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+                            <button class="btn-action btn-accept" onclick="approveReset('${r.id}')"><i class="fa-solid fa-check"></i> Approve & Reset to 123456</button>
+                            <button class="btn-action btn-reject" onclick="rejectReset('${r.id}')"><i class="fa-solid fa-times"></i> Reject</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function approveReset(id) {
+            const requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
+            const idx = requests.findIndex(r => r.id === id);
+            if (idx === -1) return;
+            const req = requests[idx];
+
+            if (!confirm('Reset password for ' + req.name + ' (' + req.email + ') to 123456?')) return;
+
+            // Update password in users
+            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            const userIdx = users.findIndex(u => u.email === req.email && u.role === req.role);
+            if (userIdx !== -1) {
+                users[userIdx].password = '123456';
+                localStorage.setItem('tba_users', JSON.stringify(users));
+            }
+
+            requests[idx].status = 'approved';
+            requests[idx].approvedAt = new Date().toISOString();
+            localStorage.setItem('tba_password_resets', JSON.stringify(requests));
+
+            alert('Password for ' + req.name + ' has been reset to 123456.');
+            renderResetsList();
+        }
+
+        function rejectReset(id) {
+            const requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
+            const idx = requests.findIndex(r => r.id === id);
+            if (idx === -1) return;
+            if (!confirm('Reject this password reset request?')) return;
+
+            requests[idx].status = 'rejected';
+            requests[idx].rejectedAt = new Date().toISOString();
+            localStorage.setItem('tba_password_resets', JSON.stringify(requests));
+
+            renderResetsList();
         }
         function logout() { localStorage.removeItem('tba_currentUser'); window.location.href = 'login.html'; }
 
