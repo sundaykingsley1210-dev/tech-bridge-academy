@@ -981,39 +981,58 @@
             const c = document.getElementById('adminResultsList');
             let html = '';
             let hasResults = false;
+            const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
 
             allClasses.forEach(cls => {
                 if (classResultFilter !== 'all' && classResultFilter !== cls) return;
-                const results = JSON.parse(localStorage.getItem('tba_results_' + cls) || '[]');
-                const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + cls) || '{}');
-                const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
                 const students = users.filter(u => u.role === 'student' && u.class === cls);
-                const hasPositions = posData.positions && Object.keys(posData.positions).length;
-                if (!results.length && !hasPositions) return;
-                hasResults = true;
-                html += '<div style="margin-bottom:25px"><h4 style="color:var(--primary);margin-bottom:10px;font-size:1rem"><i class="fa-solid fa-layer-group"></i> ' + cls + '</h4>';
-                if (results.length) {
-                    html += '<table class="fee-table"><thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead><tbody>';
-                    results.forEach(r => {
+                if (!students.length) return;
+
+                let classHtml = '';
+                let classHasResults = false;
+
+                students.forEach(s => {
+                    const studentResults = JSON.parse(localStorage.getItem('tba_student_results_' + s.id) || '[]');
+                    if (!studentResults.length) return;
+                    classHasResults = true;
+                    hasResults = true;
+
+                    classHtml += '<div style="padding:15px;background:#f8f9fa;border-radius:12px;margin-bottom:12px;border-left:4px solid var(--primary)">';
+                    classHtml += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">';
+                    classHtml += '<div style="width:36px;height:36px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.8rem">' + s.name.split(' ').map(n=>n[0]).join('') + '</div>';
+                    classHtml += '<div><strong style="color:var(--dark)">' + s.name + '</strong> <span style="font-size:.8rem;color:var(--gray)">(' + s.id + ')</span></div>';
+                    classHtml += '</div>';
+                    classHtml += '<table class="fee-table" style="margin:0"><thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead><tbody>';
+                    studentResults.forEach(r => {
                         const gc = r.grade==='A'?'#155724':r.grade==='B'?'#004085':r.grade==='C'?'#856404':'#721c24';
                         const bg = r.grade==='A'?'#d4edda':r.grade==='B'?'#cce5ff':r.grade==='C'?'#fff3cd':'#f8d7da';
-                        html += '<tr><td><strong>' + r.subject + '</strong></td><td>' + r.ca1 + '</td><td>' + r.ca2 + '</td><td>' + r.exam + '</td><td><strong>' + r.total + '</strong></td><td><span style="padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:600;color:' + gc + ';background:' + bg + '">' + r.grade + '</span></td></tr>';
+                        classHtml += '<tr><td><strong>' + r.subject + '</strong></td><td>' + r.ca1 + '</td><td>' + r.ca2 + '</td><td>' + r.exam + '</td><td><strong>' + r.total + '</strong></td><td><span style="padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:600;color:' + gc + ';background:' + bg + '">' + r.grade + '</span></td></tr>';
                     });
-                    html += '</tbody></table>';
+                    classHtml += '</tbody></table>';
+                    classHtml += '</div>';
+                });
+
+                // Add positions if available
+                const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + cls) || '{}');
+                const hasPositions = posData.positions && Object.keys(posData.positions).length;
+
+                if (classHasResults || hasPositions) {
+                    html += '<div style="margin-bottom:30px"><h4 style="color:var(--primary);margin-bottom:15px;font-size:1.1rem;padding:10px 15px;background:#f0f7ff;border-radius:10px;border-left:4px solid var(--primary)"><i class="fa-solid fa-layer-group"></i> ' + cls + ' <span style="font-size:.8rem;color:var(--gray);font-weight:400">(' + students.length + ' students)</span></h4>';
+                    html += classHtml;
+                    if (hasPositions) {
+                        html += '<div style="margin-top:10px"><h4 style="color:var(--dark);margin-bottom:8px;font-size:.9rem"><i class="fa-solid fa-trophy"></i> Class Positions (' + (posData.term || 'N/A') + ')</h4>';
+                        html += '<table class="fee-table"><thead><tr><th>Student</th><th>Position</th></tr></thead><tbody>';
+                        students.forEach(s => {
+                            const pos = posData.positions[s.id];
+                            if (pos) {
+                                const suffix = ['th','st','nd','rd'][(pos-20)%10] || ['th','st','nd','rd'][pos] || ['th','st','nd','rd'][0];
+                                html += '<tr><td><strong>' + s.name + '</strong> <span style="font-size:.8rem;color:var(--gray)">(' + s.id + ')</span></td><td><strong>' + pos + suffix + '</strong></td></tr>';
+                            }
+                        });
+                        html += '</tbody></table></div>';
+                    }
+                    html += '</div>';
                 }
-                if (hasPositions) {
-                    html += '<h4 style="color:var(--primary);margin:15px 0 8px;font-size:.9rem"><i class="fa-solid fa-trophy"></i> Class Positions (' + (posData.term || 'N/A') + ')</h4>';
-                    html += '<table class="fee-table"><thead><tr><th>Student</th><th>Position</th></tr></thead><tbody>';
-                    students.forEach(s => {
-                        const pos = posData.positions[s.id];
-                        if (pos) {
-                            const suffix = ['th','st','nd','rd'][(pos-20)%10] || ['th','st','nd','rd'][pos] || ['th','st','nd','rd'][0];
-                            html += '<tr><td><strong>' + s.name + '</strong> <span style="font-size:.8rem;color:var(--gray)">(' + s.id + ')</span></td><td><strong>' + pos + suffix + '</strong></td></tr>';
-                        }
-                    });
-                    html += '</tbody></table>';
-                }
-                html += '</div>';
             });
 
             if (!hasResults) {
