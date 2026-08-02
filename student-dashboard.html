@@ -143,14 +143,14 @@
                 <p>Student Portal</p>
             </div>
             <ul class="sidebar-nav">
-                <li><a class="active" onclick="showSection(this)"><i class="fa-solid fa-grid-2"></i> Overview</a></li>
-                <li><a onclick="showSection(this)"><i class="fa-solid fa-chart-line"></i> My Results</a></li>
-                <li><a onclick="showSection(this)"><i class="fa-solid fa-calendar"></i> Timetable</a></li>
-                <li><a onclick="showSection(this)"><i class="fa-solid fa-book"></i> Assignments</a></li>
-                <li><a onclick="showSection(this)"><i class="fa-solid fa-paper-plane"></i> My Submissions</a></li>
-                <li><a onclick="showSection(this)"><i class="fa-solid fa-bell"></i> Notifications</a></li>
-                <li><a onclick="showSection(this)"><i class="fa-solid fa-money-bill-wave"></i> Payment History</a></li>
-                <li><a href="internal-exam.html"><i class="fa-solid fa-pen-to-square"></i> Take Exam</a></li>
+                <li><a class="active" onclick="showSection(this, 'overviewSection')"><i class="fa-solid fa-grid-2"></i> Overview</a></li>
+                <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-line"></i> My Results</a></li>
+                <li><a onclick="showSection(this, 'timetableSection')"><i class="fa-solid fa-calendar"></i> Timetable</a></li>
+                <li><a onclick="showSection(this, 'assignmentsSection')"><i class="fa-solid fa-book"></i> Assignments</a></li>
+                <li><a onclick="showSection(this, 'submissionsSection')"><i class="fa-solid fa-paper-plane"></i> My Submissions</a></li>
+                <li><a onclick="showSection(this, 'notificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
+                <li><a onclick="showSection(this, 'paymentSection')"><i class="fa-solid fa-money-bill-wave"></i> Fee & Payment</a></li>
+                <li><a onclick="showSection(this, 'examSection')"><i class="fa-solid fa-pen-to-square"></i> Exam Results</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Back to Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
             </ul>
@@ -179,7 +179,7 @@
                 </div>
             </div>
 
-            <div class="stat-cards">
+            <div class="stat-cards" id="overviewStats">
                 <div class="stat-card">
                     <i class="fa-solid fa-chart-simple"></i>
                     <h3 id="avgScore">--</h3>
@@ -202,98 +202,169 @@
                 </div>
             </div>
 
-            <div class="dashboard-grid">
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-chart-line"></i> Academic Performance</h3>
-                        <button onclick="printResult()" style="background:var(--gradient);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-print"></i> Print Result</button>
-                    </div>
-                    <div class="card-body">
-                        <div class="tab-nav">
-                            <button class="tab-btn active" onclick="switchTab(this,'firstTerm')">First Term</button>
-                            <button class="tab-btn" onclick="switchTab(this,'secondTerm')">Second Term</button>
-                            <button class="tab-btn" onclick="switchTab(this,'thirdTerm')">Third Term</button>
+            <!-- Overview Section -->
+            <div id="overviewSection">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-chart-line"></i> Academic Performance</h3>
+                            <button onclick="printResult()" style="background:var(--gradient);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-print"></i> Print Result</button>
                         </div>
-                        <div class="tab-content active" id="firstTerm">
-                            <table class="result-table">
-                                <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
-                                <tbody id="resultsBody"></tbody>
-                            </table>
-                        </div>
-                        <div class="tab-content" id="secondTerm">
-                            <div class="no-data"><i class="fa-solid fa-clock"></i><p>Second term results not yet available</p></div>
-                        </div>
-                        <div class="tab-content" id="thirdTerm">
-                            <div class="no-data"><i class="fa-solid fa-clock"></i><p>Third term results not yet available</p></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-calendar"></i> Today's Schedule</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="timetable-grid" id="timetableBody"></div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-money-bill-wave"></i> Fee & Payment</h3>
-                    </div>
-                    <div class="card-body" id="feeDetailsBody"></div>
-                </div>
-
-                <div class="card full-width">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-book"></i> Assignments from Teachers</h3>
-                        <span style="font-size:.85rem;color:var(--gray)" id="assignmentCountLabel"></span>
-                    </div>
-                    <div class="card-body">
-                        <div class="assignment-list" id="assignmentList"></div>
-                    </div>
-                </div>
-
-                <div class="card full-width">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-paper-plane"></i> My Submissions</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="submission-history" id="submissionHistory"></div>
-                    </div>
-                </div>
-
-                <div class="card full-width">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-bell"></i> Notifications from Teachers</h3>
-                        <div class="filter-bar">
-                            <button class="filter-btn active" onclick="filterNotifs('all', this)">All</button>
-                            <button class="filter-btn" onclick="filterNotifs('My Class', this)">My Class</button>
-                            <button class="filter-btn" onclick="filterNotifs('All Classes', this)">General</button>
+                        <div class="card-body">
+                            <div class="tab-nav">
+                                <button class="tab-btn active" onclick="switchTab(this,'firstTerm')">First Term</button>
+                                <button class="tab-btn" onclick="switchTab(this,'secondTerm')">Second Term</button>
+                                <button class="tab-btn" onclick="switchTab(this,'thirdTerm')">Third Term</button>
+                            </div>
+                            <div class="tab-content active" id="firstTerm">
+                                <table class="result-table">
+                                    <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
+                                    <tbody id="resultsBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="tab-content" id="secondTerm">
+                                <div class="no-data"><i class="fa-solid fa-clock"></i><p>Second term results not yet available</p></div>
+                            </div>
+                            <div class="tab-content" id="thirdTerm">
+                                <div class="no-data"><i class="fa-solid fa-clock"></i><p>Third term results not yet available</p></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div class="assignment-list" id="notifListCard"></div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-calendar"></i> Today's Schedule</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="timetable-grid" id="timetableBody"></div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="card full-width">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-money-bill-wave"></i> Payment History</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="assignment-list" id="paymentHistoryList"></div>
+            <!-- Results Section -->
+            <div id="resultsSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-chart-line"></i> Academic Performance</h3>
+                            <button onclick="printResult()" style="background:var(--gradient);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-print"></i> Print Result</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="tab-nav">
+                                <button class="tab-btn active" onclick="switchTab(this,'firstTerm2')">First Term</button>
+                                <button class="tab-btn" onclick="switchTab(this,'secondTerm2')">Second Term</button>
+                                <button class="tab-btn" onclick="switchTab(this,'thirdTerm2')">Third Term</button>
+                            </div>
+                            <div class="tab-content active" id="firstTerm2">
+                                <table class="result-table">
+                                    <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
+                                    <tbody id="resultsBody2"></tbody>
+                                </table>
+                            </div>
+                            <div class="tab-content" id="secondTerm2">
+                                <div class="no-data"><i class="fa-solid fa-clock"></i><p>Second term results not yet available</p></div>
+                            </div>
+                            <div class="tab-content" id="thirdTerm2">
+                                <div class="no-data"><i class="fa-solid fa-clock"></i><p>Third term results not yet available</p></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="card full-width">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-pen-to-square"></i> My Exam Results</h3>
-                        <a href="internal-exam.html" style="background:var(--gradient);color:#fff;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.82rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-plus"></i> Take Exam</a>
+            <!-- Timetable Section -->
+            <div id="timetableSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-calendar"></i> Class Timetable</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="timetable-grid" id="timetableBody2"></div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="assignment-list" id="examResultsList"></div>
+                </div>
+            </div>
+
+            <!-- Assignments Section -->
+            <div id="assignmentsSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-book"></i> Assignments from Teachers</h3>
+                            <span style="font-size:.85rem;color:var(--gray)" id="assignmentCountLabel"></span>
+                        </div>
+                        <div class="card-body">
+                            <div class="assignment-list" id="assignmentList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submissions Section -->
+            <div id="submissionsSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-paper-plane"></i> My Submissions</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="submission-history" id="submissionHistory"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Section -->
+            <div id="notificationsSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-bell"></i> Notifications from Teachers</h3>
+                            <div class="filter-bar">
+                                <button class="filter-btn active" onclick="filterNotifs('all', this)">All</button>
+                                <button class="filter-btn" onclick="filterNotifs('My Class', this)">My Class</button>
+                                <button class="filter-btn" onclick="filterNotifs('All Classes', this)">General</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="assignment-list" id="notifListCard"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fee & Payment Section -->
+            <div id="paymentSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-money-bill-wave"></i> Fee & Payment</h3>
+                        </div>
+                        <div class="card-body" id="feeDetailsBody"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-money-bill-wave"></i> Payment History</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="assignment-list" id="paymentHistoryList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exam Results Section -->
+            <div id="examSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-pen-to-square"></i> My Exam Results</h3>
+                            <a href="internal-exam.html" style="background:var(--gradient);color:#fff;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.82rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-plus"></i> Take Exam</a>
+                        </div>
+                        <div class="card-body">
+                            <div class="assignment-list" id="examResultsList"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -456,38 +527,56 @@
 
         function renderResults() {
             const results = getResults();
-            const tbody = document.getElementById('resultsBody');
-            if (!results.length) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--gray)"><i class="fa-solid fa-chart-bar" style="font-size:2rem;display:block;margin-bottom:10px;opacity:.3"></i>No results available yet. Your teacher will upload them soon.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = results.map(r => {
-                const gradeClass = r.grade === 'A' ? 'grade-a' : r.grade === 'B' ? 'grade-b' : r.grade === 'C' ? 'grade-c' : 'grade-d';
-                return `<tr>
-                    <td><strong>${r.subject}</strong></td>
-                    <td>${r.ca1}</td><td>${r.ca2}</td><td>${r.exam}</td>
-                    <td><strong>${r.total}</strong></td>
-                    <td><span class="grade-badge ${gradeClass}">${r.grade}</span></td>
-                </tr>`;
-            }).join('');
+            const renderInto = (tbodyId) => {
+                const tbody = document.getElementById(tbodyId);
+                if (!tbody) return;
+                if (!results.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--gray)"><i class="fa-solid fa-chart-bar" style="font-size:2rem;display:block;margin-bottom:10px;opacity:.3"></i>No results available yet. Your teacher will upload them soon.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = results.map(r => {
+                    const gradeClass = r.grade === 'A' ? 'grade-a' : r.grade === 'B' ? 'grade-b' : r.grade === 'C' ? 'grade-c' : 'grade-d';
+                    return `<tr>
+                        <td><strong>${r.subject}</strong></td>
+                        <td>${r.ca1}</td><td>${r.ca2}</td><td>${r.exam}</td>
+                        <td><strong>${r.total}</strong></td>
+                        <td><span class="grade-badge ${gradeClass}">${r.grade}</span></td>
+                    </tr>`;
+                }).join('');
+            };
+            renderInto('resultsBody');
+            renderInto('resultsBody2');
+        }
+
+        function renderResultsSection() {
+            renderResults();
         }
 
         function renderTimetable() {
             const timetable = getTimetable();
-            const container = document.getElementById('timetableBody');
-            if (!timetable.length) {
-                container.innerHTML = '<div class="no-data"><i class="fa-solid fa-calendar"></i><p>No timetable available yet. Your teacher will set it soon.</p></div>';
-                return;
-            }
-            container.innerHTML = timetable.map(t => `
-                <div class="timetable-row">
-                    <div class="timetable-time">${t.time}</div>
-                    <div>
-                        <div class="timetable-subject">${t.subject}</div>
-                        ${t.teacher ? `<div class="timetable-teacher">${t.teacher}</div>` : ''}
+            const renderInto = (containerId) => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                if (!timetable.length) {
+                    container.innerHTML = '<div class="no-data"><i class="fa-solid fa-calendar"></i><p>No timetable available yet. Your teacher will set it soon.</p></div>';
+                    return;
+                }
+                container.innerHTML = timetable.map(t => `
+                    <div class="timetable-row">
+                        <div class="timetable-time">${t.time}</div>
+                        <div>
+                            <div class="timetable-subject">${t.subject}</div>
+                            ${t.teacher ? `<div class="timetable-teacher">${t.teacher}</div>` : ''}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            };
+            renderInto('timetableBody');
+            renderInto('timetableBody2');
+        }
+
+        function renderTimetableSection() {
+            renderTimetable();
         }
 
         function renderAssignments() {
@@ -865,9 +954,17 @@
             btn.classList.add('active');
         }
 
-        function showSection(el) {
+        function showSection(el, sectionId) {
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
+            const allSections = ['overviewSection','resultsSection','timetableSection','assignmentsSection','submissionsSection','notificationsSection','paymentSection','examSection'];
+            allSections.forEach(id => {
+                const sec = document.getElementById(id);
+                if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
+            });
+            document.getElementById('overviewStats').style.display = sectionId === 'overviewSection' ? 'grid' : 'none';
+            if (sectionId === 'resultsSection') renderResultsSection();
+            if (sectionId === 'timetableSection') renderTimetableSection();
         }
 
         function submitPayment(e) {
