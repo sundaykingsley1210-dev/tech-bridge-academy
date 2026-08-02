@@ -834,6 +834,9 @@
             if (!student) return;
 
             const myResults = JSON.parse(localStorage.getItem('tba_student_results_' + studentId) || '[]');
+            const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + student.class) || '{}');
+            const currentPos = posData.positions ? (posData.positions[studentId] || '') : '';
+
             let resultsHtml = '';
             if (myResults.length) {
                 resultsHtml = '<div style="margin-top:15px"><h4 style="margin-bottom:10px">Previous Results</h4>' + myResults.map((r, i) => '<div style="padding:10px 15px;background:#f8f9fa;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:4px solid '+(r.grade==='A'?'#38ef7d':r.grade==='B'?'#74b9ff':r.grade==='C'?'#ffd93d':'#ff6b6b')+'"><div><strong>'+r.subject+'</strong><div class="meta" style="margin-top:4px"><span>CA1: '+r.ca1+'</span><span>CA2: '+r.ca2+'</span><span>Exam: '+r.exam+'</span></div></div><div style="text-align:right"><div style="font-size:1.2rem;font-weight:700;color:var(--dark)">'+r.total+'</div><div style="font-size:.85rem;font-weight:600;color:'+(r.grade==='A'?'#38a169':r.grade==='B'?'#3182ce':r.grade==='C'?'#d69e2e':'#e53e3e')+'">'+r.grade+'</div></div><button onclick="deleteStudentResult(\''+studentId+'\','+i+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.85rem;margin-left:10px" title="Delete"><i class="fa-solid fa-trash"></i></button></div>').join('') + '</div>';
@@ -844,7 +847,17 @@
             let html = '<div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid #e9ecef">';
             html += '<div class="user-avatar" style="width:50px;height:50px;font-size:1rem">'+student.name.split(' ').map(n=>n[0]).join('')+'</div>';
             html += '<div><h4>'+student.name+'</h4><div class="meta"><span>'+student.id+'</span><span>'+student.class+'</span></div></div></div>';
+
+            // Position section
+            html += '<div style="padding:15px;background:#f0f7ff;border-radius:10px;margin-bottom:20px;border:1px solid #bfdbfe">';
+            html += '<h4 style="margin-bottom:10px;color:var(--primary)"><i class="fa-solid fa-trophy"></i> Class Position</h4>';
+            html += '<div style="display:flex;align-items:center;gap:10px"><label style="font-weight:600;font-size:.9rem">Position:</label><input type="number" id="srPosition" min="1" max="100" value="'+currentPos+'" placeholder="-" style="width:80px;padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:1rem;font-weight:600;text-align:center"><span style="font-size:.85rem;color:var(--gray)">in '+student.class+'</span></div>';
+            html += '<button type="button" class="btn-create" style="margin-top:10px;padding:8px 20px;font-size:.85rem" onclick="saveStudentPosition(\''+studentId+'\',\''+student.class+'\')"><i class="fa-solid fa-save"></i> Save Position</button>';
+            html += '</div>';
+
+            // Add result form
             html += '<form onsubmit="addStudentResult(event,\''+studentId+'\')">';
+            html += '<h4 style="margin-bottom:10px"><i class="fa-solid fa-plus-circle"></i> Add Result</h4>';
             html += '<div class="form-row"><div class="form-group"><label>Subject *</label><input type="text" id="srSubject" placeholder="e.g. Mathematics" required></div></div>';
             html += '<div class="form-row"><div class="form-group"><label>CA1 (20) *</label><input type="number" id="srCA1" min="0" max="20" required></div><div class="form-group"><label>CA2 (20) *</label><input type="number" id="srCA2" min="0" max="20" required></div></div>';
             html += '<div class="form-row"><div class="form-group"><label>Exam (60) *</label><input type="number" id="srExam" min="0" max="60" required></div><div class="form-group"><button type="submit" class="btn-create" style="width:100%;justify-content:center;height:45px"><i class="fa-solid fa-plus"></i> Add Result</button></div></div>';
@@ -854,6 +867,20 @@
             document.getElementById('viewModalTitle').textContent = 'Student Result — ' + student.name;
             document.getElementById('viewModalBody').innerHTML = html;
             document.getElementById('viewModal').classList.add('active');
+        }
+
+        function saveStudentPosition(studentId, cls) {
+            const val = document.getElementById('srPosition').value;
+            if (!val || parseInt(val) < 1) {
+                alert('Please enter a valid position number.');
+                return;
+            }
+            const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + cls) || '{}');
+            if (!posData.positions) posData.positions = {};
+            posData.positions[studentId] = parseInt(val);
+            posData.term = posData.term || 'First Term';
+            localStorage.setItem('tba_class_positions_' + cls, JSON.stringify(posData));
+            alert('Position saved!');
         }
 
         function addStudentResult(e, studentId) {
