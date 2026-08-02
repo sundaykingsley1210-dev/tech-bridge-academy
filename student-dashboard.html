@@ -415,6 +415,13 @@
         let notifFilter = 'all';
 
         function getResults() {
+            // Check individual student results first
+            const individual = localStorage.getItem('tba_student_results_' + currentUser.id);
+            if (individual) {
+                const parsed = JSON.parse(individual);
+                if (parsed.length) return parsed;
+            }
+            // Fall back to class results
             const saved = localStorage.getItem('tba_results_' + currentUser.class);
             return saved ? JSON.parse(saved) : [];
         }

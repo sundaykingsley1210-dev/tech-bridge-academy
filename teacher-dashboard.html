@@ -429,7 +429,7 @@
             const c = document.getElementById('studentList');
             document.getElementById('totalStudents').textContent = studs.length;
             if (!studs.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-users"></i><p>No students yet</p></div>'; return; }
-            c.innerHTML = studs.map(s => '<div class="assignment-item" style="border-left-color:var(--accent)"><div style="display:flex;align-items:center;gap:12px"><div class="user-avatar" style="width:40px;height:40px;font-size:.85rem">'+s.name.split(' ').map(n=>n[0]).join('')+'</div><div><h4 style="margin-bottom:2px">'+s.name+'</h4><div class="meta" style="margin-bottom:0"><span>'+s.id+'</span><span>'+s.class+'</span></div></div></div></div>').join('');
+            c.innerHTML = studs.map(s => '<div class="assignment-item" style="border-left-color:var(--accent);cursor:pointer" onclick="openStudentResult(\''+s.id+'\')"><div style="display:flex;align-items:center;gap:12px"><div class="user-avatar" style="width:40px;height:40px;font-size:.85rem">'+s.name.split(' ').map(n=>n[0]).join('')+'</div><div><h4 style="margin-bottom:2px">'+s.name+'</h4><div class="meta" style="margin-bottom:0"><span>'+s.id+'</span><span>'+s.class+'</span></div></div><i class="fa-solid fa-chevron-right" style="margin-left:auto;color:var(--gray)"></i></div></div>').join('');
         }
 
         function renderSubmissions() {
@@ -826,6 +826,91 @@
             
             alert('Profile updated successfully!');
         });
+
+        // Student Result Modal
+        function openStudentResult(studentId) {
+            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
+            const student = users.find(u => u.id === studentId);
+            if (!student) return;
+
+            const myResults = JSON.parse(localStorage.getItem('tba_student_results_' + studentId) || '[]');
+            let resultsHtml = '';
+            if (myResults.length) {
+                resultsHtml = '<div style="margin-top:15px"><h4 style="margin-bottom:10px">Previous Results</h4>' + myResults.map((r, i) => '<div style="padding:10px 15px;background:#f8f9fa;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:4px solid '+(r.grade==='A'?'#38ef7d':r.grade==='B'?'#74b9ff':r.grade==='C'?'#ffd93d':'#ff6b6b')+'"><div><strong>'+r.subject+'</strong><div class="meta" style="margin-top:4px"><span>CA1: '+r.ca1+'</span><span>CA2: '+r.ca2+'</span><span>Exam: '+r.exam+'</span></div></div><div style="text-align:right"><div style="font-size:1.2rem;font-weight:700;color:var(--dark)">'+r.total+'</div><div style="font-size:.85rem;font-weight:600;color:'+(r.grade==='A'?'#38a169':r.grade==='B'?'#3182ce':r.grade==='C'?'#d69e2e':'#e53e3e')+'">'+r.grade+'</div></div><button onclick="deleteStudentResult(\''+studentId+'\','+i+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.85rem;margin-left:10px" title="Delete"><i class="fa-solid fa-trash"></i></button></div>').join('') + '</div>';
+            } else {
+                resultsHtml = '<div style="padding:15px;text-align:center;color:var(--gray);font-size:.9rem">No results yet</div>';
+            }
+
+            let html = '<div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid #e9ecef">';
+            html += '<div class="user-avatar" style="width:50px;height:50px;font-size:1rem">'+student.name.split(' ').map(n=>n[0]).join('')+'</div>';
+            html += '<div><h4>'+student.name+'</h4><div class="meta"><span>'+student.id+'</span><span>'+student.class+'</span></div></div></div>';
+            html += '<form onsubmit="addStudentResult(event,\''+studentId+'\')">';
+            html += '<div class="form-row"><div class="form-group"><label>Subject *</label><input type="text" id="srSubject" placeholder="e.g. Mathematics" required></div></div>';
+            html += '<div class="form-row"><div class="form-group"><label>CA1 (20) *</label><input type="number" id="srCA1" min="0" max="20" required></div><div class="form-group"><label>CA2 (20) *</label><input type="number" id="srCA2" min="0" max="20" required></div></div>';
+            html += '<div class="form-row"><div class="form-group"><label>Exam (60) *</label><input type="number" id="srExam" min="0" max="60" required></div><div class="form-group"><button type="submit" class="btn-create" style="width:100%;justify-content:center;height:45px"><i class="fa-solid fa-plus"></i> Add Result</button></div></div>';
+            html += '</form>';
+            html += resultsHtml;
+
+            document.getElementById('viewModalTitle').textContent = 'Student Result — ' + student.name;
+            document.getElementById('viewModalBody').innerHTML = html;
+            document.getElementById('viewModal').classList.add('active');
+        }
+
+        function addStudentResult(e, studentId) {
+            e.preventDefault();
+            const ca1 = parseInt(document.getElementById('srCA1').value);
+            const ca2 = parseInt(document.getElementById('srCA2').value);
+            const exam = parseInt(document.getElementById('srExam').value);
+            const total = ca1 + ca2 + exam;
+            const grade = calcGrade(total);
+
+            const entry = {
+                subject: document.getElementById('srSubject').value,
+                ca1: ca1, ca2: ca2, exam: exam,
+                total: total, grade: grade,
+                teacherName: currentUser.name,
+                createdAt: new Date().toISOString()
+            };
+
+            let results = JSON.parse(localStorage.getItem('tba_student_results_' + studentId) || '[]');
+            results.push(entry);
+            localStorage.setItem('tba_student_results_' + studentId, JSON.stringify(results));
+
+            // Also sync to class results for student dashboard
+            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
+            const student = users.find(u => u.id === studentId);
+            if (student) {
+                let classResults = JSON.parse(localStorage.getItem('tba_results_' + student.class) || '[]');
+                classResults.push({...entry, studentId: studentId, studentName: student.name});
+                localStorage.setItem('tba_results_' + student.class, JSON.stringify(classResults));
+            }
+
+            document.getElementById('srSubject').value = '';
+            document.getElementById('srCA1').value = '';
+            document.getElementById('srCA2').value = '';
+            document.getElementById('srExam').value = '';
+            alert('Result added! Total: ' + total + ' (' + grade + ')');
+            openStudentResult(studentId);
+        }
+
+        function deleteStudentResult(studentId, index) {
+            if (!confirm('Delete this result?')) return;
+            let results = JSON.parse(localStorage.getItem('tba_student_results_' + studentId) || '[]');
+            results.splice(index, 1);
+            localStorage.setItem('tba_student_results_' + studentId, JSON.stringify(results));
+
+            // Sync to class results
+            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
+            const student = users.find(u => u.id === studentId);
+            if (student) {
+                let classResults = JSON.parse(localStorage.getItem('tba_results_' + student.class) || '[]');
+                classResults = classResults.filter(r => r.studentId !== studentId);
+                const updatedResults = results.map(r => ({...r, studentId: studentId, studentName: student.name}));
+                classResults = classResults.concat(updatedResults);
+                localStorage.setItem('tba_results_' + student.class, JSON.stringify(classResults));
+            }
+            openStudentResult(studentId);
+        }
         
         init();
     </script>
