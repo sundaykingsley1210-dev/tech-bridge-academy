@@ -551,7 +551,6 @@
             renderSubmissions();
             renderNotifications();
             renderNotifBadge();
-            renderExamResults();
             renderPaymentHistory();
             updateStats();
         }
@@ -999,12 +998,22 @@
 
         function updateStats() {
             const results = getResults();
-            let allTotals = [];
-            results.forEach(r => { if(r.total) allTotals.push(r.total); });
+            // Calculate combined average: average per subject across all terms, then overall
+            const subjectMap = {};
+            results.forEach(r => {
+                if (r.total) {
+                    if (!subjectMap[r.subject]) subjectMap[r.subject] = [];
+                    subjectMap[r.subject].push(r.total);
+                }
+            });
+            let subjectAverages = [];
+            Object.values(subjectMap).forEach(totals => {
+                if (totals.length) subjectAverages.push(Math.round(totals.reduce((a,b)=>a+b,0)/totals.length));
+            });
             const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]').filter(s=>s.studentId===currentUser.id);
-            examSubs.forEach(s => { if(s.totalMarks) allTotals.push(Math.round((s.score/s.totalMarks)*100)); });
-            if (allTotals.length) {
-                const avg = Math.round(allTotals.reduce((a,b)=>a+b,0)/allTotals.length);
+            examSubs.forEach(s => { if(s.totalMarks) subjectAverages.push(Math.round((s.score/s.totalMarks)*100)); });
+            if (subjectAverages.length) {
+                const avg = Math.round(subjectAverages.reduce((a,b)=>a+b,0)/subjectAverages.length);
                 document.getElementById('avgScore').textContent = avg + '%';
             } else {
                 document.getElementById('avgScore').textContent = '--';
