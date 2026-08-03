@@ -782,27 +782,46 @@
 
             if (!filtered.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-receipt"></i><p>No students found</p></div>'; return; }
 
-            c.innerHTML = filtered.map(s => `
-                <div class="app-item">
-                    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
-                        <div>
-                            <h4>${s.name}</h4>
-                            <div class="meta">
-                                <span><i class="fa-solid fa-id-card"></i> ${s.id}</span>
-                                <span><i class="fa-solid fa-layer-group"></i> ${s.class}</span>
-                                <span><i class="fa-solid fa-money-bill-wave"></i> ₦${s.fee.toLocaleString()}</span>
-                            </div>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px">
-                            <span class="fee-status ${s.isPaid?'fee-paid':'fee-unpaid'}">${s.isPaid?'Paid':'Unpaid'}</span>
-                            ${s.isPaid
-                                ? `<button class="btn-mark-unpaid" onclick="togglePayment('${s.id}',false)"><i class="fa-solid fa-times"></i> Mark Unpaid</button>`
-                                : `<button class="btn-mark-paid" onclick="togglePayment('${s.id}',true)"><i class="fa-solid fa-check"></i> Mark Paid</button>`
-                            }
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+            const allClasses = ['Nursery 1','Nursery 2','Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Primary 6','JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+            let html = '';
+
+            allClasses.forEach(cls => {
+                const classStudents = filtered.filter(s => s.class === cls);
+                if (!classStudents.length) return;
+
+                const paidCount = classStudents.filter(s => s.isPaid).length;
+                const unpaidCount = classStudents.length - paidCount;
+                const totalFees = classStudents.reduce((sum, s) => sum + s.fee, 0);
+
+                html += '<div style="margin-bottom:25px">';
+                html += '<div style="padding:12px 15px;background:#f0f7ff;border-radius:10px;border-left:4px solid var(--primary);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">';
+                html += '<h4 style="color:var(--primary);font-size:1rem"><i class="fa-solid fa-layer-group"></i> ' + cls + ' <span style="font-size:.8rem;color:var(--gray);font-weight:400">(' + classStudents.length + ' students)</span></h4>';
+                html += '<div style="display:flex;gap:10px;font-size:.8rem"><span style="padding:3px 10px;background:#d4edda;color:#155724;border-radius:8px;font-weight:600">Paid: ' + paidCount + '</span><span style="padding:3px 10px;background:#f8d7da;color:#721c24;border-radius:8px;font-weight:600">Unpaid: ' + unpaidCount + '</span></div>';
+                html += '</div>';
+
+                classStudents.forEach(s => {
+                    html += '<div class="app-item" style="margin-bottom:8px">';
+                    html += '<div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">';
+                    html += '<div>';
+                    html += '<h4>' + s.name + '</h4>';
+                    html += '<div class="meta">';
+                    html += '<span><i class="fa-solid fa-id-card"></i> ' + s.id + '</span>';
+                    html += '<span><i class="fa-solid fa-money-bill-wave"></i> ₦' + s.fee.toLocaleString() + '</span>';
+                    html += '</div></div>';
+                    html += '<div style="display:flex;align-items:center;gap:10px">';
+                    html += '<span class="fee-status ' + (s.isPaid?'fee-paid':'fee-unpaid') + '">' + (s.isPaid?'Paid':'Unpaid') + '</span>';
+                    if (s.isPaid) {
+                        html += '<button class="btn-mark-unpaid" onclick="togglePayment(\'' + s.id + '\',false)"><i class="fa-solid fa-times"></i> Mark Unpaid</button>';
+                    } else {
+                        html += '<button class="btn-mark-paid" onclick="togglePayment(\'' + s.id + '\',true)"><i class="fa-solid fa-check"></i> Mark Paid</button>';
+                    }
+                    html += '</div></div></div>';
+                });
+
+                html += '</div>';
+            });
+
+            c.innerHTML = html;
         }
 
         function togglePayment(studentId, paid) {
