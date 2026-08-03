@@ -129,6 +129,7 @@
                 <li><a onclick="showSection(this, 'paymentSubsSection')"><i class="fa-solid fa-paper-plane"></i> Payment Submissions</a></li>
                 <li><a onclick="showSection(this, 'studentPaymentsSection')"><i class="fa-solid fa-receipt"></i> Student Payments</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
+                <li><a onclick="showSection(this, 'adminStudentsSection')"><i class="fa-solid fa-users"></i> Students</a></li>
                 <li><a onclick="showSection(this, 'adminMessagesSection')"><i class="fa-solid fa-envelope"></i> Messages</a></li>
                 <li><a onclick="showSection(this, 'adminNotificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
                 <li><a onclick="showSection(this, 'resetsSection')"><i class="fa-solid fa-key"></i> Password Resets</a></li>
@@ -363,6 +364,22 @@
                         </div>
                         <div id="adminResultsList"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Admin Students Section -->
+            <div id="adminStudentsSection" style="display:none">
+                <div id="adminStudentsByClass"></div>
+            </div>
+
+            <!-- Admin Student Profile Modal -->
+            <div class="modal-overlay" id="adminStudentProfileModal">
+                <div class="modal" style="max-width:700px">
+                    <div class="modal-header">
+                        <h3 id="adminStudentProfileTitle">Student Profile</h3>
+                        <button class="modal-close" onclick="closeModal('adminStudentProfileModal')">&times;</button>
+                    </div>
+                    <div class="modal-body" id="adminStudentProfileBody"></div>
                 </div>
             </div>
 
@@ -1302,7 +1319,7 @@
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
 
-            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'examResultsSection', 'feesSection', 'examScheduleSection', 'bankSection', 'paymentSubsSection', 'studentPaymentsSection', 'resultsSection', 'adminMessagesSection', 'adminNotificationsSection', 'resetsSection'];
+            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'examResultsSection', 'feesSection', 'examScheduleSection', 'bankSection', 'paymentSubsSection', 'studentPaymentsSection', 'resultsSection', 'adminStudentsSection', 'adminMessagesSection', 'adminNotificationsSection', 'resetsSection'];
             sections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -1318,6 +1335,7 @@
             if (sectionId === 'paymentSubsSection') renderPaymentSubs();
             if (sectionId === 'studentPaymentsSection') renderPayments();
             if (sectionId === 'resultsSection') renderAdminResults();
+            if (sectionId === 'adminStudentsSection') renderAdminStudents();
             if (sectionId === 'adminMessagesSection') renderAdminMessages();
             if (sectionId === 'adminNotificationsSection') { renderAdminNotifCheckboxes(); renderAdminSentNotifs(); }
             if (sectionId === 'resetsSection') renderResetsList();
@@ -1389,6 +1407,211 @@
 
             renderResetsList();
         }
+
+        // ---- Admin Students Section ----
+        function renderAdminStudents() {
+            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
+            const studs = users.filter(u => u.role==='student');
+            const c = document.getElementById('adminStudentsByClass');
+            if (!studs.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-users"></i><p>No students yet</p></div>'; return; }
+
+            const classes = ['Nursery 1','Nursery 2','Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Primary 6','JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+            let html = '';
+            classes.forEach(cls => {
+                const classStudents = studs.filter(s => s.class === cls);
+                if (!classStudents.length) return;
+                html += '<div style="margin-bottom:30px">';
+                html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #e9ecef">';
+                html += '<i class="fa-solid fa-layer-group" style="color:var(--primary);font-size:1.1rem"></i>';
+                html += '<h3 style="color:var(--dark);margin:0">'+cls+'</h3>';
+                html += '<span style="padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700;background:var(--primary);color:#fff">'+classStudents.length+' student'+(classStudents.length>1?'s':'')+'</span>';
+                html += '</div>';
+                html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:15px">';
+                classStudents.forEach(s => {
+                    const initials = s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
+                    const results = JSON.parse(localStorage.getItem('tba_student_results_'+s.id)||'[]');
+                    const classResults = JSON.parse(localStorage.getItem('tba_results_'+s.class)||'[]');
+                    let allResults = [...results];
+                    const keys = results.map(r=>r.subject+'|'+r.term);
+                    classResults.forEach(r => { if(!keys.includes(r.subject+'|'+(r.term||'First Term'))) allResults.push({...r,term:r.term||'First Term'}); });
+                    const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]').filter(x=>x.studentId===s.id);
+                    let subjectMap = {};
+                    allResults.forEach(r => { if(r.total){ if(!subjectMap[r.subject]) subjectMap[r.subject]={}; subjectMap[r.subject][r.term]=r.total; }});
+                    let avgs = [];
+                    Object.values(subjectMap).forEach(t => { const v=Object.values(t); if(v.length) avgs.push(Math.round(v.reduce((a,b)=>a+b,0)/v.length)); });
+                    examSubs.forEach(x => { if(x.totalMarks) avgs.push(Math.round((x.score/x.totalMarks)*100)); });
+                    const avg = avgs.length ? Math.round(avgs.reduce((a,b)=>a+b,0)/avgs.length) : null;
+                    const avgColor = avg !== null ? (avg>=70?'#38a169':avg>=50?'#d69e2e':'#e53e3e') : 'var(--gray)';
+                    html += '<div onclick="openAdminStudentProfile(\''+s.id+'\')" style="cursor:pointer;padding:18px;background:#fff;border-radius:12px;border:2px solid #e9ecef;transition:all .2s" onmouseover="this.style.borderColor=\'var(--primary)\';this.style.boxShadow=\'0 4px 15px rgba(0,0,0,.1)\'" onmouseout="this.style.borderColor=\'#e9ecef\';this.style.boxShadow=\'none\'">';
+                    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
+                    html += '<div class="user-avatar" style="width:45px;height:45px;font-size:.85rem;background:linear-gradient(135deg,var(--primary),var(--accent))">'+initials+'</div>';
+                    html += '<div style="flex:1;min-width:0"><h4 style="margin:0;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.name+'</h4>';
+                    html += '<p style="margin:2px 0 0;font-size:.8rem;color:var(--gray)">'+s.id+'</p></div>';
+                    html += '<i class="fa-solid fa-chevron-right" style="color:var(--gray);font-size:.8rem"></i>';
+                    html += '</div>';
+                    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #f1f3f5">';
+                    html += '<span style="font-size:.8rem;color:var(--gray)"><i class="fa-solid fa-envelope" style="margin-right:4px"></i>'+(s.email||'No email')+'</span>';
+                    if (avg !== null) html += '<span style="font-size:.85rem;font-weight:700;color:'+avgColor+'">'+avg+'% avg</span>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+                html += '</div></div>';
+            });
+            c.innerHTML = html;
+        }
+
+        function openAdminStudentProfile(studentId) {
+            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
+            const student = users.find(u => u.id === studentId);
+            if (!student) return;
+
+            const individual = JSON.parse(localStorage.getItem('tba_student_results_' + studentId) || '[]');
+            const classResults = JSON.parse(localStorage.getItem('tba_results_' + student.class) || '[]');
+            let myResults = [...individual];
+            const individualKeys = individual.map(r => r.subject + '|' + r.term);
+            classResults.forEach(r => {
+                const key = r.subject + '|' + (r.term || 'First Term');
+                if (!individualKeys.includes(key)) {
+                    myResults.push({...r, term: r.term || 'First Term'});
+                }
+            });
+            const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + student.class) || '{}');
+            const currentPos = posData.positions ? (posData.positions[studentId] || '') : '';
+
+            let html = '<div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid #e9ecef">';
+            html += '<div class="user-avatar" style="width:50px;height:50px;font-size:1rem;background:linear-gradient(135deg,var(--primary),var(--accent))">'+student.name.split(' ').map(n=>n[0]).join('')+'</div>';
+            html += '<div><h4>'+student.name+'</h4><div class="meta"><span>'+student.id+'</span><span>'+student.class+'</span>'+(student.email?'<span><i class="fa-solid fa-envelope"></i> '+student.email+'</span>':'')+'</div></div></div>';
+
+            // Average score
+            const subjectMap = {};
+            myResults.forEach(r => {
+                if (r.total) {
+                    if (!subjectMap[r.subject]) subjectMap[r.subject] = {};
+                    subjectMap[r.subject][r.term] = r.total;
+                }
+            });
+            let subjectAverages = [];
+            Object.values(subjectMap).forEach(termTotals => {
+                const totals = Object.values(termTotals);
+                if (totals.length) subjectAverages.push(Math.round(totals.reduce((a,b)=>a+b,0)/totals.length));
+            });
+            const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]').filter(s=>s.studentId===studentId);
+            examSubs.forEach(s => { if(s.totalMarks) subjectAverages.push(Math.round((s.score/s.totalMarks)*100)); });
+            if (subjectAverages.length) {
+                const avg = Math.round(subjectAverages.reduce((a,b)=>a+b,0)/subjectAverages.length);
+                html += '<div style="padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;margin-bottom:20px;color:#fff;text-align:center">';
+                html += '<h4 style="margin-bottom:5px;font-size:.9rem;opacity:.9"><i class="fa-solid fa-chart-line"></i> Overall Average</h4>';
+                html += '<div style="font-size:2rem;font-weight:800">'+avg+'%</div></div>';
+            }
+
+            // Position section
+            html += '<div style="padding:15px;background:#f0f7ff;border-radius:10px;margin-bottom:20px;border:1px solid #bfdbfe">';
+            html += '<h4 style="margin-bottom:10px;color:var(--primary)"><i class="fa-solid fa-trophy"></i> Class Position</h4>';
+            html += '<div style="display:flex;align-items:center;gap:10px"><label style="font-weight:600;font-size:.9rem">Position:</label><input type="number" id="adminSrPosition" min="1" max="100" value="'+currentPos+'" placeholder="-" style="width:80px;padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:1rem;font-weight:600;text-align:center"><span style="font-size:.85rem;color:var(--gray)">in '+student.class+'</span></div>';
+            html += '<button type="button" class="btn-create" style="margin-top:10px;padding:8px 20px;font-size:.85rem" onclick="adminSaveStudentPosition(\''+studentId+'\',\''+student.class+'\')"><i class="fa-solid fa-save"></i> Save Position</button>';
+            html += '</div>';
+
+            // Add result form
+            html += '<form onsubmit="adminAddStudentResult(event,\''+studentId+'\')">';
+            html += '<h4 style="margin-bottom:10px"><i class="fa-solid fa-plus-circle"></i> Add Result</h4>';
+            html += '<div class="form-row"><div class="form-group"><label>Subject *</label><input type="text" id="adminSrSubject" placeholder="e.g. Mathematics" required></div><div class="form-group"><label>Term *</label><select id="adminSrTerm" required><option value="">Select Term</option><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div></div>';
+            html += '<div class="form-row"><div class="form-group"><label>CA1 (20) *</label><input type="number" id="adminSrCA1" min="0" max="20" required></div><div class="form-group"><label>CA2 (20) *</label><input type="number" id="adminSrCA2" min="0" max="20" required></div></div>';
+            html += '<div class="form-row"><div class="form-group"><label>Exam (60) *</label><input type="number" id="adminSrExam" min="0" max="60" required></div><div class="form-group"><button type="submit" class="btn-create" style="width:100%;justify-content:center;height:45px"><i class="fa-solid fa-plus"></i> Add Result</button></div></div>';
+            html += '</form>';
+
+            // Results grouped by term
+            const terms = ['First Term','Second Term','Third Term'];
+            terms.forEach(term => {
+                const termResults = myResults.filter(r => r.term === term);
+                const termAvg = termResults.length ? Math.round(termResults.reduce((a,r)=>a+r.total,0)/termResults.length) : null;
+                html += '<div style="margin-top:20px">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+                html += '<h4 style="color:var(--primary)"><i class="fa-solid fa-calendar"></i> '+term+'</h4>';
+                if (termAvg !== null) html += '<span style="padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700;background:#f0f7ff;color:var(--primary)">Avg: '+termAvg+'%</span>';
+                html += '</div>';
+                if (termResults.length) {
+                    termResults.forEach((r, i) => {
+                        const gc = r.grade==='A'?'#38ef7d':r.grade==='B'?'#74b9ff':r.grade==='C'?'#ffd93d':'#ff6b6b';
+                        const globalIdx = myResults.indexOf(r);
+                        html += '<div style="padding:10px 15px;background:#f8f9fa;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:4px solid '+gc+'"><div><strong>'+r.subject+'</strong><div class="meta" style="margin-top:4px"><span>CA1: '+r.ca1+'</span><span>CA2: '+r.ca2+'</span><span>Exam: '+r.exam+'</span></div></div><div style="text-align:right"><div style="font-size:1.2rem;font-weight:700;color:var(--dark)">'+r.total+'</div><div style="font-size:.85rem;font-weight:600;color:'+(r.grade==='A'?'#38a169':r.grade==='B'?'#3182ce':r.grade==='C'?'#d69e2e':'#e53e3e')+'">'+r.grade+'</div></div><button onclick="adminDeleteStudentResult(\''+studentId+'\','+globalIdx+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.85rem;margin-left:10px" title="Delete"><i class="fa-solid fa-trash"></i></button></div>';
+                    });
+                } else {
+                    html += '<div style="padding:10px;text-align:center;color:var(--gray);font-size:.85rem;background:#f8f9fa;border-radius:8px">No results for this term</div>';
+                }
+                html += '</div>';
+            });
+
+            document.getElementById('adminStudentProfileTitle').textContent = 'Student Profile — ' + student.name;
+            document.getElementById('adminStudentProfileBody').innerHTML = html;
+            document.getElementById('adminStudentProfileModal').classList.add('active');
+        }
+
+        function adminSaveStudentPosition(studentId, cls) {
+            const val = document.getElementById('adminSrPosition').value;
+            if (!val || parseInt(val) < 1) { alert('Please enter a valid position number.'); return; }
+            const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + cls) || '{}');
+            if (!posData.positions) posData.positions = {};
+            posData.positions[studentId] = parseInt(val);
+            posData.term = posData.term || 'First Term';
+            localStorage.setItem('tba_class_positions_' + cls, JSON.stringify(posData));
+            alert('Position saved!');
+        }
+
+        function adminAddStudentResult(e, studentId) {
+            e.preventDefault();
+            const ca1 = parseInt(document.getElementById('adminSrCA1').value);
+            const ca2 = parseInt(document.getElementById('adminSrCA2').value);
+            const exam = parseInt(document.getElementById('adminSrExam').value);
+            const total = ca1 + ca2 + exam;
+            const grade = total>=70?'A':total>=60?'B':total>=50?'C':total>=40?'D':'F';
+
+            const entry = {
+                subject: document.getElementById('adminSrSubject').value,
+                term: document.getElementById('adminSrTerm').value,
+                ca1: ca1, ca2: ca2, exam: exam,
+                total: total, grade: grade,
+                teacherName: 'Admin',
+                createdAt: new Date().toISOString()
+            };
+
+            let results = JSON.parse(localStorage.getItem('tba_student_results_' + studentId) || '[]');
+            results.push(entry);
+            localStorage.setItem('tba_student_results_' + studentId, JSON.stringify(results));
+
+            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
+            const student = users.find(u => u.id === studentId);
+            if (student) {
+                let classResults = JSON.parse(localStorage.getItem('tba_results_' + student.class) || '[]');
+                classResults.push({...entry, studentId: studentId, studentName: student.name});
+                localStorage.setItem('tba_results_' + student.class, JSON.stringify(classResults));
+            }
+
+            document.getElementById('adminSrSubject').value = '';
+            document.getElementById('adminSrCA1').value = '';
+            document.getElementById('adminSrCA2').value = '';
+            document.getElementById('adminSrExam').value = '';
+            alert('Result added! Total: ' + total + ' (' + grade + ')');
+            openAdminStudentProfile(studentId);
+        }
+
+        function adminDeleteStudentResult(studentId, index) {
+            if (!confirm('Delete this result?')) return;
+            let results = JSON.parse(localStorage.getItem('tba_student_results_' + studentId) || '[]');
+            results.splice(index, 1);
+            localStorage.setItem('tba_student_results_' + studentId, JSON.stringify(results));
+
+            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
+            const student = users.find(u => u.id === studentId);
+            if (student) {
+                let classResults = JSON.parse(localStorage.getItem('tba_results_' + student.class) || '[]');
+                classResults = classResults.filter(r => r.studentId !== studentId);
+                const updatedResults = results.map(r => ({...r, studentId: studentId, studentName: student.name}));
+                classResults = classResults.concat(updatedResults);
+                localStorage.setItem('tba_results_' + student.class, JSON.stringify(classResults));
+            }
+            openAdminStudentProfile(studentId);
+        }
+
         function logout() { localStorage.removeItem('tba_currentUser'); window.location.href = 'login.html'; }
 
         document.getElementById('mobileToggle').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); });

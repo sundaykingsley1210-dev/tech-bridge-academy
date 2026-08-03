@@ -220,11 +220,17 @@
 
             <!-- Students Section -->
             <div id="studentsSection" style="display:none">
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-header"><h3><i class="fa-solid fa-users"></i> Students</h3></div>
-                        <div class="card-body"><div class="assignment-list" id="studentList"></div></div>
+                <div id="studentsByClass"></div>
+            </div>
+
+            <!-- Student Profile Modal -->
+            <div class="modal-overlay" id="studentProfileModal">
+                <div class="modal" style="max-width:700px">
+                    <div class="modal-header">
+                        <h3 id="studentProfileTitle">Student Profile</h3>
+                        <button class="modal-close" onclick="closeModal('studentProfileModal')">&times;</button>
                     </div>
+                    <div class="modal-body" id="studentProfileBody"></div>
                 </div>
             </div>
 
@@ -477,10 +483,53 @@
         function renderStudents() {
             const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
             const studs = users.filter(u => u.role==='student');
-            const c = document.getElementById('studentList');
+            const c = document.getElementById('studentsByClass');
             document.getElementById('totalStudents').textContent = studs.length;
             if (!studs.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-users"></i><p>No students yet</p></div>'; return; }
-            c.innerHTML = studs.map(s => '<div class="assignment-item" style="border-left-color:var(--accent);cursor:pointer" onclick="openStudentResult(\''+s.id+'\')"><div style="display:flex;align-items:center;gap:12px"><div class="user-avatar" style="width:40px;height:40px;font-size:.85rem">'+s.name.split(' ').map(n=>n[0]).join('')+'</div><div><h4 style="margin-bottom:2px">'+s.name+'</h4><div class="meta" style="margin-bottom:0"><span>'+s.id+'</span><span>'+s.class+'</span></div></div><i class="fa-solid fa-chevron-right" style="margin-left:auto;color:var(--gray)"></i></div></div>').join('');
+
+            const classes = ['JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+            let html = '';
+            classes.forEach(cls => {
+                const classStudents = studs.filter(s => s.class === cls);
+                if (!classStudents.length) return;
+                html += '<div style="margin-bottom:30px">';
+                html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #e9ecef">';
+                html += '<i class="fa-solid fa-layer-group" style="color:var(--primary);font-size:1.1rem"></i>';
+                html += '<h3 style="color:var(--dark);margin:0">'+cls+'</h3>';
+                html += '<span style="padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700;background:var(--primary);color:#fff">'+classStudents.length+' student'+(classStudents.length>1?'s':'')+'</span>';
+                html += '</div>';
+                html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:15px">';
+                classStudents.forEach(s => {
+                    const initials = s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
+                    const results = JSON.parse(localStorage.getItem('tba_student_results_'+s.id)||'[]');
+                    const classResults = JSON.parse(localStorage.getItem('tba_results_'+s.class)||'[]');
+                    let allResults = [...results];
+                    const keys = results.map(r=>r.subject+'|'+r.term);
+                    classResults.forEach(r => { if(!keys.includes(r.subject+'|'+(r.term||'First Term'))) allResults.push({...r,term:r.term||'First Term'}); });
+                    const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]').filter(x=>x.studentId===s.id);
+                    let subjectMap = {};
+                    allResults.forEach(r => { if(r.total){ if(!subjectMap[r.subject]) subjectMap[r.subject]={}; subjectMap[r.subject][r.term]=r.total; }});
+                    let avgs = [];
+                    Object.values(subjectMap).forEach(t => { const v=Object.values(t); if(v.length) avgs.push(Math.round(v.reduce((a,b)=>a+b,0)/v.length)); });
+                    examSubs.forEach(x => { if(x.totalMarks) avgs.push(Math.round((x.score/x.totalMarks)*100)); });
+                    const avg = avgs.length ? Math.round(avgs.reduce((a,b)=>a+b,0)/avgs.length) : null;
+                    const avgColor = avg !== null ? (avg>=70?'#38a169':avg>=50?'#d69e2e':'#e53e3e') : 'var(--gray)';
+                    html += '<div onclick="openStudentProfile(\''+s.id+'\')" style="cursor:pointer;padding:18px;background:#fff;border-radius:12px;border:2px solid #e9ecef;transition:all .2s" onmouseover="this.style.borderColor=\'var(--primary)\';this.style.boxShadow=\'0 4px 15px rgba(0,0,0,.1)\'" onmouseout="this.style.borderColor=\'#e9ecef\';this.style.boxShadow=\'none\'">';
+                    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
+                    html += '<div class="user-avatar" style="width:45px;height:45px;font-size:.85rem;background:linear-gradient(135deg,var(--primary),var(--accent))">'+initials+'</div>';
+                    html += '<div style="flex:1;min-width:0"><h4 style="margin:0;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.name+'</h4>';
+                    html += '<p style="margin:2px 0 0;font-size:.8rem;color:var(--gray)">'+s.id+'</p></div>';
+                    html += '<i class="fa-solid fa-chevron-right" style="color:var(--gray);font-size:.8rem"></i>';
+                    html += '</div>';
+                    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #f1f3f5">';
+                    html += '<span style="font-size:.8rem;color:var(--gray)"><i class="fa-solid fa-envelope" style="margin-right:4px"></i>'+(s.email||'No email')+'</span>';
+                    if (avg !== null) html += '<span style="font-size:.85rem;font-weight:700;color:'+avgColor+'">'+avg+'% avg</span>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+                html += '</div></div>';
+            });
+            c.innerHTML = html;
         }
 
         function viewAssignment(id) {
@@ -897,8 +946,8 @@
             alert('Profile updated successfully!');
         });
 
-        // Student Result Modal
-        function openStudentResult(studentId) {
+        // Student Profile Modal
+        function openStudentProfile(studentId) {
             const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
             const student = users.find(u => u.id === studentId);
             if (!student) return;
@@ -980,9 +1029,9 @@
                 html += '</div>';
             });
 
-            document.getElementById('viewModalTitle').textContent = 'Student Result — ' + student.name;
-            document.getElementById('viewModalBody').innerHTML = html;
-            document.getElementById('viewModal').classList.add('active');
+            document.getElementById('studentProfileTitle').textContent = 'Student Profile — ' + student.name;
+            document.getElementById('studentProfileBody').innerHTML = html;
+            document.getElementById('studentProfileModal').classList.add('active');
         }
 
         function saveStudentPosition(studentId, cls) {
@@ -1034,7 +1083,7 @@
             document.getElementById('srCA2').value = '';
             document.getElementById('srExam').value = '';
             alert('Result added! Total: ' + total + ' (' + grade + ')');
-            openStudentResult(studentId);
+            openStudentProfile(studentId);
         }
 
         function deleteStudentResult(studentId, index) {
