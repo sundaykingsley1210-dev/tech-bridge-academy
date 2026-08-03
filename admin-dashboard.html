@@ -1066,7 +1066,7 @@
                     classHtml += '<div style="width:36px;height:36px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.8rem">' + s.name.split(' ').map(n=>n[0]).join('') + '</div>';
                     classHtml += '<div><strong style="color:var(--dark)">' + s.name + '</strong> <span style="font-size:.8rem;color:var(--gray)">(' + s.id + ')</span></div>';
                     classHtml += '</div>';
-                    if (allTotals.length) classHtml += '<span style="padding:4px 14px;border-radius:20px;font-size:.85rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff">Avg: ' + avg + '%</span>';
+                    if (subjectAverages.length) classHtml += '<span style="padding:4px 14px;border-radius:20px;font-size:.85rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff">Avg: ' + avg + '%</span>';
                     classHtml += '</div>';
                     if (studentResults.length) {
                     classHtml += '<table class="fee-table" style="margin:0"><thead><tr><th>Subject</th><th>Term</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead><tbody>';
