@@ -122,7 +122,11 @@
                 <li><a onclick="showSection(this, 'applicationsSection')"><i class="fa-solid fa-file-lines"></i> Applications</a></li>
                 <li><a onclick="showSection(this, 'approvedSection')"><i class="fa-solid fa-circle-check"></i> Approved</a></li>
                 <li><a onclick="showSection(this, 'admittedSection')"><i class="fa-solid fa-user-check"></i> Admitted</a></li>
+                <li><a onclick="showSection(this, 'examResultsSection')"><i class="fa-solid fa-pen-to-square"></i> Exam Results</a></li>
                 <li><a onclick="showSection(this, 'feesSection')"><i class="fa-solid fa-money-bill-wave"></i> Fees</a></li>
+                <li><a onclick="showSection(this, 'examScheduleSection')"><i class="fa-solid fa-calendar-days"></i> Exam Schedule</a></li>
+                <li><a onclick="showSection(this, 'bankSection')"><i class="fa-solid fa-university"></i> Bank Details</a></li>
+                <li><a onclick="showSection(this, 'paymentSubsSection')"><i class="fa-solid fa-paper-plane"></i> Payment Submissions</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
                 <li><a onclick="showSection(this, 'adminMessagesSection')"><i class="fa-solid fa-envelope"></i> Messages</a></li>
                 <li><a onclick="showSection(this, 'adminNotificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
@@ -230,7 +234,8 @@
             </div>
 
             <!-- Fees Section -->
-            <div id="feesSection" style="display:none">
+            <!-- Exam Results Section -->
+            <div id="examResultsSection" style="display:none">
                 <div class="card" style="margin-top:25px">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-pen-to-square"></i> Exam Results</h3>
@@ -244,7 +249,10 @@
                         <div class="app-list" id="examResultsList"></div>
                     </div>
                 </div>
+            </div>
 
+            <!-- Fees Section -->
+            <div id="feesSection" style="display:none">
                 <div class="card" style="margin-top:25px">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-money-bill-wave"></i> Fee Management</h3>
@@ -257,7 +265,10 @@
                         </table>
                     </div>
                 </div>
+            </div>
 
+            <!-- Exam Schedule Section -->
+            <div id="examScheduleSection" style="display:none">
                 <div class="card" style="margin-top:25px">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-calendar-days"></i> Exam Schedule (Per Class)</h3>
@@ -270,7 +281,10 @@
                         </table>
                     </div>
                 </div>
+            </div>
 
+            <!-- Bank Details Section -->
+            <div id="bankSection" style="display:none">
                 <div class="card" style="margin-top:25px">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-university"></i> School Bank Details</h3>
@@ -287,7 +301,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
+            <!-- Payment Submissions Section -->
+            <div id="paymentSubsSection" style="display:none">
                 <div class="card" style="margin-top:25px">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-paper-plane"></i> Payment Submissions</h3>
@@ -300,20 +317,6 @@
                     </div>
                     <div class="card-body">
                         <div class="app-list" id="paymentSubsList"></div>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-top:25px">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-receipt"></i> Student Payments</h3>
-                        <div class="filter-bar">
-                            <button class="filter-btn active" onclick="filterPayments('all', this)">All</button>
-                            <button class="filter-btn" onclick="filterPayments('paid', this)">Paid</button>
-                            <button class="filter-btn" onclick="filterPayments('unpaid', this)">Unpaid</button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="app-list" id="paymentList"></div>
                     </div>
                 </div>
             </div>
@@ -1281,7 +1284,7 @@
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
 
-            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'feesSection', 'resultsSection', 'adminMessagesSection', 'adminNotificationsSection', 'resetsSection'];
+            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'examResultsSection', 'feesSection', 'examScheduleSection', 'bankSection', 'paymentSubsSection', 'resultsSection', 'adminMessagesSection', 'adminNotificationsSection', 'resetsSection'];
             sections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -1290,6 +1293,11 @@
             // Re-render when switching sections
             if (sectionId === 'approvedSection') renderApprovedList();
             if (sectionId === 'admittedSection') renderAdmittedList();
+            if (sectionId === 'examResultsSection') renderExamResults();
+            if (sectionId === 'feesSection') renderFeeTable();
+            if (sectionId === 'examScheduleSection') renderExamSchedule();
+            if (sectionId === 'bankSection') loadBankDetails();
+            if (sectionId === 'paymentSubsSection') renderPaymentSubs();
             if (sectionId === 'resultsSection') renderAdminResults();
             if (sectionId === 'adminMessagesSection') renderAdminMessages();
             if (sectionId === 'adminNotificationsSection') { renderAdminNotifCheckboxes(); renderAdminSentNotifs(); }
