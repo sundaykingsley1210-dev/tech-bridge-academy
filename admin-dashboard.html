@@ -24,7 +24,11 @@
         .top-bar{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:20px 30px;border-radius:16px;box-shadow:0 2px 15px rgba(0,0,0,.05);margin-bottom:30px}
         .top-bar h2{font-size:1.4rem;color:var(--dark)}
         .user-info{display:flex;align-items:center;gap:12px}
-        .user-avatar{width:45px;height:45px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem}
+        .user-avatar{width:45px;height:45px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;cursor:pointer;position:relative;overflow:hidden}
+        .user-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+        .user-avatar input[type="file"]{display:none}
+        .user-avatar .upload-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.5);border-radius:50%;align-items:center;justify-content:center;color:#fff;font-size:.7rem}
+        .user-avatar:hover .upload-overlay{display:flex}
         .user-details h4{font-size:.95rem;color:var(--dark)}
         .user-details span{font-size:.8rem;color:var(--gray)}
         .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:30px}
@@ -137,7 +141,12 @@
                         <h4 id="adminName">Admin</h4>
                         <span>Administrator</span>
                     </div>
-                    <div class="user-avatar" id="avatarInitials">A</div>
+                    <div class="user-avatar" id="avatarInitials" onclick="document.getElementById('profilePicInput').click()">
+                        <img id="profilePicImg" style="display:none">
+                        <span id="avatarText">AD</span>
+                        <div class="upload-overlay"><i class="fa-solid fa-camera"></i></div>
+                        <input type="file" id="profilePicInput" accept="image/*" onchange="uploadProfilePic(event)">
+                    </div>
                 </div>
             </div>
 
@@ -378,7 +387,7 @@
             const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
             document.getElementById('greeting').textContent = `${greeting}, Admin!`;
             document.getElementById('adminName').textContent = currentUser.name;
-            document.getElementById('avatarInitials').textContent = 'AD';
+            document.getElementById('avatarText').textContent = 'AD';
             renderApps();
             renderApprovedList();
             renderAdmittedList();
@@ -386,6 +395,7 @@
             renderExamSchedule();
             renderPayments();
             renderExamResults();
+            loadProfilePic();
             renderAdminResults();
             renderPaymentSubs();
             loadBankDetails();
@@ -715,17 +725,51 @@
 
             const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
             const students = users.filter(u=>u.role==='student');
-            let allTotals = [];
+            let subjectAverages = [];
             students.forEach(st => {
                 const results = JSON.parse(localStorage.getItem('tba_student_results_'+st.id)||'[]');
-                results.forEach(r => { if(r.total) allTotals.push(r.total); });
+                const subjectMap = {};
+                results.forEach(r => {
+                    if (r.total) {
+                        if (!subjectMap[r.subject]) subjectMap[r.subject] = {};
+                        subjectMap[r.subject][r.term] = r.total;
+                    }
+                });
+                Object.values(subjectMap).forEach(termTotals => {
+                    const totals = Object.values(termTotals);
+                    if (totals.length) subjectAverages.push(Math.round(totals.reduce((a,b)=>a+b,0)/totals.length));
+                });
             });
             const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]');
-            examSubs.forEach(s => { if(s.totalMarks) allTotals.push(Math.round((s.score/s.totalMarks)*100)); });
-            if (allTotals.length) {
-                document.getElementById('schoolAvg').textContent = Math.round(allTotals.reduce((a,b)=>a+b,0)/allTotals.length)+'%';
+            examSubs.forEach(s => { if(s.totalMarks) subjectAverages.push(Math.round((s.score/s.totalMarks)*100)); });
+            if (subjectAverages.length) {
+                document.getElementById('schoolAvg').textContent = Math.round(subjectAverages.reduce((a,b)=>a+b,0)/subjectAverages.length)+'%';
             } else {
                 document.getElementById('schoolAvg').textContent = '--';
+            }
+        }
+
+        function uploadProfilePic(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
+            if (file.size > 2 * 1024 * 1024) { alert('Image must be less than 2MB'); return; }
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                localStorage.setItem('tba_profile_pic_admin', ev.target.result);
+                loadProfilePic();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function loadProfilePic() {
+            const pic = localStorage.getItem('tba_profile_pic_admin');
+            const img = document.getElementById('profilePicImg');
+            const text = document.getElementById('avatarText');
+            if (pic && img && text) {
+                img.src = pic;
+                img.style.display = 'block';
+                text.style.display = 'none';
             }
         }
 
