@@ -963,6 +963,8 @@
             const student = users.find(u => u.id === studentId);
             if (!student) return;
 
+            const profilePic = localStorage.getItem('tba_profile_pic_' + studentId);
+
             const individual = JSON.parse(localStorage.getItem('tba_student_results_' + studentId) || '[]');
             const classResults = JSON.parse(localStorage.getItem('tba_results_' + student.class) || '[]');
             let myResults = [...individual];
@@ -975,12 +977,36 @@
             });
             const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + student.class) || '{}');
             const currentPos = posData.positions ? (posData.positions[studentId] || '') : '';
+            const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]').filter(s=>s.studentId===studentId);
+            const submissions = JSON.parse(localStorage.getItem('tba_submissions')||'[]').filter(s=>s.studentId===studentId);
+            const payments = JSON.parse(localStorage.getItem('tba_payments')||'{}');
+            const isPaid = payments[studentId] === true;
 
-            let html = '<div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid #e9ecef">';
-            html += '<div class="user-avatar" style="width:50px;height:50px;font-size:1rem">'+student.name.split(' ').map(n=>n[0]).join('')+'</div>';
-            html += '<div><h4>'+student.name+'</h4><div class="meta"><span>'+student.id+'</span><span>'+student.class+'</span></div></div></div>';
+            let html = '';
 
-            // Average score across all terms (same logic as student dashboard)
+            // Profile header
+            html += '<div style="text-align:center;padding:25px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:15px;margin-bottom:20px;color:#fff">';
+            if (profilePic) {
+                html += '<img src="'+profilePic+'" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.5);margin-bottom:10px">';
+            } else {
+                html += '<div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.2);display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;margin-bottom:10px;border:3px solid rgba(255,255,255,.5)">'+student.name.split(' ').map(n=>n[0]).join('')+'</div>';
+            }
+            html += '<h3 style="margin:0">'+student.name+'</h3>';
+            html += '<p style="margin:5px 0 0;opacity:.9">'+student.id+' | '+student.class+'</p>';
+            html += '</div>';
+
+            // Info cards
+            html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px">';
+            html += '<div style="padding:12px;background:#f8f9fa;border-radius:10px;text-align:center"><i class="fa-solid fa-layer-group" style="color:var(--primary);font-size:1.1rem"></i><p style="margin:5px 0 0;font-size:.75rem;color:var(--gray)">Class</p><p style="margin:2px 0 0;font-weight:700">'+student.class+'</p></div>';
+            html += '<div style="padding:12px;background:#f8f9fa;border-radius:10px;text-align:center"><i class="fa-solid fa-venus-mars" style="color:var(--accent);font-size:1.1rem"></i><p style="margin:5px 0 0;font-size:.75rem;color:var(--gray)">Gender</p><p style="margin:2px 0 0;font-weight:700">'+(student.gender||'N/A')+'</p></div>';
+            html += '<div style="padding:12px;background:#f8f9fa;border-radius:10px;text-align:center"><i class="fa-solid fa-envelope" style="color:#e53e3e;font-size:1.1rem"></i><p style="margin:5px 0 0;font-size:.75rem;color:var(--gray)">Email</p><p style="margin:2px 0 0;font-weight:700;font-size:.8rem">'+(student.email||'N/A')+'</p></div>';
+            html += '<div style="padding:12px;background:#f8f9fa;border-radius:10px;text-align:center"><i class="fa-solid fa-trophy" style="color:#d69e2e;font-size:1.1rem"></i><p style="margin:5px 0 0;font-size:.75rem;color:var(--gray)">Position</p><p style="margin:2px 0 0;font-weight:700">'+(currentPos||'-')+' in '+student.class+'</p></div>';
+            html += '<div style="padding:12px;background:#f8f9fa;border-radius:10px;text-align:center"><i class="fa-solid fa-receipt" style="color:#38a169;font-size:1.1rem"></i><p style="margin:5px 0 0;font-size:.75rem;color:var(--gray)">Fee Status</p><p style="margin:2px 0 0;font-weight:700">'+(isPaid?'<span style="color:#38a169">Paid</span>':'<span style="color:#e53e3e">Unpaid</span>')+'</p></div>';
+            html += '<div style="padding:12px;background:#f8f9fa;border-radius:10px;text-align:center"><i class="fa-solid fa-pen-to-square" style="color:#1e40af;font-size:1.1rem"></i><p style="margin:5px 0 0;font-size:.75rem;color:var(--gray)">Exams Taken</p><p style="margin:2px 0 0;font-weight:700">'+examSubs.length+'</p></div>';
+            html += '<div style="padding:12px;background:#f8f9fa;border-radius:10px;text-align:center"><i class="fa-solid fa-paper-plane" style="color:#7c3aed;font-size:1.1rem"></i><p style="margin:5px 0 0;font-size:.75rem;color:var(--gray)">Submissions</p><p style="margin:2px 0 0;font-weight:700">'+submissions.length+'</p></div>';
+            html += '</div>';
+
+            // Average score
             const subjectMap = {};
             myResults.forEach(r => {
                 if (r.total) {
@@ -993,10 +1019,10 @@
                 const totals = Object.values(termTotals);
                 if (totals.length) subjectAverages.push(Math.round(totals.reduce((a,b)=>a+b,0)/totals.length));
             });
-            const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]').filter(s=>s.studentId===studentId);
             examSubs.forEach(s => { if(s.totalMarks) subjectAverages.push(Math.round((s.score/s.totalMarks)*100)); });
             if (subjectAverages.length) {
                 const avg = Math.round(subjectAverages.reduce((a,b)=>a+b,0)/subjectAverages.length);
+                const avgColor = avg>=70?'#38a169':avg>=50?'#d69e2e':'#e53e3e';
                 html += '<div style="padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;margin-bottom:20px;color:#fff;text-align:center">';
                 html += '<h4 style="margin-bottom:5px;font-size:.9rem;opacity:.9"><i class="fa-solid fa-chart-line"></i> Overall Average</h4>';
                 html += '<div style="font-size:2rem;font-weight:800">'+avg+'%</div></div>';
@@ -1030,7 +1056,6 @@
                 if (termResults.length) {
                     termResults.forEach((r, i) => {
                         const gc = r.grade==='A'?'#38ef7d':r.grade==='B'?'#74b9ff':r.grade==='C'?'#ffd93d':'#ff6b6b';
-                        const bg = r.grade==='A'?'#d4edda':r.grade==='B'?'#cce5ff':r.grade==='C'?'#fff3cd':'#f8d7da';
                         const globalIdx = myResults.indexOf(r);
                         html += '<div style="padding:10px 15px;background:#f8f9fa;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:4px solid '+gc+'"><div><strong>'+r.subject+'</strong><div class="meta" style="margin-top:4px"><span>CA1: '+r.ca1+'</span><span>CA2: '+r.ca2+'</span><span>Exam: '+r.exam+'</span></div></div><div style="text-align:right"><div style="font-size:1.2rem;font-weight:700;color:var(--dark)">'+r.total+'</div><div style="font-size:.85rem;font-weight:600;color:'+(r.grade==='A'?'#38a169':r.grade==='B'?'#3182ce':r.grade==='C'?'#d69e2e':'#e53e3e')+'">'+r.grade+'</div></div><button onclick="deleteStudentResult(\''+studentId+'\','+globalIdx+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.85rem;margin-left:10px" title="Delete"><i class="fa-solid fa-trash"></i></button></div>';
                     });
@@ -1039,6 +1064,17 @@
                 }
                 html += '</div>';
             });
+
+            // Exam submissions
+            if (examSubs.length) {
+                html += '<div style="margin-top:20px"><h4 style="margin-bottom:10px;color:var(--primary)"><i class="fa-solid fa-pen-to-square"></i> Exam Submissions</h4>';
+                examSubs.forEach(s => {
+                    const pct = s.totalMarks ? Math.round((s.score/s.totalMarks)*100) : 0;
+                    const sc = pct>=70?'#38a169':pct>=50?'#d69e2e':'#e53e3e';
+                    html += '<div style="padding:10px 15px;background:#f8f9fa;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><div><strong>'+s.subject+'</strong><span style="font-size:.8rem;color:var(--gray);margin-left:8px">'+s.term+'</span></div><div style="display:flex;align-items:center;gap:10px"><span style="font-weight:700;color:'+sc+'">'+pct+'%</span>'+(s.graded?'<span style="padding:3px 8px;border-radius:10px;font-size:.7rem;background:#d4edda;color:#155724">Graded</span>':'<span style="padding:3px 8px;border-radius:10px;font-size:.7rem;background:#fff3cd;color:#856404">Pending</span>')+'</div></div>';
+                });
+                html += '</div>';
+            }
 
             document.getElementById('studentProfileTitle').textContent = 'Student Profile — ' + student.name;
             document.getElementById('studentProfileBody').innerHTML = html;
