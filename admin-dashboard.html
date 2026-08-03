@@ -717,31 +717,6 @@
             document.getElementById('pendingApps').textContent = apps.filter(a => a.status === 'Pending').length;
             document.getElementById('approvedApps').textContent = apps.filter(a => a.status === 'Approved').length;
             document.getElementById('admittedApps').textContent = apps.filter(a => a.status === 'Admitted').length;
-
-            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
-            const students = users.filter(u=>u.role==='student');
-            let subjectAverages = [];
-            students.forEach(st => {
-                const results = JSON.parse(localStorage.getItem('tba_student_results_'+st.id)||'[]');
-                const subjectMap = {};
-                results.forEach(r => {
-                    if (r.total) {
-                        if (!subjectMap[r.subject]) subjectMap[r.subject] = {};
-                        subjectMap[r.subject][r.term] = r.total;
-                    }
-                });
-                Object.values(subjectMap).forEach(termTotals => {
-                    const totals = Object.values(termTotals);
-                    if (totals.length) subjectAverages.push(Math.round(totals.reduce((a,b)=>a+b,0)/totals.length));
-                });
-            });
-            const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]');
-            examSubs.forEach(s => { if(s.totalMarks) subjectAverages.push(Math.round((s.score/s.totalMarks)*100)); });
-            if (subjectAverages.length) {
-                document.getElementById('schoolAvg').textContent = Math.round(subjectAverages.reduce((a,b)=>a+b,0)/subjectAverages.length)+'%';
-            } else {
-                document.getElementById('schoolAvg').textContent = '--';
-            }
         }
 
         function uploadProfilePic(e) {
