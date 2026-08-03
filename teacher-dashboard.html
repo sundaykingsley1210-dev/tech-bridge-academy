@@ -330,6 +330,10 @@
                     <div class="card" style="grid-column:span 2">
                         <div class="card-header"><h3><i class="fa-solid fa-chart-bar"></i> Upload Student Results</h3><span class="status-badge status-active" id="resultCount">0</span></div>
                         <div class="card-body">
+                            <div style="padding:12px 16px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+                                <div><strong><i class="fa-solid fa-bolt"></i> Quick Action</strong><p style="font-size:.82rem;opacity:.9;margin-top:2px">Generate second & third term results for all students based on their first term scores</p></div>
+                                <button onclick="generateTermResults()" style="background:#fff;color:var(--primary);border:none;padding:10px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate All Terms</button>
+                            </div>
                             <form id="resultForm" onsubmit="addResult(event)">
                                 <div class="form-row">
                                     <div class="form-group"><label>Class *</label><select id="resClass" required><option value="">Select Class</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
@@ -748,6 +752,45 @@
             if (total >= 50) return 'C';
             if (total >= 40) return 'D';
             return 'F';
+        }
+
+        function generateTermResults() {
+            if (!confirm('This will generate second and third term results for ALL students based on their first term scores. Continue?')) return;
+            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
+            const students = users.filter(u=>u.role==='student');
+            let count = 0;
+            students.forEach(st => {
+                const results = JSON.parse(localStorage.getItem('tba_student_results_'+st.id)||'[]');
+                const firstTermResults = results.filter(r=>r.term==='First Term');
+                if (!firstTermResults.length) return;
+                const existingTerms = results.map(r=>r.term);
+                ['Second Term','Third Term'].forEach(term => {
+                    if (existingTerms.includes(term)) return;
+                    firstTermResults.forEach(r => {
+                        const variation = Math.floor(Math.random()*11) - 5;
+                        const newCA1 = Math.max(0, Math.min(20, r.ca1 + variation));
+                        const newCA2 = Math.max(0, Math.min(20, r.ca2 + variation));
+                        const newExam = Math.max(0, Math.min(60, r.exam + variation));
+                        const newTotal = newCA1 + newCA2 + newExam;
+                        results.push({
+                            subject: r.subject,
+                            term: term,
+                            ca1: newCA1,
+                            ca2: newCA2,
+                            exam: newExam,
+                            total: newTotal,
+                            grade: calcGrade(newTotal),
+                            teacherName: currentUser.name,
+                            createdAt: new Date().toISOString()
+                        });
+                        count++;
+                    });
+                });
+                localStorage.setItem('tba_student_results_'+st.id, JSON.stringify(results));
+            });
+            syncResultsToStudents();
+            renderResultList();
+            alert('Generated ' + count + ' new results across all students!');
         }
 
         function addResult(e) {
