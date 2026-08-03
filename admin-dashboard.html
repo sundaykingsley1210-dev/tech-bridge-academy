@@ -127,6 +127,7 @@
                 <li><a onclick="showSection(this, 'examScheduleSection')"><i class="fa-solid fa-calendar-days"></i> Exam Schedule</a></li>
                 <li><a onclick="showSection(this, 'bankSection')"><i class="fa-solid fa-university"></i> Bank Details</a></li>
                 <li><a onclick="showSection(this, 'paymentSubsSection')"><i class="fa-solid fa-paper-plane"></i> Payment Submissions</a></li>
+                <li><a onclick="showSection(this, 'studentPaymentsSection')"><i class="fa-solid fa-receipt"></i> Student Payments</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
                 <li><a onclick="showSection(this, 'adminMessagesSection')"><i class="fa-solid fa-envelope"></i> Messages</a></li>
                 <li><a onclick="showSection(this, 'adminNotificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
@@ -317,6 +318,23 @@
                     </div>
                     <div class="card-body">
                         <div class="app-list" id="paymentSubsList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Payments Section -->
+            <div id="studentPaymentsSection" style="display:none">
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-receipt"></i> Student Payments</h3>
+                        <div class="filter-bar">
+                            <button class="filter-btn active" onclick="filterPayments('all', this)">All</button>
+                            <button class="filter-btn" onclick="filterPayments('paid', this)">Paid</button>
+                            <button class="filter-btn" onclick="filterPayments('unpaid', this)">Unpaid</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="app-list" id="paymentList"></div>
                     </div>
                 </div>
             </div>
@@ -1284,7 +1302,7 @@
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
 
-            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'examResultsSection', 'feesSection', 'examScheduleSection', 'bankSection', 'paymentSubsSection', 'resultsSection', 'adminMessagesSection', 'adminNotificationsSection', 'resetsSection'];
+            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'examResultsSection', 'feesSection', 'examScheduleSection', 'bankSection', 'paymentSubsSection', 'studentPaymentsSection', 'resultsSection', 'adminMessagesSection', 'adminNotificationsSection', 'resetsSection'];
             sections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -1298,6 +1316,7 @@
             if (sectionId === 'examScheduleSection') renderExamSchedule();
             if (sectionId === 'bankSection') loadBankDetails();
             if (sectionId === 'paymentSubsSection') renderPaymentSubs();
+            if (sectionId === 'studentPaymentsSection') renderPayments();
             if (sectionId === 'resultsSection') renderAdminResults();
             if (sectionId === 'adminMessagesSection') renderAdminMessages();
             if (sectionId === 'adminNotificationsSection') { renderAdminNotifCheckboxes(); renderAdminSentNotifs(); }
