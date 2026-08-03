@@ -124,7 +124,6 @@
                 <li><a onclick="showSection(this, 'admittedSection')"><i class="fa-solid fa-user-check"></i> Admitted</a></li>
                 <li><a onclick="showSection(this, 'feesSection')"><i class="fa-solid fa-money-bill-wave"></i> Fees</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
-                <li><a onclick="showSection(this, 'adminSubmissionsSection')"><i class="fa-solid fa-paper-plane"></i> Submissions</a></li>
                 <li><a onclick="showSection(this, 'adminMessagesSection')"><i class="fa-solid fa-envelope"></i> Messages</a></li>
                 <li><a onclick="showSection(this, 'resetsSection')"><i class="fa-solid fa-key"></i> Password Resets</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Home</a></li>
@@ -345,23 +344,6 @@
                 </div>
             </div>
 
-            <!-- Password Resets Section -->
-            <div id="adminSubmissionsSection" style="display:none">
-                <div class="card" style="margin-top:25px">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-paper-plane"></i> Student Submissions</h3>
-                        <div class="filter-bar">
-                            <button class="filter-btn active" onclick="filterAdminSubs('all', this)">All</button>
-                            <button class="filter-btn" onclick="filterAdminSubs('pending', this)">Pending</button>
-                            <button class="filter-btn" onclick="filterAdminSubs('graded', this)">Graded</button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div id="adminSubmissionsList"></div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Admin Messages Section -->
             <div id="adminMessagesSection" style="display:none">
                 <div class="card" style="margin-top:25px">
@@ -429,7 +411,6 @@
             renderExamResults();
             loadProfilePic();
             renderAdminResults();
-            renderAdminSubmissions();
             renderPaymentSubs();
             loadBankDetails();
             updateStats();
@@ -1175,57 +1156,6 @@
             renderAdminResults();
         }
 
-        let adminSubsFilter = 'all';
-
-        function filterAdminSubs(filter, btn) {
-            adminSubsFilter = filter;
-            document.querySelectorAll('#adminSubmissionsSection .filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderAdminSubmissions();
-        }
-
-        function renderAdminSubmissions() {
-            const subs = JSON.parse(localStorage.getItem('tba_submissions') || '[]');
-            const c = document.getElementById('adminSubmissionsList');
-            let filtered = subs;
-            if (adminSubsFilter === 'pending') filtered = subs.filter(s => !s.graded);
-            else if (adminSubsFilter === 'graded') filtered = subs.filter(s => s.graded);
-
-            if (!filtered.length) {
-                c.innerHTML = '<div class="no-data"><i class="fa-solid fa-inbox"></i><p>No submissions found</p></div>';
-                return;
-            }
-
-            c.innerHTML = filtered.slice().reverse().map(s => {
-                let totalScore = 0, maxPossible = 0;
-                if (s.answers && s.answers.length) {
-                    s.answers.forEach(a => { if (a.score !== undefined) totalScore += a.score; maxPossible += 10; });
-                }
-                const statusColor = s.graded ? '#155724' : '#856404';
-                const statusBg = s.graded ? '#d4edda' : '#fff3cd';
-                const statusLabel = s.graded ? 'Graded (' + totalScore + '/' + maxPossible + ')' : 'Pending Review';
-
-                return `
-                <div class="app-item" style="border-left-color:${statusColor}">
-                    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
-                        <div>
-                            <h4>${s.assignmentTitle}</h4>
-                            <div class="meta">
-                                <span><i class="fa-solid fa-user-graduate"></i> ${s.studentName}</span>
-                                <span><i class="fa-solid fa-id-card"></i> ${s.studentId}</span>
-                                <span><i class="fa-solid fa-layer-group"></i> ${s.studentClass}</span>
-                                <span><i class="fa-solid fa-book"></i> ${s.subject}</span>
-                                <span><i class="fa-solid fa-chalkboard-user"></i> ${s.teacherName}</span>
-                                <span><i class="fa-solid fa-clock"></i> ${new Date(s.submittedAt).toLocaleString()}</span>
-                            </div>
-                        </div>
-                        <span style="padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:600;color:${statusColor};background:${statusBg}">${statusLabel}</span>
-                    </div>
-                    ${s.answers && s.answers.length ? '<div style="margin-top:12px">' + s.answers.map((a, i) => '<div style="padding:8px 12px;background:#f8f9fa;border-radius:8px;margin-bottom:6px;border-left:3px solid var(--primary)"><strong style="font-size:.8rem;color:var(--primary)">Q' + (i+1) + ':</strong> <span style="font-size:.9rem;color:#555">' + (a.answer || 'N/A') + '</span>' + (a.feedback ? '<br><span style="font-size:.8rem;color:#155724"><i class="fa-solid fa-comment"></i> Feedback: ' + a.feedback + '</span>' : '') + '</div>').join('') + '</div>' : ''}
-                </div>`;
-            }).join('');
-        }
-
         function renderAdminMessages() {
             const messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
             const c = document.getElementById('adminMessagesList');
@@ -1278,7 +1208,7 @@
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
 
-            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'feesSection', 'resultsSection', 'adminSubmissionsSection', 'adminMessagesSection', 'resetsSection'];
+            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'feesSection', 'resultsSection', 'adminMessagesSection', 'resetsSection'];
             sections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -1288,7 +1218,6 @@
             if (sectionId === 'approvedSection') renderApprovedList();
             if (sectionId === 'admittedSection') renderAdmittedList();
             if (sectionId === 'resultsSection') renderAdminResults();
-            if (sectionId === 'adminSubmissionsSection') renderAdminSubmissions();
             if (sectionId === 'adminMessagesSection') renderAdminMessages();
             if (sectionId === 'resetsSection') renderResetsList();
         }
