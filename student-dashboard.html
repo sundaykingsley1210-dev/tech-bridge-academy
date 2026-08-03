@@ -217,10 +217,16 @@
                                 </table>
                             </div>
                             <div class="tab-content" id="secondTerm">
-                                <div class="no-data"><i class="fa-solid fa-clock"></i><p>Second term results not yet available</p></div>
+                                <table class="result-table">
+                                    <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
+                                    <tbody id="resultsBody5"></tbody>
+                                </table>
                             </div>
                             <div class="tab-content" id="thirdTerm">
-                                <div class="no-data"><i class="fa-solid fa-clock"></i><p>Third term results not yet available</p></div>
+                                <table class="result-table">
+                                    <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
+                                    <tbody id="resultsBody6"></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -552,9 +558,9 @@
         function renderResults() {
             const results = getResults();
             const terms = [
-                { name: 'First Term', bodyId: 'resultsBody2' },
-                { name: 'Second Term', bodyId: 'resultsBody3' },
-                { name: 'Third Term', bodyId: 'resultsBody4' }
+                { name: 'First Term', bodyIds: ['resultsBody', 'resultsBody2'] },
+                { name: 'Second Term', bodyIds: ['resultsBody5', 'resultsBody3'] },
+                { name: 'Third Term', bodyIds: ['resultsBody6', 'resultsBody4'] }
             ];
 
             // Calculate combined average per subject across all terms
@@ -582,22 +588,24 @@
             }
 
             terms.forEach(term => {
-                const tbody = document.getElementById(term.bodyId);
-                if (!tbody) return;
                 const termResults = results.filter(r => r.term === term.name);
-                if (!termResults.length) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--gray);font-size:.85rem">No results for ' + term.name + '</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = termResults.map(r => {
-                    const gradeClass = r.grade === 'A' ? 'grade-a' : r.grade === 'B' ? 'grade-b' : r.grade === 'C' ? 'grade-c' : 'grade-d';
-                    return `<tr>
-                        <td><strong>${r.subject}</strong></td>
-                        <td>${r.ca1}</td><td>${r.ca2}</td><td>${r.exam}</td>
-                        <td><strong>${r.total}</strong></td>
-                        <td><span class="grade-badge ${gradeClass}">${r.grade}</span></td>
-                    </tr>`;
-                }).join('');
+                term.bodyIds.forEach(bodyId => {
+                    const tbody = document.getElementById(bodyId);
+                    if (!tbody) return;
+                    if (!termResults.length) {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--gray);font-size:.85rem">No results for ' + term.name + '</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = termResults.map(r => {
+                        const gradeClass = r.grade === 'A' ? 'grade-a' : r.grade === 'B' ? 'grade-b' : r.grade === 'C' ? 'grade-c' : 'grade-d';
+                        return `<tr>
+                            <td><strong>${r.subject}</strong></td>
+                            <td>${r.ca1}</td><td>${r.ca2}</td><td>${r.exam}</td>
+                            <td><strong>${r.total}</strong></td>
+                            <td><span class="grade-badge ${gradeClass}">${r.grade}</span></td>
+                        </tr>`;
+                    }).join('');
+                });
             });
         }
 
