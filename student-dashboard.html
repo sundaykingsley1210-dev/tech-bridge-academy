@@ -260,21 +260,18 @@
                                 <button class="tab-btn" onclick="switchTab(this,'thirdTerm2')">Third Term</button>
                             </div>
                             <div class="tab-content active" id="firstTerm2">
-                                <div id="firstTermAvg" style="display:none;padding:8px 14px;background:#f0f7ff;border-radius:8px;margin-bottom:10px;font-size:.85rem;font-weight:600;color:var(--primary)"></div>
                                 <table class="result-table">
                                     <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
                                     <tbody id="resultsBody2"></tbody>
                                 </table>
                             </div>
                             <div class="tab-content" id="secondTerm2">
-                                <div id="secondTermAvg" style="display:none;padding:8px 14px;background:#f0f7ff;border-radius:8px;margin-bottom:10px;font-size:.85rem;font-weight:600;color:var(--primary)"></div>
                                 <table class="result-table">
                                     <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
                                     <tbody id="resultsBody3"></tbody>
                                 </table>
                             </div>
                             <div class="tab-content" id="thirdTerm2">
-                                <div id="thirdTermAvg" style="display:none;padding:8px 14px;background:#f0f7ff;border-radius:8px;margin-bottom:10px;font-size:.85rem;font-weight:600;color:var(--primary)"></div>
                                 <table class="result-table">
                                     <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
                                     <tbody id="resultsBody4"></tbody>
@@ -562,28 +559,42 @@
         function renderResults() {
             const results = getResults();
             const terms = [
-                { name: 'First Term', bodyId: 'resultsBody2', avgId: 'firstTermAvg' },
-                { name: 'Second Term', bodyId: 'resultsBody3', avgId: 'secondTermAvg' },
-                { name: 'Third Term', bodyId: 'resultsBody4', avgId: 'thirdTermAvg' }
+                { name: 'First Term', bodyId: 'resultsBody2' },
+                { name: 'Second Term', bodyId: 'resultsBody3' },
+                { name: 'Third Term', bodyId: 'resultsBody4' }
             ];
-            let allTotals = [];
+
+            // Calculate combined average per subject across all terms
+            const subjectMap = {};
+            results.forEach(r => {
+                if (!subjectMap[r.subject]) subjectMap[r.subject] = {};
+                subjectMap[r.subject][r.term] = r.total;
+            });
+            let subjectAverages = [];
+            Object.keys(subjectMap).forEach(subj => {
+                const termTotals = Object.values(subjectMap[subj]);
+                if (termTotals.length) {
+                    subjectAverages.push(Math.round(termTotals.reduce((a,b)=>a+b,0)/termTotals.length));
+                }
+            });
+            const combinedAvg = subjectAverages.length ? Math.round(subjectAverages.reduce((a,b)=>a+b,0)/subjectAverages.length) : 0;
+
+            const overallBanner = document.getElementById('overallAvgBanner');
+            const overallScore = document.getElementById('overallAvgScore');
+            if (combinedAvg && overallBanner && overallScore) {
+                overallBanner.style.display = 'block';
+                overallScore.textContent = combinedAvg + '%';
+            } else if (overallBanner) {
+                overallBanner.style.display = 'none';
+            }
 
             terms.forEach(term => {
                 const tbody = document.getElementById(term.bodyId);
-                const avgEl = document.getElementById(term.avgId);
                 if (!tbody) return;
                 const termResults = results.filter(r => r.term === term.name);
                 if (!termResults.length) {
                     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--gray);font-size:.85rem">No results for ' + term.name + '</td></tr>';
-                    if (avgEl) avgEl.style.display = 'none';
                     return;
-                }
-                const termTotals = termResults.map(r => r.total);
-                allTotals = allTotals.concat(termTotals);
-                const termAvg = Math.round(termTotals.reduce((a,b)=>a+b,0)/termTotals.length);
-                if (avgEl) {
-                    avgEl.style.display = 'block';
-                    avgEl.innerHTML = '<i class="fa-solid fa-chart-line"></i> ' + term.name + ' Average: <strong>' + termAvg + '%</strong>';
                 }
                 tbody.innerHTML = termResults.map(r => {
                     const gradeClass = r.grade === 'A' ? 'grade-a' : r.grade === 'B' ? 'grade-b' : r.grade === 'C' ? 'grade-c' : 'grade-d';
@@ -595,15 +606,6 @@
                     </tr>`;
                 }).join('');
             });
-
-            const overallBanner = document.getElementById('overallAvgBanner');
-            const overallScore = document.getElementById('overallAvgScore');
-            if (allTotals.length && overallBanner && overallScore) {
-                overallBanner.style.display = 'block';
-                overallScore.textContent = Math.round(allTotals.reduce((a,b)=>a+b,0)/allTotals.length) + '%';
-            } else if (overallBanner) {
-                overallBanner.style.display = 'none';
-            }
         }
 
         function renderResultsSection() {
