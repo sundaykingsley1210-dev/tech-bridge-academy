@@ -152,6 +152,7 @@
                 <li><a onclick="showSection(this, 'assignmentsSection')"><i class="fa-solid fa-book"></i> Assignments</a></li>
                 <li><a onclick="showSection(this, 'messageSection')"><i class="fa-solid fa-envelope"></i> Message Admin</a></li>
                 <li><a onclick="showSection(this, 'takeExamSection')"><i class="fa-solid fa-pen-to-square"></i> Take Exam</a></li>
+                <li><a onclick="showSection(this, 'examScheduleSection')"><i class="fa-solid fa-calendar-days"></i> Exam Schedule</a></li>
                 <li><a onclick="showSection(this, 'notificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
                 <li><a onclick="showSection(this, 'paymentSection')"><i class="fa-solid fa-money-bill-wave"></i> Fee & Payment</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Back to Home</a></li>
@@ -389,6 +390,20 @@
                         </div>
                         <div class="card-body">
                             <div id="availableExamsList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exam Schedule Section -->
+            <div id="examScheduleSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-calendar-days"></i> Exam Schedule</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="examScheduleList"></div>
                         </div>
                     </div>
                 </div>
@@ -800,6 +815,7 @@
         function renderAvailableExams() {
             const allQuestions = JSON.parse(localStorage.getItem('tba_exam_questions') || '[]');
             const mySubmissions = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]');
+            const schedule = JSON.parse(localStorage.getItem('tba_exam_schedule') || '{}');
             const c = document.getElementById('availableExamsList');
 
             // Group questions by class+subject+term
@@ -819,22 +835,91 @@
                 return;
             }
 
+            const classSchedule = schedule[currentUser.class] || {};
+            const schedDate = classSchedule.date || '';
+            const schedTime = classSchedule.time || '';
+
             c.innerHTML = examKeys.map((key, i) => {
                 const exam = exams[key];
                 const submitted = mySubmissions.find(s => s.studentId === currentUser.id && s.subject === exam.subject && s.term === exam.term);
                 const graded = submitted && submitted.graded;
+                let scheduleHtml = '';
+                if (schedDate) {
+                    const d = new Date(schedDate + 'T' + (schedTime || '00:00'));
+                    scheduleHtml = '<div style="margin-top:8px;padding:8px 12px;background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe;display:inline-flex;align-items:center;gap:8px"><i class="fa-solid fa-clock" style="color:#1e40af"></i><span style="font-size:.82rem;font-weight:600;color:#1e40af">Scheduled: ' + d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}) + ' at ' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) + '</span></div>';
+                }
                 return '<div class="assignment-item" style="border-left-color:' + (graded ? '#38ef7d' : submitted ? '#ffd93d' : '#1e40af') + '">' +
                     '<div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">' +
                     '<div><h4><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#1e40af;color:#fff;font-size:.78rem;font-weight:700;margin-right:6px;flex-shrink:0">' + (i + 1) + '</span> ' + exam.subject + ' Exam</h4>' +
                     '<div class="meta"><span><i class="fa-solid fa-layer-group"></i> ' + exam.class + '</span>' +
                     '<span><i class="fa-solid fa-calendar"></i> ' + exam.term + '</span>' +
                     '<span><i class="fa-solid fa-list"></i> ' + exam.questions.length + ' Questions</span>' +
-                    '<span><i class="fa-solid fa-star"></i> ' + exam.totalMarks + ' Marks</span></div></div>' +
+                    '<span><i class="fa-solid fa-star"></i> ' + exam.totalMarks + ' Marks</span></div>' +
+                    scheduleHtml + '</div>' +
                     '<div>' + (graded ? '<span style="padding:6px 14px;border-radius:20px;font-size:.82rem;font-weight:700;background:#d4edda;color:#155724">' + Math.round((submitted.score / submitted.totalMarks) * 100) + '% (' + submitted.grade + ')</span>' :
                     submitted ? '<span style="padding:6px 14px;border-radius:20px;font-size:.82rem;font-weight:600;background:#fff3cd;color:#856404">Submitted — Awaiting Grade</span>' :
                     '<button class="btn-create" style="padding:8px 16px;font-size:.82rem" onclick="startExam(\'' + key + '\')"><i class="fa-solid fa-play"></i> Start Exam</button>') +
                     '</div></div></div>';
             }).join('');
+        }
+
+        function renderStudentExamSchedule() {
+            const schedule = JSON.parse(localStorage.getItem('tba_exam_schedule') || '{}');
+            const allQuestions = JSON.parse(localStorage.getItem('tba_exam_questions') || '[]');
+            const mySubmissions = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]');
+            const c = document.getElementById('examScheduleList');
+            const myClass = currentUser.class;
+
+            const classSchedule = schedule[myClass];
+            if (!classSchedule || !classSchedule.date) {
+                c.innerHTML = '<div class="no-data"><i class="fa-solid fa-calendar-days"></i><p>No exam scheduled for your class yet</p></div>';
+                return;
+            }
+
+            const schedDate = new Date(classSchedule.date + 'T' + (classSchedule.time || '00:00'));
+            const now = new Date();
+            const isPast = schedDate < now;
+
+            // Get exam info for this class
+            const classExams = allQuestions.filter(q => q.class === myClass);
+            const subjects = [...new Set(classExams.map(q => q.subject))];
+            const totalQuestions = classExams.length;
+            const totalMarks = classExams.reduce((a, q) => a + q.marks, 0);
+
+            let html = '<div style="padding:25px;background:linear-gradient(135deg,#1e40af,#7c3aed);border-radius:15px;color:#fff;margin-bottom:20px">';
+            html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:15px"><i class="fa-solid fa-calendar-days" style="font-size:1.5rem"></i><h3 style="margin:0">' + myClass + ' Exam Schedule</h3></div>';
+            html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px">';
+            html += '<div style="padding:15px;background:rgba(255,255,255,.15);border-radius:10px"><p style="margin:0;font-size:.8rem;opacity:.8">Date</p><p style="margin:4px 0 0;font-size:1.1rem;font-weight:700">' + schedDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) + '</p></div>';
+            html += '<div style="padding:15px;background:rgba(255,255,255,.15);border-radius:10px"><p style="margin:0;font-size:.8rem;opacity:.8">Time</p><p style="margin:4px 0 0;font-size:1.1rem;font-weight:700">' + schedDate.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) + '</p></div>';
+            html += '<div style="padding:15px;background:rgba(255,255,255,.15);border-radius:10px"><p style="margin:0;font-size:.8rem;opacity:.8">Subjects</p><p style="margin:4px 0 0;font-size:1.1rem;font-weight:700">' + (subjects.length || 'None') + '</p></div>';
+            html += '<div style="padding:15px;background:rgba(255,255,255,.15);border-radius:10px"><p style="margin:0;font-size:.8rem;opacity:.8">Total Questions</p><p style="margin:4px 0 0;font-size:1.1rem;font-weight:700">' + totalQuestions + '</p></div>';
+            html += '<div style="padding:15px;background:rgba(255,255,255,.15);border-radius:10px"><p style="margin:0;font-size:.8rem;opacity:.8">Total Marks</p><p style="margin:4px 0 0;font-size:1.1rem;font-weight:700">' + totalMarks + '</p></div>';
+            html += '</div>';
+            if (isPast) {
+                html += '<div style="margin-top:15px;padding:10px 15px;background:rgba(255,255,255,.2);border-radius:8px;display:inline-flex;align-items:center;gap:8px"><i class="fa-solid fa-check-circle"></i><span style="font-weight:600">Exam period has passed</span></div>';
+            } else {
+                const diff = schedDate - now;
+                const days = Math.floor(diff / 86400000);
+                const hrs = Math.floor((diff % 86400000) / 3600000);
+                html += '<div style="margin-top:15px;padding:10px 15px;background:rgba(255,255,255,.2);border-radius:8px;display:inline-flex;align-items:center;gap:8px"><i class="fa-solid fa-hourglass-half"></i><span style="font-weight:600">' + (days > 0 ? days + ' day' + (days>1?'s':'') + ' ' : '') + hrs + ' hour' + (hrs>1?'s':'') + ' remaining</span></div>';
+            }
+            html += '</div>';
+
+            // Subjects list
+            if (subjects.length) {
+                html += '<div class="card"><div class="card-header"><h3><i class="fa-solid fa-book"></i> Exam Subjects</h3></div><div class="card-body">';
+                subjects.forEach(sub => {
+                    const subQs = classExams.filter(q => q.subject === sub);
+                    const subMarks = subQs.reduce((a, q) => a + q.marks, 0);
+                    const submitted = mySubmissions.find(s => s.studentId === currentUser.id && s.subject === sub);
+                    const graded = submitted && submitted.graded;
+                    let statusHtml = graded ? '<span style="padding:4px 10px;border-radius:12px;font-size:.75rem;font-weight:700;background:#d4edda;color:#155724">Graded: ' + Math.round((submitted.score/submitted.totalMarks)*100) + '%</span>' : submitted ? '<span style="padding:4px 10px;border-radius:12px;font-size:.75rem;font-weight:600;background:#fff3cd;color:#856404">Submitted</span>' : '<span style="padding:4px 10px;border-radius:12px;font-size:.75rem;font-weight:600;background:#e0e7ff;color:#3730a3">Pending</span>';
+                    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 15px;background:#f8f9fa;border-radius:10px;margin-bottom:8px"><div><strong>' + sub + '</strong><div class="meta" style="margin-top:4px"><span><i class="fa-solid fa-list"></i> ' + subQs.length + ' Questions</span><span><i class="fa-solid fa-star"></i> ' + subMarks + ' Marks</span></div></div>' + statusHtml + '</div>';
+                });
+                html += '</div></div>';
+            }
+
+            c.innerHTML = html;
         }
 
         function startExam(examKey) {
@@ -1149,7 +1234,7 @@
         function showSection(el, sectionId) {
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
-            const allSections = ['overviewSection','resultsSection','timetableSection','assignmentsSection','messageSection','takeExamSection','notificationsSection','paymentSection'];
+            const allSections = ['overviewSection','resultsSection','timetableSection','assignmentsSection','messageSection','takeExamSection','examScheduleSection','notificationsSection','paymentSection'];
             allSections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -1158,6 +1243,7 @@
             if (sectionId === 'resultsSection') renderResultsSection();
             if (sectionId === 'timetableSection') renderTimetableSection();
             if (sectionId === 'takeExamSection') renderAvailableExams();
+            if (sectionId === 'examScheduleSection') renderStudentExamSchedule();
         }
 
         function submitPayment(e) {
