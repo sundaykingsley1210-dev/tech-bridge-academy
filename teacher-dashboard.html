@@ -570,7 +570,16 @@
             const students = users.filter(u=>u.role==='student');
             let subjectAverages = [];
             students.forEach(st => {
-                const results = JSON.parse(localStorage.getItem('tba_student_results_'+st.id)||'[]');
+                const individual = JSON.parse(localStorage.getItem('tba_student_results_'+st.id)||'[]');
+                const classResults = JSON.parse(localStorage.getItem('tba_results_'+st.class)||'[]');
+                let results = [...individual];
+                const individualKeys = individual.map(r => r.subject + '|' + r.term);
+                classResults.forEach(r => {
+                    const key = r.subject + '|' + (r.term || 'First Term');
+                    if (!individualKeys.includes(key)) {
+                        results.push({...r, term: r.term || 'First Term'});
+                    }
+                });
                 const subjectMap = {};
                 results.forEach(r => {
                     if (r.total) {
@@ -982,7 +991,16 @@
             const student = users.find(u => u.id === studentId);
             if (!student) return;
 
-            const myResults = JSON.parse(localStorage.getItem('tba_student_results_' + studentId) || '[]');
+            const individual = JSON.parse(localStorage.getItem('tba_student_results_' + studentId) || '[]');
+            const classResults = JSON.parse(localStorage.getItem('tba_results_' + student.class) || '[]');
+            let myResults = [...individual];
+            const individualKeys = individual.map(r => r.subject + '|' + r.term);
+            classResults.forEach(r => {
+                const key = r.subject + '|' + (r.term || 'First Term');
+                if (!individualKeys.includes(key)) {
+                    myResults.push({...r, term: r.term || 'First Term'});
+                }
+            });
             const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + student.class) || '{}');
             const currentPos = posData.positions ? (posData.positions[studentId] || '') : '';
 

@@ -1039,7 +1039,16 @@
                 let classHasResults = false;
 
                 students.forEach(s => {
-                    const studentResults = JSON.parse(localStorage.getItem('tba_student_results_' + s.id) || '[]');
+                    const individual = JSON.parse(localStorage.getItem('tba_student_results_' + s.id) || '[]');
+                    const classResults = JSON.parse(localStorage.getItem('tba_results_' + s.class) || '[]');
+                    let studentResults = [...individual];
+                    const individualKeys = individual.map(r => r.subject + '|' + r.term);
+                    classResults.forEach(r => {
+                        const key = r.subject + '|' + (r.term || 'First Term');
+                        if (!individualKeys.includes(key)) {
+                            studentResults.push({...r, term: r.term || 'First Term'});
+                        }
+                    });
                     const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]').filter(x => x.studentId === s.id);
                     if (!studentResults.length && !examSubs.length) return;
                     classHasResults = true;
