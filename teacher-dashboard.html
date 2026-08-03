@@ -899,16 +899,22 @@
             const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + student.class) || '{}');
             const currentPos = posData.positions ? (posData.positions[studentId] || '') : '';
 
-            let resultsHtml = '';
-            if (myResults.length) {
-                resultsHtml = '<div style="margin-top:15px"><h4 style="margin-bottom:10px">Previous Results</h4>' + myResults.map((r, i) => '<div style="padding:10px 15px;background:#f8f9fa;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:4px solid '+(r.grade==='A'?'#38ef7d':r.grade==='B'?'#74b9ff':r.grade==='C'?'#ffd93d':'#ff6b6b')+'"><div><strong>'+r.subject+'</strong><div class="meta" style="margin-top:4px"><span>CA1: '+r.ca1+'</span><span>CA2: '+r.ca2+'</span><span>Exam: '+r.exam+'</span></div></div><div style="text-align:right"><div style="font-size:1.2rem;font-weight:700;color:var(--dark)">'+r.total+'</div><div style="font-size:.85rem;font-weight:600;color:'+(r.grade==='A'?'#38a169':r.grade==='B'?'#3182ce':r.grade==='C'?'#d69e2e':'#e53e3e')+'">'+r.grade+'</div></div><button onclick="deleteStudentResult(\''+studentId+'\','+i+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.85rem;margin-left:10px" title="Delete"><i class="fa-solid fa-trash"></i></button></div>').join('') + '</div>';
-            } else {
-                resultsHtml = '<div style="padding:15px;text-align:center;color:var(--gray);font-size:.9rem">No results yet</div>';
-            }
-
             let html = '<div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid #e9ecef">';
             html += '<div class="user-avatar" style="width:50px;height:50px;font-size:1rem">'+student.name.split(' ').map(n=>n[0]).join('')+'</div>';
             html += '<div><h4>'+student.name+'</h4><div class="meta"><span>'+student.id+'</span><span>'+student.class+'</span></div></div></div>';
+
+            // Average score across all terms
+            let allTotals = [];
+            ['First Term','Second Term','Third Term'].forEach(term => {
+                const termResults = myResults.filter(r => r.term === term);
+                termResults.forEach(r => allTotals.push(r.total));
+            });
+            if (allTotals.length) {
+                const avg = Math.round(allTotals.reduce((a,b)=>a+b,0)/allTotals.length);
+                html += '<div style="padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;margin-bottom:20px;color:#fff;text-align:center">';
+                html += '<h4 style="margin-bottom:5px;font-size:.9rem;opacity:.9"><i class="fa-solid fa-chart-line"></i> Overall Average</h4>';
+                html += '<div style="font-size:2rem;font-weight:800">'+avg+'%</div></div>';
+            }
 
             // Position section
             html += '<div style="padding:15px;background:#f0f7ff;border-radius:10px;margin-bottom:20px;border:1px solid #bfdbfe">';
@@ -920,11 +926,33 @@
             // Add result form
             html += '<form onsubmit="addStudentResult(event,\''+studentId+'\')">';
             html += '<h4 style="margin-bottom:10px"><i class="fa-solid fa-plus-circle"></i> Add Result</h4>';
-            html += '<div class="form-row"><div class="form-group"><label>Subject *</label><input type="text" id="srSubject" placeholder="e.g. Mathematics" required></div></div>';
+            html += '<div class="form-row"><div class="form-group"><label>Subject *</label><input type="text" id="srSubject" placeholder="e.g. Mathematics" required></div><div class="form-group"><label>Term *</label><select id="srTerm" required><option value="">Select Term</option><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div></div>';
             html += '<div class="form-row"><div class="form-group"><label>CA1 (20) *</label><input type="number" id="srCA1" min="0" max="20" required></div><div class="form-group"><label>CA2 (20) *</label><input type="number" id="srCA2" min="0" max="20" required></div></div>';
             html += '<div class="form-row"><div class="form-group"><label>Exam (60) *</label><input type="number" id="srExam" min="0" max="60" required></div><div class="form-group"><button type="submit" class="btn-create" style="width:100%;justify-content:center;height:45px"><i class="fa-solid fa-plus"></i> Add Result</button></div></div>';
             html += '</form>';
-            html += resultsHtml;
+
+            // Results grouped by term
+            const terms = ['First Term','Second Term','Third Term'];
+            terms.forEach(term => {
+                const termResults = myResults.filter(r => r.term === term);
+                const termAvg = termResults.length ? Math.round(termResults.reduce((a,r)=>a+r.total,0)/termResults.length) : null;
+                html += '<div style="margin-top:20px">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+                html += '<h4 style="color:var(--primary)"><i class="fa-solid fa-calendar"></i> '+term+'</h4>';
+                if (termAvg !== null) html += '<span style="padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700;background:#f0f7ff;color:var(--primary)">Avg: '+termAvg+'%</span>';
+                html += '</div>';
+                if (termResults.length) {
+                    termResults.forEach((r, i) => {
+                        const gc = r.grade==='A'?'#38ef7d':r.grade==='B'?'#74b9ff':r.grade==='C'?'#ffd93d':'#ff6b6b';
+                        const bg = r.grade==='A'?'#d4edda':r.grade==='B'?'#cce5ff':r.grade==='C'?'#fff3cd':'#f8d7da';
+                        const globalIdx = myResults.indexOf(r);
+                        html += '<div style="padding:10px 15px;background:#f8f9fa;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:4px solid '+gc+'"><div><strong>'+r.subject+'</strong><div class="meta" style="margin-top:4px"><span>CA1: '+r.ca1+'</span><span>CA2: '+r.ca2+'</span><span>Exam: '+r.exam+'</span></div></div><div style="text-align:right"><div style="font-size:1.2rem;font-weight:700;color:var(--dark)">'+r.total+'</div><div style="font-size:.85rem;font-weight:600;color:'+(r.grade==='A'?'#38a169':r.grade==='B'?'#3182ce':r.grade==='C'?'#d69e2e':'#e53e3e')+'">'+r.grade+'</div></div><button onclick="deleteStudentResult(\''+studentId+'\','+globalIdx+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.85rem;margin-left:10px" title="Delete"><i class="fa-solid fa-trash"></i></button></div>';
+                    });
+                } else {
+                    html += '<div style="padding:10px;text-align:center;color:var(--gray);font-size:.85rem;background:#f8f9fa;border-radius:8px">No results for this term</div>';
+                }
+                html += '</div>';
+            });
 
             document.getElementById('viewModalTitle').textContent = 'Student Result — ' + student.name;
             document.getElementById('viewModalBody').innerHTML = html;
@@ -955,6 +983,7 @@
 
             const entry = {
                 subject: document.getElementById('srSubject').value,
+                term: document.getElementById('srTerm').value,
                 ca1: ca1, ca2: ca2, exam: exam,
                 total: total, grade: grade,
                 teacherName: currentUser.name,
