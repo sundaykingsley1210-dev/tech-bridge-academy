@@ -125,6 +125,7 @@
                 <li><a onclick="showSection(this, 'feesSection')"><i class="fa-solid fa-money-bill-wave"></i> Fees</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
                 <li><a onclick="showSection(this, 'adminMessagesSection')"><i class="fa-solid fa-envelope"></i> Messages</a></li>
+                <li><a onclick="showSection(this, 'adminNotificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
                 <li><a onclick="showSection(this, 'resetsSection')"><i class="fa-solid fa-key"></i> Password Resets</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
@@ -352,6 +353,38 @@
                     </div>
                     <div class="card-body">
                         <div id="adminMessagesList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Notifications Section -->
+            <div id="adminNotificationsSection" style="display:none">
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-bell"></i> Send Notification</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="adminNotifForm" onsubmit="sendAdminNotification(event)">
+                            <div class="form-group"><label>Title *</label><input type="text" id="adminNotifTitle" placeholder="e.g. Holiday Notice" required></div>
+                            <div class="form-group">
+                                <label>Send To *</label>
+                                <div style="display:flex;gap:8px;margin-bottom:8px">
+                                    <button type="button" class="btn-create" style="padding:6px 12px;font-size:.8rem" onclick="document.querySelectorAll('.admin-notif-cb').forEach(cb=>cb.checked=true)">Select All</button>
+                                    <button type="button" style="padding:6px 12px;font-size:.8rem;background:#f1f3f5;border:2px solid #e9ecef;border-radius:8px;font-weight:600;cursor:pointer" onclick="document.querySelectorAll('.admin-notif-cb').forEach(cb=>cb.checked=false)">Deselect All</button>
+                                </div>
+                                <div id="adminNotifClassCheckboxes" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px;background:#f8f9fa;border-radius:10px;border:2px solid #e9ecef"></div>
+                            </div>
+                            <div class="form-group"><label>Message *</label><textarea id="adminNotifMessage" rows="3" placeholder="Type your message..." required></textarea></div>
+                            <button type="submit" class="btn-create" style="width:100%;justify-content:center"><i class="fa-solid fa-paper-plane"></i> Send</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-bell"></i> Sent Notifications</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="adminSentNotifs"></div>
                     </div>
                 </div>
             </div>
@@ -1202,13 +1235,53 @@
             alert('Reply sent!');
         }
 
+        const adminNotifClasses = ['All Classes','JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+
+        function renderAdminNotifCheckboxes() {
+            const c = document.getElementById('adminNotifClassCheckboxes');
+            c.innerHTML = adminNotifClasses.map(cls => '<label style="display:flex;align-items:center;gap:6px;font-size:.85rem;font-weight:600;color:var(--dark);cursor:pointer;padding:6px 10px;background:#fff;border-radius:6px;border:1px solid #e9ecef"><input type="checkbox" class="admin-notif-cb" value="'+cls+'" style="accent-color:var(--primary)"> '+cls+'</label>').join('');
+        }
+
+        function sendAdminNotification(e) {
+            e.preventDefault();
+            const selectedClasses = Array.from(document.querySelectorAll('.admin-notif-cb:checked')).map(cb => cb.value);
+            if (selectedClasses.length === 0) return alert('Please select at least one class');
+            const title = document.getElementById('adminNotifTitle').value;
+            const message = document.getElementById('adminNotifMessage').value;
+            selectedClasses.forEach(cls => {
+                const notif = {
+                    id: 'NOTIF-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).substring(2,5),
+                    title: title,
+                    targetClass: cls,
+                    message: message,
+                    from: currentUser.name,
+                    fromId: 'admin',
+                    date: new Date().toISOString(),
+                    readBy: []
+                };
+                let notifs = JSON.parse(localStorage.getItem('tba_notifications')||'[]');
+                notifs.push(notif);
+                localStorage.setItem('tba_notifications', JSON.stringify(notifs));
+            });
+            document.getElementById('adminNotifForm').reset();
+            renderAdminSentNotifs();
+            alert('Notification sent to '+selectedClasses.join(', ')+'!');
+        }
+
+        function renderAdminSentNotifs() {
+            const notifs = JSON.parse(localStorage.getItem('tba_notifications')||'[]').filter(n=>n.fromId==='admin');
+            const c = document.getElementById('adminSentNotifs');
+            if (!notifs.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-bell"></i><p>No notifications sent yet</p></div>'; return; }
+            c.innerHTML = notifs.slice().reverse().map(n => '<div style="padding:12px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border-left:3px solid var(--primary)"><div style="display:flex;justify-content:space-between;align-items:start"><h4 style="margin:0">'+n.title+'</h4><span style="font-size:.75rem;color:var(--gray)">'+new Date(n.date).toLocaleString()+'</span></div><div class="meta" style="margin-top:5px"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span></div><p style="margin:8px 0 0;font-size:.9rem;color:#555">'+n.message+'</p></div>').join('');
+        }
+
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
         function showSection(el, sectionId) {
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
 
-            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'feesSection', 'resultsSection', 'adminMessagesSection', 'resetsSection'];
+            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'feesSection', 'resultsSection', 'adminMessagesSection', 'adminNotificationsSection', 'resetsSection'];
             sections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -1219,6 +1292,7 @@
             if (sectionId === 'admittedSection') renderAdmittedList();
             if (sectionId === 'resultsSection') renderAdminResults();
             if (sectionId === 'adminMessagesSection') renderAdminMessages();
+            if (sectionId === 'adminNotificationsSection') { renderAdminNotifCheckboxes(); renderAdminSentNotifs(); }
             if (sectionId === 'resetsSection') renderResetsList();
         }
 
