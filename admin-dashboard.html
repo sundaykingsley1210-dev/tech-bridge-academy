@@ -332,6 +332,12 @@
                         </div>
                     </div>
                     <div class="card-body">
+                        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+                            <button class="filter-btn active admin-term-btn" onclick="filterAdminTerm('all', this)">All Terms</button>
+                            <button class="filter-btn admin-term-btn" onclick="filterAdminTerm('First Term', this)">First Term</button>
+                            <button class="filter-btn admin-term-btn" onclick="filterAdminTerm('Second Term', this)">Second Term</button>
+                            <button class="filter-btn admin-term-btn" onclick="filterAdminTerm('Third Term', this)">Third Term</button>
+                        </div>
                         <div id="adminResultsList"></div>
                     </div>
                 </div>
@@ -1022,6 +1028,7 @@
         }
 
         let classResultFilter = 'all';
+        let adminTermFilter = 'all';
 
         function renderAdminResults() {
             const allClasses = ['JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
@@ -1049,6 +1056,9 @@
                             studentResults.push({...r, term: r.term || 'First Term'});
                         }
                     });
+                    if (adminTermFilter !== 'all') {
+                        studentResults = studentResults.filter(r => r.term === adminTermFilter);
+                    }
                     const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]').filter(x => x.studentId === s.id);
                     if (!studentResults.length && !examSubs.length) return;
                     classHasResults = true;
@@ -1121,7 +1131,14 @@
 
         function filterClassResults(cls, btn) {
             classResultFilter = cls;
-            document.querySelectorAll('#resultsSection .filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#resultsSection .filter-bar .filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderAdminResults();
+        }
+
+        function filterAdminTerm(term, btn) {
+            adminTermFilter = term;
+            document.querySelectorAll('.admin-term-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             renderAdminResults();
         }
