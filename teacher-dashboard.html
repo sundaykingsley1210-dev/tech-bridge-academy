@@ -127,6 +127,7 @@
                 <li><a onclick="showSection(this, 'assignmentsSection')"><i class="fa-solid fa-book"></i> Assignments</a></li>
                 <li><a onclick="showSection(this, 'studentsSection')"><i class="fa-solid fa-users"></i> Students</a></li>
                 <li><a onclick="showSection(this, 'notificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
+                <li><a onclick="showSection(this, 'submissionsSection')"><i class="fa-solid fa-inbox"></i> Submissions</a></li>
                 <li><a onclick="showSection(this, 'examsSection')"><i class="fa-solid fa-pen-to-square"></i> Exams</a></li>
                 <li><a onclick="showSection(this, 'timetableSection')"><i class="fa-solid fa-calendar-days"></i> Timetable</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
@@ -256,6 +257,16 @@
                 </div>
             </div>
 
+            <!-- Submissions Section -->
+            <div id="submissionsSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fa-solid fa-inbox"></i> Student Submissions</h3></div>
+                        <div class="card-body"><div class="submissions-list" id="submissionsList"></div></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Exams Section -->
             <div id="examsSection" style="display:none">
                 <div class="dashboard-grid">
@@ -376,6 +387,8 @@
 
     <div class="modal-overlay" id="viewModal"><div class="modal"><div class="modal-header"><h3 id="viewModalTitle">Details</h3><button class="modal-close" onclick="closeModal('viewModal')">&times;</button></div><div class="modal-body" id="viewModalBody"></div></div></div>
 
+    <div class="modal-overlay" id="gradeModal"><div class="modal"><div class="modal-header"><h3><i class="fa-solid fa-pen"></i> Grade Submission</h3><button class="modal-close" onclick="closeModal('gradeModal')">&times;</button></div><div class="modal-body" id="gradeModalBody"></div><div class="modal-footer"><button class="btn-cancel" onclick="closeModal('gradeModal')">Cancel</button><button class="btn-submit" onclick="saveGrade()"><i class="fa-solid fa-check"></i> Save</button></div></div></div>
+
     <script>
         const currentUser = JSON.parse(localStorage.getItem('tba_currentUser'));
         if (!currentUser || currentUser.role !== 'teacher') window.location.href = 'login.html';
@@ -415,7 +428,57 @@
         function selectAllClasses() { document.querySelectorAll('.class-cb').forEach(cb => cb.checked = true); }
         function deselectAllClasses() { document.querySelectorAll('.class-cb').forEach(cb => cb.checked = false); }
 
-        function renderAll() { renderAssignments(); renderStudents(); renderSentNotifs(); renderNotifBadge(); renderTimetableList(); renderResultList(); updateStats(); }
+        function renderAll() { renderAssignments(); renderStudents(); renderSubmissions(); renderSentNotifs(); renderNotifBadge(); renderTimetableList(); renderResultList(); updateStats(); }
+
+        function renderSubmissions() {
+            const subs = JSON.parse(localStorage.getItem('tba_submissions')||'[]');
+            const mine = subs.filter(s => s.teacherId === currentUser.id);
+            const c = document.getElementById('submissionsList');
+            if (!mine.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-inbox"></i><p>No submissions yet</p></div>'; return; }
+            c.innerHTML = mine.slice().reverse().map((s,i) => {
+                const oi = subs.indexOf(s);
+                return '<div class="submission-item" style="padding:12px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border-left:3px solid '+(s.graded?'#155724':'#856404')+';cursor:pointer" onclick="openGrade('+oi+')"><div style="display:flex;justify-content:space-between;align-items:start"><div><h4 style="margin:0">'+s.studentName+'</h4><div class="meta" style="margin-top:4px"><span><i class="fa-solid fa-book"></i> '+s.assignmentTitle+'</span><span><i class="fa-solid fa-layer-group"></i> '+s.studentClass+'</span><span><i class="fa-solid fa-clock"></i> '+new Date(s.submittedAt).toLocaleDateString()+'</span></div></div>'+(s.graded?'<span class="status-badge status-active">Graded</span>':'<span class="status-badge status-closed">Needs Review</span>')+'</div></div>';
+            }).join('');
+        }
+
+        let currentGradeIdx = null;
+
+        function openGrade(idx) {
+            const subs = JSON.parse(localStorage.getItem('tba_submissions')||'[]');
+            const s = subs[idx];
+            if (!s) return;
+            currentGradeIdx = idx;
+            let html = '<div style="margin-bottom:15px;padding:15px;background:#f8f9fa;border-radius:10px"><strong>'+s.studentName+'</strong> <span style="color:var(--gray);font-size:.85rem">— '+s.assignmentTitle+'</span></div>';
+            if (s.answers && s.answers.length) {
+                s.answers.forEach((a,i) => {
+                    html += '<div class="q-display"><div class="q-label">Q'+(i+1)+': '+a.question+'</div></div><div class="a-display"><div class="a-label">Answer:</div><div class="a-text">'+(a.answer||'(no answer)')+'</div></div>';
+                    if (a.feedback) html += '<div style="padding:8px 12px;background:#d4edda;border-radius:8px;margin-top:5px;font-size:.85rem"><strong>Feedback:</strong> '+a.feedback+'</div>';
+                    html += '<div style="display:flex;align-items:center;gap:10px;margin:8px 0 15px"><label style="font-size:.85rem;font-weight:600">Score:</label><input type="number" class="score-input q-score" data-qi="'+i+'" value="'+(a.score!==undefined?a.score:'')+'" min="0" max="10"><label style="font-size:.85rem;font-weight:600">Feedback:</label><input type="text" class="feedback-input q-feedback" data-qi="'+i+'" value="'+(a.feedback||'')+'" placeholder="Correct/Incorrect..."></div>';
+                });
+            }
+            document.getElementById('gradeModalBody').innerHTML = html;
+            document.getElementById('gradeModal').classList.add('active');
+        }
+
+        function saveGrade() {
+            if (currentGradeIdx === null) return;
+            let subs = JSON.parse(localStorage.getItem('tba_submissions')||'[]');
+            const s = subs[currentGradeIdx];
+            document.querySelectorAll('.q-score').forEach(inp => {
+                const qi = parseInt(inp.dataset.qi);
+                if (s.answers[qi]) s.answers[qi].score = inp.value ? parseInt(inp.value) : undefined;
+            });
+            document.querySelectorAll('.q-feedback').forEach(inp => {
+                const qi = parseInt(inp.dataset.qi);
+                if (s.answers[qi]) s.answers[qi].feedback = inp.value || null;
+            });
+            s.graded = true;
+            s.gradedAt = new Date().toISOString();
+            localStorage.setItem('tba_submissions', JSON.stringify(subs));
+            closeModal('gradeModal');
+            renderSubmissions();
+            alert('Grade saved!');
+        }
 
         function addQuestion() {
             questionCount++;
@@ -580,7 +643,7 @@
         function showSection(el, sectionId) {
             document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
             el.classList.add('active');
-            const sections = ['overviewSection','assignmentsSection','studentsSection','notificationsSection','examsSection','timetableSection','resultsSection'];
+            const sections = ['overviewSection','assignmentsSection','studentsSection','notificationsSection','submissionsSection','examsSection','timetableSection','resultsSection'];
             sections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';

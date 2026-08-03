@@ -396,6 +396,42 @@
         </main>
     </div>
 
+    <!-- Submit Answer Modal -->
+    <div class="modal-overlay" id="submitModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-paper-plane"></i> Submit Your Answer</h3>
+                <button class="modal-close" onclick="closeModal('submitModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="submitForm" onsubmit="submitAnswer(event)">
+                    <input type="hidden" id="submitAssignmentId">
+                    <div id="submitFormContent"></div>
+                    <p style="font-size:.8rem;color:var(--gray);margin-bottom:20px">
+                        <i class="fa-solid fa-info-circle"></i> Answer all questions before submitting.
+                    </p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal('submitModal')">Cancel</button>
+                <button class="btn-send" onclick="document.getElementById('submitForm').requestSubmit()">
+                    <i class="fa-solid fa-paper-plane"></i> Submit Answer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Submission Modal -->
+    <div class="modal-overlay" id="viewSubmissionModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-eye"></i> Submission Details</h3>
+                <button class="modal-close" onclick="closeModal('viewSubmissionModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="viewSubmissionBody"></div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="viewModal">
         <div class="modal">
             <div class="modal-header">
@@ -737,6 +773,8 @@
                     ${questionsPreview}
                     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px">
                         ${statusHtml}
+                        ${!isSubmitted && !isPast ? '<button class="btn-submit-answer" onclick="openSubmitModal(\''+a.id+'\')"><i class="fa-solid fa-paper-plane"></i> Answer Questions</button>' : ''}
+                        ${isSubmitted ? '<button class="btn-view-submission" onclick="viewMySubmission(\''+a.id+'\')"><i class="fa-solid fa-eye"></i> View Feedback</button>' : ''}
                     </div>
                 </div>`;
             }).join('');
@@ -876,6 +914,124 @@
             renderQuestion();
         }
 
+        function openSubmitModal(assignmentId) {
+            const assignments = JSON.parse(localStorage.getItem('tba_assignments') || '[]');
+            const a = assignments.find(x => x.id === assignmentId);
+            if (!a) return;
+
+            document.getElementById('submitAssignmentId').value = a.id;
+            let questionsHtml = '';
+            if (a.questions && a.questions.length) {
+                questionsHtml = a.questions.map((q, i) => `
+                    <div style="padding:14px;background:#f8f9fa;border-radius:10px;margin-bottom:12px;border-left:3px solid var(--primary)">
+                        <label style="font-weight:700;color:var(--primary);font-size:.85rem;display:block;margin-bottom:6px">Question ${i+1}</label>
+                        <p style="color:var(--dark);font-size:.95rem;margin-bottom:10px;line-height:1.6">${q}</p>
+                        <textarea class="q-answer" data-qi="${i}" rows="3" placeholder="Type your answer here..." required style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem;resize:vertical"></textarea>
+                    </div>
+                `).join('');
+            } else {
+                questionsHtml = '<div class="form-group"><label>Your Answer *</label><textarea id="answerText" rows="6" placeholder="Type your answer here..." required></textarea></div>';
+            }
+
+            document.getElementById('submitFormContent').innerHTML = `
+                <h4>${a.title}</h4>
+                <div class="meta">
+                    <span><i class="fa-solid fa-book"></i> ${a.subject}</span>
+                    <span><i class="fa-solid fa-user"></i> ${a.teacherName}</span>
+                    <span><i class="fa-solid fa-calendar"></i> Due: ${new Date(a.deadline).toLocaleDateString()}</span>
+                    <span><i class="fa-solid fa-star"></i> ${a.maxScore} marks</span>
+                </div>
+                ${a.description ? '<p style="margin-top:10px;color:#555;font-size:.9rem">'+a.description+'</p>' : ''}
+                <h4 style="margin-top:20px;margin-bottom:10px">Answer the Questions:</h4>
+                ${questionsHtml}
+            `;
+            document.getElementById('submitModal').classList.add('active');
+        }
+
+        function submitAnswer(e) {
+            e.preventDefault();
+            const assignmentId = document.getElementById('submitAssignmentId').value;
+            const assignments = JSON.parse(localStorage.getItem('tba_assignments') || '[]');
+            const assignment = assignments.find(a => a.id === assignmentId);
+            if (!assignment) return;
+
+            let answers = [];
+            const qAnswerEls = document.querySelectorAll('.q-answer');
+            if (qAnswerEls.length) {
+                qAnswerEls.forEach((el, i) => {
+                    answers.push({ question: assignment.questions[i], answer: el.value.trim(), score: undefined, feedback: null });
+                });
+                if (answers.some(a => !a.answer)) return alert('Please answer all questions');
+            } else {
+                return alert('No questions found for this assignment');
+            }
+
+            const submission = {
+                id: 'SUB-'+Date.now().toString(36).toUpperCase(),
+                assignmentId: assignmentId,
+                assignmentTitle: assignment.title,
+                subject: assignment.subject,
+                maxScore: assignment.maxScore,
+                teacherName: assignment.teacherName,
+                teacherId: assignment.teacherId,
+                studentId: currentUser.id,
+                studentName: currentUser.name,
+                studentClass: currentUser.class,
+                answers: answers,
+                submittedAt: new Date().toISOString(),
+                graded: false
+            };
+
+            let submissions = JSON.parse(localStorage.getItem('tba_submissions') || '[]');
+            submissions.push(submission);
+            localStorage.setItem('tba_submissions', JSON.stringify(submissions));
+
+            closeModal('submitModal');
+            renderAssignments();
+            alert('Answers submitted successfully!');
+        }
+
+        function viewMySubmission(assignmentId) {
+            const submissions = JSON.parse(localStorage.getItem('tba_submissions') || '[]');
+            const s = submissions.find(x => x.assignmentId === assignmentId && x.studentId === currentUser.id);
+            if (!s) return;
+
+            let totalScore = 0, maxPossible = 0;
+            let answersHtml = '';
+            if (s.answers && s.answers.length) {
+                s.answers.forEach((a, i) => {
+                    const score = a.score !== undefined ? a.score : '-';
+                    if (a.score !== undefined) totalScore += a.score;
+                    maxPossible += 10;
+                    answersHtml += `
+                        <div style="padding:14px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border-left:3px solid var(--primary)">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                                <label style="font-weight:700;color:var(--primary);font-size:.85rem">Q${i+1}: ${a.question}</label>
+                                <span style="font-weight:700;color:${a.score!==undefined?(a.score>=7?'#155724':a.score>=5?'#856404':'#721c24'):'var(--gray)'}">${score}/10</span>
+                            </div>
+                            <div style="padding:10px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #e9ecef"><strong style="font-size:.8rem;color:var(--gray)">Your Answer:</strong><p style="margin:4px 0 0;color:#555;font-size:.9rem;line-height:1.6">${a.answer}</p></div>
+                            ${a.feedback ? '<div style="padding:8px 12px;background:#d4edda;border-radius:8px;font-size:.85rem"><strong style="color:#155724"><i class="fa-solid fa-comment"></i> Teacher Feedback:</strong> '+a.feedback+'</div>' : '<p style="font-size:.8rem;color:var(--gray);margin:4px 0 0">No feedback yet</p>'}
+                        </div>`;
+                });
+            }
+
+            const scoreBox = s.graded
+                ? `<div style="padding:15px;background:#d4edda;border-radius:10px;margin-bottom:15px;text-align:center"><strong style="font-size:1.5rem;color:#155724">${totalScore} / ${maxPossible}</strong><br><span style="font-size:.85rem;color:#155724">Graded by ${s.teacherName}</span></div>`
+                : `<div style="padding:15px;background:#fff3cd;border-radius:10px;margin-bottom:15px;text-align:center"><strong style="color:#856404">Awaiting Teacher Review</strong></div>`;
+
+            document.getElementById('viewSubmissionBody').innerHTML = `
+                <h4 style="margin-bottom:10px">${s.assignmentTitle}</h4>
+                <div style="display:flex;gap:15px;font-size:.85rem;color:var(--gray);margin-bottom:15px;flex-wrap:wrap">
+                    <span><i class="fa-solid fa-book"></i> ${s.subject}</span>
+                    <span><i class="fa-solid fa-user"></i> ${s.teacherName}</span>
+                    <span><i class="fa-solid fa-clock"></i> ${new Date(s.submittedAt).toLocaleString()}</span>
+                </div>
+                ${scoreBox}
+                <h4 style="margin-bottom:10px">Your Answers & Feedback:</h4>
+                ${answersHtml}
+            `;
+            document.getElementById('viewSubmissionModal').classList.add('active');
+        }
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
