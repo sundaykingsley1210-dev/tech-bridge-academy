@@ -125,6 +125,7 @@
                 <li><a onclick="showSection(this, 'feesSection')"><i class="fa-solid fa-money-bill-wave"></i> Fees</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
                 <li><a onclick="showSection(this, 'adminSubmissionsSection')"><i class="fa-solid fa-paper-plane"></i> Submissions</a></li>
+                <li><a onclick="showSection(this, 'adminMessagesSection')"><i class="fa-solid fa-envelope"></i> Messages</a></li>
                 <li><a onclick="showSection(this, 'resetsSection')"><i class="fa-solid fa-key"></i> Password Resets</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
@@ -357,6 +358,18 @@
                     </div>
                     <div class="card-body">
                         <div id="adminSubmissionsList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Messages Section -->
+            <div id="adminMessagesSection" style="display:none">
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-envelope"></i> Student Messages</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="adminMessagesList"></div>
                     </div>
                 </div>
             </div>
@@ -1213,13 +1226,59 @@
             }).join('');
         }
 
+        function renderAdminMessages() {
+            const messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
+            const c = document.getElementById('adminMessagesList');
+            if (!messages.length) {
+                c.innerHTML = '<div class="no-data"><i class="fa-solid fa-envelope-open"></i><p>No student messages yet</p></div>';
+                return;
+            }
+            c.innerHTML = messages.slice().reverse().map(m => {
+                const replyHtml = m.reply
+                    ? '<div style="margin-top:10px;padding:10px;background:#d4edda;border-radius:8px;border-left:3px solid #155724"><strong style="font-size:.8rem;color:#155724"><i class="fa-solid fa-reply"></i> Your Reply:</strong><p style="margin-top:5px;font-size:.9rem;color:#555">' + m.reply + '</p><span style="font-size:.75rem;color:var(--gray)">' + new Date(m.repliedAt).toLocaleString() + '</span></div>'
+                    : '';
+                return `
+                <div class="app-item" style="border-left-color:#667eea">
+                    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
+                        <div>
+                            <h4><i class="fa-solid fa-user-graduate"></i> ${m.studentName}</h4>
+                            <div class="meta">
+                                <span><i class="fa-solid fa-id-card"></i> ${m.studentId}</span>
+                                <span><i class="fa-solid fa-layer-group"></i> ${m.studentClass}</span>
+                                <span><i class="fa-solid fa-clock"></i> ${new Date(m.sentAt).toLocaleString()}</span>
+                            </div>
+                        </div>
+                        ${!m.reply ? '<span style="padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:600;color:#856404;background:#fff3cd">New Message</span>' : '<span style="padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:600;color:#155724;background:#d4edda">Replied</span>'}
+                    </div>
+                    <div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:8px;border-left:3px solid #667eea">
+                        <p style="font-size:.9rem;color:var(--dark);margin:0">${m.text}</p>
+                    </div>
+                    ${replyHtml}
+                    ${!m.reply ? '<div style="margin-top:10px;display:flex;gap:8px;align-items:end"><textarea id="adminReply_'+m.id+'" rows="2" placeholder="Type your reply..." style="flex:1;padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.85rem;resize:vertical"></textarea><button class="btn-action btn-accept" onclick="replyToStudent(\'' + m.id + '\')"><i class="fa-solid fa-reply"></i> Reply</button></div>' : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function replyToStudent(msgId) {
+            const replyText = document.getElementById('adminReply_' + msgId).value.trim();
+            if (!replyText) return alert('Please type a reply');
+            let messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
+            const idx = messages.findIndex(m => m.id === msgId);
+            if (idx === -1) return;
+            messages[idx].reply = replyText;
+            messages[idx].repliedAt = new Date().toISOString();
+            localStorage.setItem('tba_messages', JSON.stringify(messages));
+            renderAdminMessages();
+            alert('Reply sent!');
+        }
+
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
         function showSection(el, sectionId) {
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
 
-            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'feesSection', 'resultsSection', 'adminSubmissionsSection', 'resetsSection'];
+            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'feesSection', 'resultsSection', 'adminSubmissionsSection', 'adminMessagesSection', 'resetsSection'];
             sections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -1230,6 +1289,7 @@
             if (sectionId === 'admittedSection') renderAdmittedList();
             if (sectionId === 'resultsSection') renderAdminResults();
             if (sectionId === 'adminSubmissionsSection') renderAdminSubmissions();
+            if (sectionId === 'adminMessagesSection') renderAdminMessages();
             if (sectionId === 'resetsSection') renderResetsList();
         }
 
