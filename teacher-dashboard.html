@@ -153,6 +153,7 @@
                     <div class="stat-card"><i class="fa-solid fa-users"></i><h3 id="totalStudents">0</h3><p>Students</p></div>
                     <div class="stat-card"><i class="fa-solid fa-inbox"></i><h3 id="totalSubmissions">0</h3><p>Submissions</p></div>
                     <div class="stat-card"><i class="fa-solid fa-clock"></i><h3 id="pendingReview">0</h3><p>Pending Review</p></div>
+                    <div class="stat-card" style="grid-column:span 2"><i class="fa-solid fa-chart-line" style="color:var(--secondary)"></i><h3 id="avgScore">--</h3><p>Class Average Score (All Terms)</p></div>
                 </div>
                 <div class="dashboard-grid">
                     <div class="card" style="grid-column: span 2">
@@ -549,6 +550,21 @@
             const subs = JSON.parse(localStorage.getItem('tba_submissions')||'[]').filter(s=>s.teacherId===currentUser.id);
             document.getElementById('totalSubmissions').textContent = subs.length;
             document.getElementById('pendingReview').textContent = subs.filter(s=>!s.graded).length;
+
+            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
+            const students = users.filter(u=>u.role==='student');
+            let allTotals = [];
+            students.forEach(st => {
+                const results = JSON.parse(localStorage.getItem('tba_student_results_'+st.id)||'[]');
+                results.forEach(r => { if(r.total) allTotals.push(r.total); });
+            });
+            const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]');
+            examSubs.forEach(s => { if(s.totalMarks) allTotals.push(Math.round((s.score/s.totalMarks)*100)); });
+            if (allTotals.length) {
+                document.getElementById('avgScore').textContent = Math.round(allTotals.reduce((a,b)=>a+b,0)/allTotals.length)+'%';
+            } else {
+                document.getElementById('avgScore').textContent = '--';
+            }
         }
 
         emailjs.init({ publicKey: 'X8j9z5L6vj2GOKQiJ' });

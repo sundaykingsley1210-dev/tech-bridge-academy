@@ -955,8 +955,12 @@
 
         function updateStats() {
             const results = getResults();
-            if (results.length) {
-                const avg = Math.round(results.reduce((a, b) => a + b.total, 0) / results.length);
+            let allTotals = [];
+            results.forEach(r => { if(r.total) allTotals.push(r.total); });
+            const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]').filter(s=>s.studentId===currentUser.id);
+            examSubs.forEach(s => { if(s.totalMarks) allTotals.push(Math.round((s.score/s.totalMarks)*100)); });
+            if (allTotals.length) {
+                const avg = Math.round(allTotals.reduce((a,b)=>a+b,0)/allTotals.length);
                 document.getElementById('avgScore').textContent = avg + '%';
             } else {
                 document.getElementById('avgScore').textContent = '--';
