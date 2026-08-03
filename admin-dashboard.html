@@ -1070,10 +1070,20 @@
                     classHasResults = true;
                     hasResults = true;
 
-                    let allTotals = [];
-                    studentResults.forEach(r => { if(r.total) allTotals.push(r.total); });
-                    examSubs.forEach(x => { if(x.totalMarks) allTotals.push(Math.round((x.score/x.totalMarks)*100)); });
-                    const avg = allTotals.length ? Math.round(allTotals.reduce((a,b)=>a+b,0)/allTotals.length) : 0;
+                    const subjectMap = {};
+                    studentResults.forEach(r => {
+                        if (r.total) {
+                            if (!subjectMap[r.subject]) subjectMap[r.subject] = {};
+                            subjectMap[r.subject][r.term] = r.total;
+                        }
+                    });
+                    let subjectAverages = [];
+                    Object.values(subjectMap).forEach(termTotals => {
+                        const totals = Object.values(termTotals);
+                        if (totals.length) subjectAverages.push(Math.round(totals.reduce((a,b)=>a+b,0)/totals.length));
+                    });
+                    examSubs.forEach(x => { if(x.totalMarks) subjectAverages.push(Math.round((x.score/x.totalMarks)*100)); });
+                    const avg = subjectAverages.length ? Math.round(subjectAverages.reduce((a,b)=>a+b,0)/subjectAverages.length) : 0;
 
                     classHtml += '<div style="padding:15px;background:#f8f9fa;border-radius:12px;margin-bottom:12px;border-left:4px solid var(--primary)">';
                     classHtml += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px">';
