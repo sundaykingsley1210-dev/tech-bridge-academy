@@ -648,7 +648,13 @@
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
             });
+            if (sectionId === 'assignmentsSection') renderAssignments();
+            if (sectionId === 'studentsSection') renderStudents();
+            if (sectionId === 'notificationsSection') { renderSentNotifs(); renderClassCheckboxes(); }
+            if (sectionId === 'submissionsSection') renderSubmissions();
             if (sectionId === 'examsSection') { renderExamQuestions(); renderExamSubmissions(); }
+            if (sectionId === 'timetableSection') renderTimetableList();
+            if (sectionId === 'resultsSection') renderResultList();
         }
         function uploadProfilePic(e) {
             const file = e.target.files[0];
