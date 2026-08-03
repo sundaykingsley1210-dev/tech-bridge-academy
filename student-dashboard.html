@@ -844,34 +844,67 @@
         }
 
         function renderExamResults() {
-            const results = JSON.parse(localStorage.getItem('tba_exam_results') || '[]');
-            const myResults = results.filter(r => r.studentId === currentUser.id);
+            const oldResults = JSON.parse(localStorage.getItem('tba_exam_results') || '[]');
+            const submissions = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]');
+            const myOldResults = oldResults.filter(r => r.studentId === currentUser.id);
+            const mySubmissions = submissions.filter(s => s.studentId === currentUser.id);
             const c = document.getElementById('examResultsList');
 
-            if (!myResults.length) {
+            let allResults = [];
+
+            myOldResults.forEach(r => {
+                allResults.push({
+                    title: r.class + ' Examination',
+                    score: r.score,
+                    total: r.total,
+                    percentage: r.percentage,
+                    grade: r.passed ? 'PASSED' : 'BELOW CUT-OFF',
+                    date: r.date,
+                    passed: r.passed,
+                    color: r.passed ? '#38ef7d' : '#e53e3e'
+                });
+            });
+
+            mySubmissions.forEach(s => {
+                const pct = s.totalMarks > 0 ? Math.round((s.score / s.totalMarks) * 100) : 0;
+                const grade = calcGrade(pct);
+                allResults.push({
+                    title: s.subject + ' (' + s.term + ')',
+                    score: s.score,
+                    total: s.totalMarks,
+                    percentage: pct,
+                    grade: grade,
+                    date: s.submittedAt,
+                    passed: pct >= 40,
+                    color: pct >= 40 ? '#38ef7d' : '#e53e3e'
+                });
+            });
+
+            if (!allResults.length) {
                 c.innerHTML = '<div class="no-data"><i class="fa-solid fa-pen-to-square"></i><p>You haven\'t taken any exams yet</p></div>';
                 return;
             }
 
-            c.innerHTML = myResults.slice().reverse().map((r, i) => {
-                const passed = r.passed;
+            allResults.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            c.innerHTML = allResults.map((r, i) => {
                 return `
-                <div class="assignment-item" style="border-left-color:${passed ? '#38ef7d' : '#e53e3e'}">
+                <div class="assignment-item" style="border-left-color:${r.color}">
                     <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
                         <div>
-                            <h4><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:${passed ? '#38ef7d' : '#e53e3e'};color:#fff;font-size:.78rem;font-weight:700;margin-right:6px;flex-shrink:0">${i + 1}</span> ${r.class} Examination</h4>
+                            <h4><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:${r.color};color:#fff;font-size:.78rem;font-weight:700;margin-right:6px;flex-shrink:0">${i + 1}</span> ${r.title}</h4>
                             <div class="meta">
                                 <span><i class="fa-solid fa-calendar"></i> ${new Date(r.date).toLocaleDateString()}</span>
                                 <span><i class="fa-solid fa-clock"></i> ${new Date(r.date).toLocaleTimeString()}</span>
                             </div>
                         </div>
                         <div style="text-align:right">
-                            <div style="font-size:1.5rem;font-weight:800;color:${passed ? '#155724' : '#721c24'}">${r.score}/${r.total}</div>
-                            <div style="font-size:.85rem;color:${passed ? '#155724' : '#721c24'}">${r.percentage}%</div>
+                            <div style="font-size:1.5rem;font-weight:800;color:${r.color}">${r.score}/${r.total}</div>
+                            <div style="font-size:.85rem;color:${r.color}">${r.percentage}%</div>
                         </div>
                     </div>
-                    <div style="margin-top:10px;display:inline-block;padding:5px 14px;border-radius:20px;font-size:.8rem;font-weight:600;${passed ? 'background:#d4edda;color:#155724' : 'background:#f8d7da;color:#721c24'}">
-                        ${passed ? 'PASSED' : 'BELOW CUT-OFF'}
+                    <div style="margin-top:10px;display:inline-block;padding:5px 14px;border-radius:20px;font-size:.8rem;font-weight:600;${r.passed ? 'background:#d4edda;color:#155724' : 'background:#f8d7da;color:#721c24'}">
+                        ${r.grade}
                     </div>
                 </div>`;
             }).join('');
