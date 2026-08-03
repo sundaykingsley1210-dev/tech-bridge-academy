@@ -148,9 +148,10 @@
                 <li><a onclick="showSection(this, 'timetableSection')"><i class="fa-solid fa-calendar"></i> Timetable</a></li>
                 <li><a onclick="showSection(this, 'assignmentsSection')"><i class="fa-solid fa-book"></i> Assignments</a></li>
                 <li><a onclick="showSection(this, 'submissionsSection')"><i class="fa-solid fa-paper-plane"></i> My Submissions</a></li>
+                <li><a onclick="showSection(this, 'takeExamSection')"><i class="fa-solid fa-pen-to-square"></i> Take Exam</a></li>
                 <li><a onclick="showSection(this, 'notificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
                 <li><a onclick="showSection(this, 'paymentSection')"><i class="fa-solid fa-money-bill-wave"></i> Fee & Payment</a></li>
-                <li><a onclick="showSection(this, 'examSection')"><i class="fa-solid fa-pen-to-square"></i> Exam Results</a></li>
+                <li><a onclick="showSection(this, 'examSection')"><i class="fa-solid fa-chart-bar"></i> Exam Results</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Back to Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
             </ul>
@@ -354,6 +355,20 @@
                 </div>
             </div>
 
+            <!-- Take Exam Section -->
+            <div id="takeExamSection" style="display:none">
+                <div class="dashboard-grid">
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-pen-to-square"></i> Available Exams</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="availableExamsList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Exam Results Section -->
             <div id="examSection" style="display:none">
                 <div class="dashboard-grid">
@@ -405,6 +420,16 @@
                 <button class="modal-close" onclick="closeModal('viewSubmissionModal')">&times;</button>
             </div>
             <div class="modal-body" id="viewSubmissionBody"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="viewModalTitle">Details</h3>
+                <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="viewModalBody"></div>
         </div>
     </div>
 
@@ -701,6 +726,123 @@
             }).join('');
         }
 
+        function renderAvailableExams() {
+            const allQuestions = JSON.parse(localStorage.getItem('tba_exam_questions') || '[]');
+            const mySubmissions = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]');
+            const c = document.getElementById('availableExamsList');
+
+            // Group questions by class+subject+term
+            const exams = {};
+            allQuestions.forEach(q => {
+                if (q.class === currentUser.class) {
+                    const key = q.class + '|' + q.subject + '|' + q.term;
+                    if (!exams[key]) exams[key] = { class: q.class, subject: q.subject, term: q.term, questions: [], totalMarks: 0 };
+                    exams[key].questions.push(q);
+                    exams[key].totalMarks += q.marks;
+                }
+            });
+
+            const examKeys = Object.keys(exams);
+            if (!examKeys.length) {
+                c.innerHTML = '<div class="no-data"><i class="fa-solid fa-pen-to-square"></i><p>No exams available for your class yet</p></div>';
+                return;
+            }
+
+            c.innerHTML = examKeys.map(key => {
+                const exam = exams[key];
+                const submitted = mySubmissions.find(s => s.studentId === currentUser.id && s.subject === exam.subject && s.term === exam.term);
+                const graded = submitted && submitted.graded;
+                return '<div class="assignment-item" style="border-left-color:' + (graded ? '#38ef7d' : submitted ? '#ffd93d' : '#1e40af') + '">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">' +
+                    '<div><h4>' + exam.subject + ' Exam</h4>' +
+                    '<div class="meta"><span><i class="fa-solid fa-layer-group"></i> ' + exam.class + '</span>' +
+                    '<span><i class="fa-solid fa-calendar"></i> ' + exam.term + '</span>' +
+                    '<span><i class="fa-solid fa-list"></i> ' + exam.questions.length + ' Questions</span>' +
+                    '<span><i class="fa-solid fa-star"></i> ' + exam.totalMarks + ' Marks</span></div></div>' +
+                    '<div>' + (graded ? '<span style="padding:6px 14px;border-radius:20px;font-size:.82rem;font-weight:700;background:#d4edda;color:#155724">Score: ' + submitted.score + '/' + submitted.totalMarks + ' (' + submitted.grade + ')</span>' :
+                    submitted ? '<span style="padding:6px 14px;border-radius:20px;font-size:.82rem;font-weight:600;background:#fff3cd;color:#856404">Submitted — Awaiting Grade</span>' :
+                    '<button class="btn-create" style="padding:8px 16px;font-size:.82rem" onclick="startExam(\'' + key + '\')"><i class="fa-solid fa-play"></i> Start Exam</button>') +
+                    '</div></div></div>';
+            }).join('');
+        }
+
+        function startExam(examKey) {
+            const allQuestions = JSON.parse(localStorage.getItem('tba_exam_questions') || '[]');
+            const [cls, subject, term] = examKey.split('|');
+            const questions = allQuestions.filter(q => q.class === cls && q.subject === subject && q.term === term);
+            if (!questions.length) { alert('No questions found.'); return; }
+
+            let currentQ = 0;
+            const answers = {};
+
+            function renderQuestion() {
+                const q = questions[currentQ];
+                let html = '<div style="margin-bottom:10px;color:#64748b;font-size:.85rem">Question ' + (currentQ + 1) + ' of ' + questions.length + ' | ' + q.marks + ' marks</div>';
+                html += '<div style="font-weight:600;font-size:1.05rem;margin-bottom:15px;line-height:1.6">' + q.question + '</div>';
+                ['A','B','C','D'].forEach(opt => {
+                    const selected = answers[q.id] === opt;
+                    html += '<label style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:8px;border:2px solid ' + (selected ? '#1e40af' : '#e9ecef') + ';border-radius:10px;cursor:pointer;transition:all .2s;background:' + (selected ? '#eff6ff' : '#fff') + '" onclick="selectExamAnswer(\'' + q.id + '\',\'' + opt + '\')">' +
+                    '<div style="width:22px;height:22px;border-radius:50%;border:2px solid ' + (selected ? '#1e40af' : '#cbd5e1') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
+                    (selected ? '<div style="width:12px;height:12px;border-radius:50%;background:#1e40af"></div>' : '') +
+                    '</div><span style="font-size:.95rem">' + opt + '. ' + q.options[opt] + '</span></label>';
+                });
+                html += '<div style="display:flex;gap:10px;margin-top:20px">';
+                if (currentQ > 0) html += '<button class="btn-create" style="padding:10px 20px;background:#6c757d" onclick="prevExamQ()"><i class="fa-solid fa-arrow-left"></i> Previous</button>';
+                if (currentQ < questions.length - 1) html += '<button class="btn-create" style="padding:10px 20px" onclick="nextExamQ()">Next <i class="fa-solid fa-arrow-right"></i></button>';
+                else html += '<button class="btn-create" style="padding:10px 20px;background:#28a745" onclick="submitExam(\'' + examKey + '\')"><i class="fa-solid fa-check"></i> Submit Exam</button>';
+                html += '</div>';
+
+                document.getElementById('viewModalTitle').textContent = subject + ' Exam — ' + term;
+                document.getElementById('viewModalBody').innerHTML = html;
+                document.getElementById('viewModal').classList.add('active');
+
+                window.selectExamAnswer = function(qId, opt) { answers[qId] = opt; renderQuestion(); };
+                window.nextExamQ = function() { if (currentQ < questions.length - 1) { currentQ++; renderQuestion(); } };
+                window.prevExamQ = function() { if (currentQ > 0) { currentQ--; renderQuestion(); } };
+            }
+
+            window.submitExam = function(key) {
+                const [c, s, t] = key.split('|');
+                const qs = allQuestions.filter(q => q.class === c && q.subject === s && q.term === t);
+                let score = 0, totalMarks = 0;
+                const answerDetails = qs.map(q => {
+                    totalMarks += q.marks;
+                    const selected = answers[q.id] || null;
+                    const isCorrect = selected === q.answer;
+                    if (isCorrect) score += q.marks;
+                    return { questionId: q.id, question: q.question, selected: selected, correct: q.answer, marks: q.marks, isCorrect: isCorrect };
+                });
+
+                const percentage = totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0;
+                const grade = calcGrade(percentage);
+
+                const submission = {
+                    id: 'EXS-' + Date.now().toString(36).toUpperCase(),
+                    studentId: currentUser.id,
+                    studentName: currentUser.name,
+                    studentClass: currentUser.class,
+                    subject: s,
+                    term: t,
+                    answers: answerDetails,
+                    score: score,
+                    totalMarks: totalMarks,
+                    grade: grade,
+                    graded: false,
+                    submittedAt: new Date().toISOString()
+                };
+
+                let subs = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]');
+                subs.push(submission);
+                localStorage.setItem('tba_exam_submissions', JSON.stringify(subs));
+
+                closeModal('viewModal');
+                alert('Exam submitted successfully! Your score: ' + score + '/' + totalMarks + ' (' + grade + ')');
+                renderAvailableExams();
+            };
+
+            renderQuestion();
+        }
+
         function renderExamResults() {
             const results = JSON.parse(localStorage.getItem('tba_exam_results') || '[]');
             const myResults = results.filter(r => r.studentId === currentUser.id);
@@ -964,7 +1106,7 @@
         function showSection(el, sectionId) {
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
-            const allSections = ['overviewSection','resultsSection','timetableSection','assignmentsSection','submissionsSection','notificationsSection','paymentSection','examSection'];
+            const allSections = ['overviewSection','resultsSection','timetableSection','assignmentsSection','submissionsSection','takeExamSection','notificationsSection','paymentSection','examSection'];
             allSections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -972,6 +1114,8 @@
             document.getElementById('overviewStats').style.display = sectionId === 'overviewSection' ? 'grid' : 'none';
             if (sectionId === 'resultsSection') renderResultsSection();
             if (sectionId === 'timetableSection') renderTimetableSection();
+            if (sectionId === 'takeExamSection') renderAvailableExams();
+            if (sectionId === 'examSection') renderExamResults();
         }
 
         function submitPayment(e) {
