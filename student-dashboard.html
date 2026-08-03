@@ -250,22 +250,35 @@
                             <button onclick="printResult()" style="background:var(--gradient);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-print"></i> Print Result</button>
                         </div>
                         <div class="card-body">
+                            <div id="overallAvgBanner" style="display:none;padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;margin-bottom:20px;color:#fff;text-align:center">
+                                <h4 style="margin-bottom:5px;font-size:.9rem;opacity:.9"><i class="fa-solid fa-chart-line"></i> Overall Average</h4>
+                                <div style="font-size:2rem;font-weight:800" id="overallAvgScore">--</div>
+                            </div>
                             <div class="tab-nav">
                                 <button class="tab-btn active" onclick="switchTab(this,'firstTerm2')">First Term</button>
                                 <button class="tab-btn" onclick="switchTab(this,'secondTerm2')">Second Term</button>
                                 <button class="tab-btn" onclick="switchTab(this,'thirdTerm2')">Third Term</button>
                             </div>
                             <div class="tab-content active" id="firstTerm2">
+                                <div id="firstTermAvg" style="display:none;padding:8px 14px;background:#f0f7ff;border-radius:8px;margin-bottom:10px;font-size:.85rem;font-weight:600;color:var(--primary)"></div>
                                 <table class="result-table">
                                     <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
                                     <tbody id="resultsBody2"></tbody>
                                 </table>
                             </div>
                             <div class="tab-content" id="secondTerm2">
-                                <div class="no-data"><i class="fa-solid fa-clock"></i><p>Second term results not yet available</p></div>
+                                <div id="secondTermAvg" style="display:none;padding:8px 14px;background:#f0f7ff;border-radius:8px;margin-bottom:10px;font-size:.85rem;font-weight:600;color:var(--primary)"></div>
+                                <table class="result-table">
+                                    <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
+                                    <tbody id="resultsBody3"></tbody>
+                                </table>
                             </div>
                             <div class="tab-content" id="thirdTerm2">
-                                <div class="no-data"><i class="fa-solid fa-clock"></i><p>Third term results not yet available</p></div>
+                                <div id="thirdTermAvg" style="display:none;padding:8px 14px;background:#f0f7ff;border-radius:8px;margin-bottom:10px;font-size:.85rem;font-weight:600;color:var(--primary)"></div>
+                                <table class="result-table">
+                                    <thead><tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
+                                    <tbody id="resultsBody4"></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -543,14 +556,31 @@
 
         function renderResults() {
             const results = getResults();
-            const renderInto = (tbodyId) => {
-                const tbody = document.getElementById(tbodyId);
+            const terms = [
+                { name: 'First Term', bodyId: 'resultsBody2', avgId: 'firstTermAvg' },
+                { name: 'Second Term', bodyId: 'resultsBody3', avgId: 'secondTermAvg' },
+                { name: 'Third Term', bodyId: 'resultsBody4', avgId: 'thirdTermAvg' }
+            ];
+            let allTotals = [];
+
+            terms.forEach(term => {
+                const tbody = document.getElementById(term.bodyId);
+                const avgEl = document.getElementById(term.avgId);
                 if (!tbody) return;
-                if (!results.length) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--gray)"><i class="fa-solid fa-chart-bar" style="font-size:2rem;display:block;margin-bottom:10px;opacity:.3"></i>No results available yet. Your teacher will upload them soon.</td></tr>';
+                const termResults = results.filter(r => r.term === term.name);
+                if (!termResults.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--gray);font-size:.85rem">No results for ' + term.name + '</td></tr>';
+                    if (avgEl) avgEl.style.display = 'none';
                     return;
                 }
-                tbody.innerHTML = results.map(r => {
+                const termTotals = termResults.map(r => r.total);
+                allTotals = allTotals.concat(termTotals);
+                const termAvg = Math.round(termTotals.reduce((a,b)=>a+b,0)/termTotals.length);
+                if (avgEl) {
+                    avgEl.style.display = 'block';
+                    avgEl.innerHTML = '<i class="fa-solid fa-chart-line"></i> ' + term.name + ' Average: <strong>' + termAvg + '%</strong>';
+                }
+                tbody.innerHTML = termResults.map(r => {
                     const gradeClass = r.grade === 'A' ? 'grade-a' : r.grade === 'B' ? 'grade-b' : r.grade === 'C' ? 'grade-c' : 'grade-d';
                     return `<tr>
                         <td><strong>${r.subject}</strong></td>
@@ -559,9 +589,16 @@
                         <td><span class="grade-badge ${gradeClass}">${r.grade}</span></td>
                     </tr>`;
                 }).join('');
-            };
-            renderInto('resultsBody');
-            renderInto('resultsBody2');
+            });
+
+            const overallBanner = document.getElementById('overallAvgBanner');
+            const overallScore = document.getElementById('overallAvgScore');
+            if (allTotals.length && overallBanner && overallScore) {
+                overallBanner.style.display = 'block';
+                overallScore.textContent = Math.round(allTotals.reduce((a,b)=>a+b,0)/allTotals.length) + '%';
+            } else if (overallBanner) {
+                overallBanner.style.display = 'none';
+            }
         }
 
         function renderResultsSection() {
