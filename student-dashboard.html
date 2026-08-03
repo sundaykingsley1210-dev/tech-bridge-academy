@@ -195,11 +195,6 @@
                     <h3 id="feeStatus">--</h3>
                     <p>Fee Status</p>
                 </div>
-                <div class="stat-card">
-                    <i class="fa-solid fa-list-check"></i>
-                    <h3 id="pendingAssignments">--</h3>
-                    <p>Pending Tasks</p>
-                </div>
             </div>
 
             <!-- Overview Section -->
@@ -1056,13 +1051,6 @@
                 </div>
                 ${!isPaid ? '<div id="paymentFormArea" style="margin-top:20px"><h4 style="color:var(--dark);margin-bottom:10px;font-size:.9rem"><i class="fa-solid fa-paper-plane"></i> Submit Payment Proof</h4><form id="paymentForm" onsubmit="submitPayment(event)"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Teller/Ref Number *</label><input type="text" id="payTeller" required placeholder="e.g. 1234567890" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Amount Paid *</label><input type="number" id="payAmount" required min="1" placeholder="e.g. 45000" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Bank Name *</label><input type="text" id="payBank" required placeholder="e.g. GTBank" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Payment Date *</label><input type="date" id="payDate" required style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div></div><button type="submit" style="width:100%;margin-top:12px;padding:12px;background:var(--gradient);color:#fff;border:none;border-radius:10px;font-weight:600;font-size:.9rem;cursor:pointer"><i class="fa-solid fa-check"></i> Submit Payment</button></form></div>' : ''}
             `;
-
-            const assignments = JSON.parse(localStorage.getItem('tba_assignments') || '[]');
-            const submissions = JSON.parse(localStorage.getItem('tba_submissions') || '[]');
-            const myClassAssignments = assignments.filter(a => a.targetClass === currentUser.class || a.targetClass === 'All Classes' || !a.targetClass);
-            const mySubmissions = submissions.filter(s => s.studentId === currentUser.id);
-            const pending = myClassAssignments.length - mySubmissions.length;
-            document.getElementById('pendingAssignments').textContent = Math.max(0, pending);
         }
 
         function renderNotifications() {
