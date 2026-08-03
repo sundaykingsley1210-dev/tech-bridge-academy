@@ -748,13 +748,13 @@
                 return;
             }
 
-            c.innerHTML = examKeys.map(key => {
+            c.innerHTML = examKeys.map((key, i) => {
                 const exam = exams[key];
                 const submitted = mySubmissions.find(s => s.studentId === currentUser.id && s.subject === exam.subject && s.term === exam.term);
                 const graded = submitted && submitted.graded;
                 return '<div class="assignment-item" style="border-left-color:' + (graded ? '#38ef7d' : submitted ? '#ffd93d' : '#1e40af') + '">' +
                     '<div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">' +
-                    '<div><h4>' + exam.subject + ' Exam</h4>' +
+                    '<div><h4><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#1e40af;color:#fff;font-size:.78rem;font-weight:700;margin-right:6px;flex-shrink:0">' + (i + 1) + '</span> ' + exam.subject + ' Exam</h4>' +
                     '<div class="meta"><span><i class="fa-solid fa-layer-group"></i> ' + exam.class + '</span>' +
                     '<span><i class="fa-solid fa-calendar"></i> ' + exam.term + '</span>' +
                     '<span><i class="fa-solid fa-list"></i> ' + exam.questions.length + ' Questions</span>' +
@@ -778,7 +778,7 @@
             function renderQuestion() {
                 const q = questions[currentQ];
                 let html = '<div style="margin-bottom:10px;color:#64748b;font-size:.85rem">Question ' + (currentQ + 1) + ' of ' + questions.length + ' | ' + q.marks + ' marks</div>';
-                html += '<div style="font-weight:600;font-size:1.05rem;margin-bottom:15px;line-height:1.6">' + q.question + '</div>';
+                html += '<div style="font-weight:600;font-size:1.05rem;margin-bottom:15px;line-height:1.6"><span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#1e40af;color:#fff;font-size:.85rem;font-weight:700;margin-right:8px;flex-shrink:0;vertical-align:middle">' + (currentQ + 1) + '</span> ' + q.question + '</div>';
                 ['A','B','C','D'].forEach(opt => {
                     const selected = answers[q.id] === opt;
                     html += '<label style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:8px;border:2px solid ' + (selected ? '#1e40af' : '#e9ecef') + ';border-radius:10px;cursor:pointer;transition:all .2s;background:' + (selected ? '#eff6ff' : '#fff') + '" onclick="selectExamAnswer(\'' + q.id + '\',\'' + opt + '\')">' +
@@ -853,13 +853,13 @@
                 return;
             }
 
-            c.innerHTML = myResults.slice().reverse().map(r => {
+            c.innerHTML = myResults.slice().reverse().map((r, i) => {
                 const passed = r.passed;
                 return `
                 <div class="assignment-item" style="border-left-color:${passed ? '#38ef7d' : '#e53e3e'}">
                     <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
                         <div>
-                            <h4>${r.class} Examination</h4>
+                            <h4><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:${passed ? '#38ef7d' : '#e53e3e'};color:#fff;font-size:.78rem;font-weight:700;margin-right:6px;flex-shrink:0">${i + 1}</span> ${r.class} Examination</h4>
                             <div class="meta">
                                 <span><i class="fa-solid fa-calendar"></i> ${new Date(r.date).toLocaleDateString()}</span>
                                 <span><i class="fa-solid fa-clock"></i> ${new Date(r.date).toLocaleTimeString()}</span>
