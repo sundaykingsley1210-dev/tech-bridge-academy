@@ -381,7 +381,6 @@
         if (!currentUser || currentUser.role !== 'teacher') window.location.href = 'login.html';
 
         let questionCount = 1;
-        let currentGradeIdx = null;
         const notifClasses = ['All Classes','JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
 
         function init() {
@@ -416,9 +415,6 @@
         function deselectAllClasses() { document.querySelectorAll('.class-cb').forEach(cb => cb.checked = false); }
 
         function renderAll() { renderAssignments(); renderStudents(); renderSentNotifs(); renderNotifBadge(); renderTimetableList(); renderResultList(); updateStats(); }
-
-            alert('Grade saved!');
-        }
 
         function addQuestion() {
             questionCount++;
