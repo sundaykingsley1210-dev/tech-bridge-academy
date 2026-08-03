@@ -437,15 +437,20 @@
         let notifFilter = 'all';
 
         function getResults() {
-            // Check individual student results first
-            const individual = localStorage.getItem('tba_student_results_' + currentUser.id);
-            if (individual) {
-                const parsed = JSON.parse(individual);
-                if (parsed.length) return parsed;
-            }
-            // Fall back to class results
-            const saved = localStorage.getItem('tba_results_' + currentUser.class);
-            return saved ? JSON.parse(saved) : [];
+            // Get individual student results
+            const individual = JSON.parse(localStorage.getItem('tba_student_results_' + currentUser.id) || '[]');
+            // Also get class results as fallback
+            const classResults = JSON.parse(localStorage.getItem('tba_results_' + currentUser.class) || '[]');
+            // Merge: individual results take priority, add class results that don't exist in individual
+            let merged = [...individual];
+            const individualKeys = individual.map(r => r.subject + '|' + r.term);
+            classResults.forEach(r => {
+                const key = r.subject + '|' + (r.term || 'First Term');
+                if (!individualKeys.includes(key)) {
+                    merged.push({...r, term: r.term || 'First Term'});
+                }
+            });
+            return merged;
         }
 
         function ordinalSuffix(n) {

@@ -795,7 +795,7 @@
             const byClass = {};
             all.forEach(e => {
                 if (!byClass[e.cls]) byClass[e.cls] = [];
-                byClass[e.cls].push({ subject: e.subject, ca1: e.ca1, ca2: e.ca2, exam: e.exam, total: e.total, grade: e.grade });
+                byClass[e.cls].push({ subject: e.subject, term: e.term || 'First Term', ca1: e.ca1, ca2: e.ca2, exam: e.exam, total: e.total, grade: e.grade });
             });
             const allClasses = ['JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
             allClasses.forEach(cls => {
