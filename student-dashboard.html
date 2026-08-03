@@ -151,7 +151,6 @@
                 <li><a onclick="showSection(this, 'takeExamSection')"><i class="fa-solid fa-pen-to-square"></i> Take Exam</a></li>
                 <li><a onclick="showSection(this, 'notificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
                 <li><a onclick="showSection(this, 'paymentSection')"><i class="fa-solid fa-money-bill-wave"></i> Fee & Payment</a></li>
-                <li><a onclick="showSection(this, 'examSection')"><i class="fa-solid fa-chart-bar"></i> Exam Results</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Back to Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
             </ul>
@@ -364,21 +363,6 @@
                         </div>
                         <div class="card-body">
                             <div id="availableExamsList"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Exam Results Section -->
-            <div id="examSection" style="display:none">
-                <div class="dashboard-grid">
-                    <div class="card full-width">
-                        <div class="card-header">
-                            <h3><i class="fa-solid fa-pen-to-square"></i> My Exam Results</h3>
-                            <a href="internal-exam.html" style="background:var(--gradient);color:#fff;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.82rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-plus"></i> Take Exam</a>
-                        </div>
-                        <div class="card-body">
-                            <div class="assignment-list" id="examResultsList"></div>
                         </div>
                     </div>
                 </div>
@@ -843,72 +827,6 @@
             renderQuestion();
         }
 
-        function renderExamResults() {
-            const oldResults = JSON.parse(localStorage.getItem('tba_exam_results') || '[]');
-            const submissions = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]');
-            const myOldResults = oldResults.filter(r => r.studentId === currentUser.id);
-            const mySubmissions = submissions.filter(s => s.studentId === currentUser.id);
-            const c = document.getElementById('examResultsList');
-
-            let allResults = [];
-
-            myOldResults.forEach(r => {
-                allResults.push({
-                    title: r.class + ' Examination',
-                    score: r.score,
-                    total: r.total,
-                    percentage: r.percentage,
-                    grade: r.passed ? 'PASSED' : 'BELOW CUT-OFF',
-                    date: r.date,
-                    passed: r.passed,
-                    color: r.passed ? '#38ef7d' : '#e53e3e'
-                });
-            });
-
-            mySubmissions.forEach(s => {
-                const pct = s.totalMarks > 0 ? Math.round((s.score / s.totalMarks) * 100) : 0;
-                const grade = calcGrade(pct);
-                allResults.push({
-                    title: s.subject + ' (' + s.term + ')',
-                    score: s.score,
-                    total: s.totalMarks,
-                    percentage: pct,
-                    grade: grade,
-                    date: s.submittedAt,
-                    passed: pct >= 40,
-                    color: pct >= 40 ? '#38ef7d' : '#e53e3e'
-                });
-            });
-
-            if (!allResults.length) {
-                c.innerHTML = '<div class="no-data"><i class="fa-solid fa-pen-to-square"></i><p>You haven\'t taken any exams yet</p></div>';
-                return;
-            }
-
-            allResults.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            c.innerHTML = allResults.map((r, i) => {
-                return `
-                <div class="assignment-item" style="border-left-color:${r.color}">
-                    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
-                        <div>
-                            <h4><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:${r.color};color:#fff;font-size:.78rem;font-weight:700;margin-right:6px;flex-shrink:0">${i + 1}</span> ${r.title}</h4>
-                            <div class="meta">
-                                <span><i class="fa-solid fa-calendar"></i> ${new Date(r.date).toLocaleDateString()}</span>
-                                <span><i class="fa-solid fa-clock"></i> ${new Date(r.date).toLocaleTimeString()}</span>
-                            </div>
-                        </div>
-                        <div style="text-align:right">
-                            <div style="font-size:1.5rem;font-weight:800;color:${r.color}">${r.score}/${r.total}</div>
-                            <div style="font-size:.85rem;color:${r.color}">${r.percentage}%</div>
-                        </div>
-                    </div>
-                    <div style="margin-top:10px;display:inline-block;padding:5px 14px;border-radius:20px;font-size:.8rem;font-weight:600;${r.passed ? 'background:#d4edda;color:#155724' : 'background:#f8d7da;color:#721c24'}">
-                        ${r.grade}
-                    </div>
-                </div>`;
-            }).join('');
-        }
 
         function openSubmitModal(assignmentId) {
             const assignments = JSON.parse(localStorage.getItem('tba_assignments') || '[]');
@@ -1139,7 +1057,7 @@
         function showSection(el, sectionId) {
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
-            const allSections = ['overviewSection','resultsSection','timetableSection','assignmentsSection','submissionsSection','takeExamSection','notificationsSection','paymentSection','examSection'];
+            const allSections = ['overviewSection','resultsSection','timetableSection','assignmentsSection','submissionsSection','takeExamSection','notificationsSection','paymentSection'];
             allSections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -1148,7 +1066,6 @@
             if (sectionId === 'resultsSection') renderResultsSection();
             if (sectionId === 'timetableSection') renderTimetableSection();
             if (sectionId === 'takeExamSection') renderAvailableExams();
-            if (sectionId === 'examSection') renderExamResults();
         }
 
         function submitPayment(e) {
