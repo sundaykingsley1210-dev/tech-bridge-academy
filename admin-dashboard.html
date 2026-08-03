@@ -369,6 +369,16 @@
 
             <!-- Admin Students Section -->
             <div id="adminStudentsSection" style="display:none">
+                <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px">
+                    <h3 style="margin:0"><i class="fa-solid fa-users"></i> Students</h3>
+                    <select id="adminClassFilter" onchange="renderAdminStudents()" style="padding:10px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem;font-weight:600;background:#fff;cursor:pointer;min-width:160px">
+                        <option value="all">All Classes</option>
+                        <option>Nursery 1</option><option>Nursery 2</option>
+                        <option>Primary 1</option><option>Primary 2</option><option>Primary 3</option><option>Primary 4</option><option>Primary 5</option><option>Primary 6</option>
+                        <option>JSS 1</option><option>JSS 2</option><option>JSS 3</option>
+                        <option>SSS 1</option><option>SSS 2</option><option>SSS 3</option>
+                    </select>
+                </div>
                 <div id="adminStudentsByClass"></div>
             </div>
 
@@ -1412,10 +1422,12 @@
         function renderAdminStudents() {
             const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
             const studs = users.filter(u => u.role==='student');
+            const filter = document.getElementById('adminClassFilter').value;
             const c = document.getElementById('adminStudentsByClass');
             if (!studs.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-users"></i><p>No students yet</p></div>'; return; }
 
-            const classes = ['Nursery 1','Nursery 2','Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Primary 6','JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+            const allClasses = ['Nursery 1','Nursery 2','Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Primary 6','JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+            const classes = filter === 'all' ? allClasses : [filter];
             let html = '';
             classes.forEach(cls => {
                 const classStudents = studs.filter(s => s.class === cls);
@@ -1457,6 +1469,7 @@
                 });
                 html += '</div></div>';
             });
+            if (!html) html = '<div class="no-data"><i class="fa-solid fa-users"></i><p>No students in this class</p></div>';
             c.innerHTML = html;
         }
 

@@ -220,6 +220,14 @@
 
             <!-- Students Section -->
             <div id="studentsSection" style="display:none">
+                <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px">
+                    <h3 style="margin:0"><i class="fa-solid fa-users"></i> Students</h3>
+                    <select id="teacherClassFilter" onchange="renderStudents()" style="padding:10px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem;font-weight:600;background:#fff;cursor:pointer;min-width:160px">
+                        <option value="all">All Classes</option>
+                        <option>JSS 1</option><option>JSS 2</option><option>JSS 3</option>
+                        <option>SSS 1</option><option>SSS 2</option><option>SSS 3</option>
+                    </select>
+                </div>
                 <div id="studentsByClass"></div>
             </div>
 
@@ -483,11 +491,13 @@
         function renderStudents() {
             const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
             const studs = users.filter(u => u.role==='student');
+            const filter = document.getElementById('teacherClassFilter').value;
             const c = document.getElementById('studentsByClass');
             document.getElementById('totalStudents').textContent = studs.length;
             if (!studs.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-users"></i><p>No students yet</p></div>'; return; }
 
-            const classes = ['JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+            const allClasses = ['JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+            const classes = filter === 'all' ? allClasses : [filter];
             let html = '';
             classes.forEach(cls => {
                 const classStudents = studs.filter(s => s.class === cls);
@@ -529,6 +539,7 @@
                 });
                 html += '</div></div>';
             });
+            if (!html) html = '<div class="no-data"><i class="fa-solid fa-users"></i><p>No students in this class</p></div>';
             c.innerHTML = html;
         }
 
