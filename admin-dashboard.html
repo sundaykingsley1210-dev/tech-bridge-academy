@@ -146,7 +146,7 @@
                 </div>
                 <div class="user-info">
                     <div class="user-details" style="text-align:right">
-                        <h4 id="adminName">Admin</h4>
+                        <h4 id="adminName">${currentUser.name}</h4>
                         <span>Administrator</span>
                     </div>
                     <div class="user-avatar" id="avatarInitials" onclick="document.getElementById('profilePicInput').click()">
@@ -180,6 +180,14 @@
                         <i class="fa-solid fa-user-check"></i>
                         <h3 id="admittedApps">0</h3>
                         <p>Admitted</p>
+                    </div>
+                </div>
+                <div class="dashboard-grid" style="margin-top:20px">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fa-solid fa-id-card"></i> Admin ID Card</h3><button onclick="printAdminIdCard()" style="background:var(--gradient);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-print"></i> Print</button></div>
+                        <div class="card-body">
+                            <div id="adminIdCardPreview"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -480,7 +488,7 @@
             seedFees();
             const hour = new Date().getHours();
             const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
-            document.getElementById('greeting').textContent = `${greeting}, Admin!`;
+            document.getElementById('greeting').textContent = `${greeting}, ${currentUser.name}!`;
             document.getElementById('adminName').textContent = currentUser.name;
             document.getElementById('avatarText').textContent = 'AD';
             renderApps();
@@ -495,6 +503,7 @@
             renderPaymentSubs();
             loadBankDetails();
             updateStats();
+            renderAdminIdCard();
         }
 
         function seedFees() {
@@ -809,6 +818,188 @@
         function handleSearch() {
             searchQuery = document.getElementById('searchInput').value;
             renderApps();
+        }
+
+        function renderAdminIdCard() {
+            const profilePic = localStorage.getItem('tba_profile_pic_admin');
+            const c = document.getElementById('adminIdCardPreview');
+            if (!c) return;
+            const cardData = JSON.parse(localStorage.getItem('tba_admin_id_card') || '{}');
+            const name = cardData.name || currentUser.name;
+            const email = cardData.email || currentUser.email || 'admin@techbridge.edu';
+            const phone = cardData.phone || '';
+            const gender = cardData.gender || '';
+            const initials = name.split(' ').map(n=>n[0]).join('').substring(0,2);
+            c.innerHTML = `
+                <div class="reg-id-card" style="background-color:#d69e2e;margin:0 auto;max-width:340px">
+                    <div class="reg-avatar-box" style="border-color:#d69e2e">
+                        ${profilePic ? '<img src="'+profilePic+'" alt="Photo">' : '<span style="font-size:1.8rem;font-weight:700;color:#d69e2e">'+initials+'</span>'}
+                    </div>
+                    <div class="reg-card-name">${name}</div>
+                    <div class="reg-card-course">Administrator</div>
+                    <div class="reg-card-details">
+                        <p><strong>Role:</strong> Admin</p>
+                        <p><strong>ID No:</strong> ${currentUser.id}</p>
+                        <p><strong>Gender:</strong> ${gender || 'Not set'}</p>
+                        <p><strong>Email:</strong> ${email}</p>
+                        <p><strong>Phone:</strong> ${phone || 'Not set'}</p>
+                    </div>
+                </div>
+                <div style="text-align:center;margin-top:15px">
+                    <button onclick="editAdminIdCard()" style="background:var(--gradient);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><i class="fa-solid fa-pen"></i> Edit ID Card</button>
+                </div>
+            `;
+        }
+
+        function editAdminIdCard() {
+            const cardData = JSON.parse(localStorage.getItem('tba_admin_id_card') || '{}');
+            const html = `
+                <div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">
+                    <div style="background:#fff;border-radius:16px;padding:30px;max-width:450px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto">
+                        <h3 style="margin:0 0 20px;color:var(--dark);text-align:center"><i class="fa-solid fa-pen"></i> Edit Admin ID Card</h3>
+                        <div style="display:flex;flex-direction:column;gap:12px">
+                            <div><label style="font-weight:600;font-size:.85rem;display:block;margin-bottom:4px">Full Name</label><input type="text" id="editAdminName" value="${cardData.name || currentUser.name}" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                                <div><label style="font-weight:600;font-size:.85rem;display:block;margin-bottom:4px">Gender</label>
+                                    <select id="editAdminGender" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem">
+                                        <option value="">Select</option>
+                                        <option value="Male" ${cardData.gender==='Male'?'selected':''}>Male</option>
+                                        <option value="Female" ${cardData.gender==='Female'?'selected':''}>Female</option>
+                                    </select>
+                                </div>
+                                <div><label style="font-weight:600;font-size:.85rem;display:block;margin-bottom:4px">Phone</label><input type="tel" id="editAdminPhone" value="${cardData.phone || ''}" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                            </div>
+                            <div><label style="font-weight:600;font-size:.85rem;display:block;margin-bottom:4px">Email</label><input type="email" id="editAdminEmail" value="${cardData.email || currentUser.email || ''}" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                        </div>
+                        <div style="display:flex;gap:10px;margin-top:20px">
+                            <button onclick="saveAdminIdCard()" style="flex:1;padding:12px;border:none;border-radius:10px;background:var(--gradient);color:#fff;cursor:pointer;font-size:.9rem;font-weight:700"><i class="fa-solid fa-save"></i> Save</button>
+                            <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:12px;border:none;border-radius:10px;background:#f8f9fa;color:var(--gray);cursor:pointer;font-size:.9rem;font-weight:600">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            document.body.appendChild(div.firstElementChild);
+        }
+
+        function saveAdminIdCard() {
+            const cardData = {
+                name: document.getElementById('editAdminName').value.trim(),
+                gender: document.getElementById('editAdminGender').value,
+                phone: document.getElementById('editAdminPhone').value.trim(),
+                email: document.getElementById('editAdminEmail').value.trim()
+            };
+            localStorage.setItem('tba_admin_id_card', JSON.stringify(cardData));
+            if (cardData.name) {
+                currentUser.name = cardData.name;
+                localStorage.setItem('tba_currentUser', JSON.stringify(currentUser));
+            }
+            document.querySelector('div[style*=fixed]').remove();
+            renderAdminIdCard();
+            alert('ID card updated!');
+        }
+
+        function printAdminIdCard() {
+            const profilePic = localStorage.getItem('tba_profile_pic_admin');
+            const cardData = JSON.parse(localStorage.getItem('tba_admin_id_card') || '{}');
+            const name = cardData.name || currentUser.name;
+            const email = cardData.email || currentUser.email || 'admin@techbridge.edu';
+            const phone = cardData.phone || '';
+            const gender = cardData.gender || '';
+            const initials = name.split(' ').map(n=>n[0]).join('').substring(0,2);
+
+            const html = `
+                <div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">
+                    <div style="background:#fff;border-radius:16px;padding:30px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                        <h3 style="margin:0 0 5px;color:var(--dark);text-align:center"><i class="fa-solid fa-id-card"></i> Print Admin ID Card</h3>
+                        <p style="text-align:center;color:var(--gray);font-size:.85rem;margin-bottom:20px">Your browser's print dialog will open with available printers.</p>
+                        <label style="display:block;margin-bottom:20px"><span style="font-weight:600;font-size:.9rem;color:var(--dark);display:block;margin-bottom:8px">Print Color:</span>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                                <label style="display:flex;align-items:center;gap:10px;padding:14px;border:2px solid #d69e2e;border-radius:10px;background:#fefce8;cursor:pointer">
+                                    <input type="radio" name="adminIdPrintColor" value="color" checked style="accent-color:#d69e2e;width:18px;height:18px">
+                                    <div><i class="fa-solid fa-palette" style="color:#d69e2e;font-size:1.1rem"></i><div style="font-weight:600;font-size:.9rem;margin-top:2px">Color</div><div style="font-size:.75rem;color:var(--gray)">Full color</div></div>
+                                </label>
+                                <label style="display:flex;align-items:center;gap:10px;padding:14px;border:2px solid #e9ecef;border-radius:10px;background:#f8f9fa;cursor:pointer">
+                                    <input type="radio" name="adminIdPrintColor" value="bw" style="accent-color:#333;width:18px;height:18px">
+                                    <div><i class="fa-solid fa-circle-half-stroke" style="color:#333;font-size:1.1rem"></i><div style="font-weight:600;font-size:.9rem;margin-top:2px">Black & White</div><div style="font-size:.75rem;color:var(--gray)">Monochrome</div></div>
+                                </label>
+                            </div>
+                        </label>
+                        <div style="display:flex;flex-direction:column;gap:10px">
+                            <button onclick="doPrintAdminIdCard()" style="padding:14px;border:none;border-radius:10px;background:var(--gradient);color:#fff;cursor:pointer;font-size:.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px"><i class="fa-solid fa-print"></i> Print Now</button>
+                            <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:12px;border:none;border-radius:10px;background:#f8f9fa;color:var(--gray);cursor:pointer;font-size:.9rem;font-weight:600">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            document.body.appendChild(div.firstElementChild);
+
+            document.querySelectorAll('input[name=adminIdPrintColor]').forEach(r => {
+                r.addEventListener('change', function() {
+                    document.querySelectorAll('label:has(input[name=adminIdPrintColor])').forEach(l => {
+                        l.style.borderColor = '#e9ecef';
+                        l.style.background = '#f8f9fa';
+                    });
+                    this.parentElement.style.borderColor = this.value === 'color' ? '#d69e2e' : '#333';
+                    this.parentElement.style.background = this.value === 'color' ? '#fefce8' : '#f0f0f0';
+                });
+            });
+        }
+
+        function doPrintAdminIdCard() {
+            const colorMode = document.querySelector('input[name=adminIdPrintColor]:checked').value;
+            const isBW = colorMode === 'bw';
+            document.querySelector('div[style*=fixed]').remove();
+
+            const profilePic = localStorage.getItem('tba_profile_pic_admin');
+            const cardData = JSON.parse(localStorage.getItem('tba_admin_id_card') || '{}');
+            const name = cardData.name || currentUser.name;
+            const email = cardData.email || currentUser.email || 'admin@techbridge.edu';
+            const phone = cardData.phone || '';
+            const gender = cardData.gender || '';
+            const initials = name.split(' ').map(n=>n[0]).join('').substring(0,2);
+            const idColor = isBW ? '#000' : '#d69e2e';
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html><html><head><title>Admin ID Card - ${currentUser.name}</title>
+                <style>
+                    @media print {
+                        body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        @page { margin: 15mm; size: auto; }
+                    }
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+                    .reg-id-card{border-radius:14px;padding:24px;text-align:center;color:#fff;width:340px;margin:0 auto}
+                    .reg-avatar-box{width:100px;height:100px;border-radius:50%;background:#fff;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:3px solid ${idColor}}
+                    .reg-avatar-box img{width:100%;height:100%;object-fit:cover}
+                    .reg-card-name{font-size:1.15rem;font-weight:700;margin-bottom:4px}
+                    .reg-card-course{font-size:.8rem;opacity:.9;margin-bottom:14px}
+                    .reg-card-details{text-align:left;font-size:.78rem;line-height:1.9;background:rgba(255,255,255,.15);border-radius:8px;padding:12px 14px}
+                    .reg-card-details p{margin:0}
+                    .reg-card-details strong{display:inline-block;width:65px}
+                </style>
+                </head><body>
+                    <div class="reg-id-card" style="background-color:${idColor}">
+                        <div class="reg-avatar-box">
+                            ${profilePic ? '<img src="'+profilePic+'">' : '<span style="font-size:1.8rem;font-weight:700;color:'+idColor+'">'+initials+'</span>'}
+                        </div>
+                        <div class="reg-card-name">${name}</div>
+                        <div class="reg-card-course">Administrator</div>
+                        <div class="reg-card-details">
+                            <p><strong>Role:</strong> Admin</p>
+                            <p><strong>ID No:</strong> ${currentUser.id}</p>
+                            <p><strong>Gender:</strong> ${gender || 'Not set'}</p>
+                            <p><strong>Email:</strong> ${email}</p>
+                            <p><strong>Phone:</strong> ${phone || 'Not set'}</p>
+                        </div>
+                    </div>
+                </body></html>
+            `);
+            printWindow.document.close();
+            setTimeout(() => { printWindow.focus(); printWindow.print(); }, 500);
         }
 
         function updateStats() {
