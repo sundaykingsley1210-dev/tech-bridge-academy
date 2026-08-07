@@ -31,7 +31,7 @@
                 <li><a href="#home">Home</a></li>
                 <li><a href="#features">Features</a></li>
                 <li><a href="#about">About</a></li>
-                <li><a href="#services">Services</a></li>
+                <li><a href="#gallery">Gallery</a></li>
                 <li><a href="#contact">Contact</a></li>
                 <li><a href="login.html" class="btn-nav">Portal Login</a></li>
                 <li><a href="admission.html" class="btn-nav" style="background: var(--gradient);">Apply Now</a></li>
@@ -134,111 +134,63 @@
         </div>
     </section>
 
-    <!-- Student Registration Section -->
-    <section class="reg-section" id="studentCard">
+    <!-- School Gallery Section -->
+    <section class="gallery-section" id="gallery">
         <div class="container">
             <div class="section-header">
-                <span class="badge" style="background:rgba(255,255,255,0.2);color:white;">Student Registration</span>
-                <h2>Register as a <span class="gradient-text">Student</span></h2>
-                <p>Fill in the form below to register and get your student ID card</p>
+                <span class="badge" style="background:rgba(255,255,255,0.2);color:white;">School Gallery</span>
+                <h2>Life at <span class="gradient-text">TECH-BRIDGE ACADEMY</span></h2>
+                <p>A glimpse into our vibrant school community, learning environment, and the amazing moments our students create every day.</p>
             </div>
-            <div class="reg-wrapper">
-                <div class="reg-form-box">
-                    <form id="registrationForm">
-                        <div class="reg-form-group">
-                            <label for="regFullName">Full Name</label>
-                            <input type="text" id="regFullName" placeholder="Enter your full name">
-                        </div>
-                        <div class="reg-form-group">
-                            <label for="regEmail">Email Address</label>
-                            <input type="email" id="regEmail" placeholder="Enter your email">
-                        </div>
-                        <div class="reg-form-group">
-                            <label for="regPhone">Phone Number</label>
-                            <input type="tel" id="regPhone" placeholder="Enter your phone number">
-                        </div>
-                        <div class="reg-form-group">
-                            <label for="regAddress">Student Address</label>
-                            <input type="text" id="regAddress" placeholder="Enter your address">
-                        </div>
-                        <div class="reg-form-group">
-                            <label for="regAge">Age</label>
-                            <input type="number" id="regAge" min="1" max="120" placeholder="Enter your age">
-                        </div>
-                        <div class="reg-form-group">
-                            <label for="regStudentClass">Student Class</label>
-                            <select id="regStudentClass">
-                                <option value="">Select your class</option>
-                                <optgroup label="Junior Secondary">
-                                    <option value="JSS1">JSS 1</option>
-                                    <option value="JSS2">JSS 2</option>
-                                    <option value="JSS3">JSS 3</option>
-                                </optgroup>
-                                <optgroup label="Senior Secondary">
-                                    <option value="SS1">SS 1</option>
-                                    <option value="SS2">SS 2</option>
-                                    <option value="SS3">SS 3</option>
-                                </optgroup>
-                            </select>
-                        </div>
-                        <div class="reg-form-group">
-                            <label for="regFaculty">Faculty</label>
-                            <select id="regFaculty">
-                                <option value="">Select a faculty</option>
-                                <option value="Art">Art</option>
-                                <option value="Science">Science</option>
-                                <option value="Commercial">Commercial</option>
-                            </select>
-                        </div>
-                        <div class="reg-form-group">
-                            <label>Subjects <span id="regSubjectLimit" class="reg-subject-limit"></span></label>
-                            <div id="regSubjectsList" class="reg-subjects-list">
-                                <p class="reg-subjects-hint">Select your class first to see available subjects</p>
-                            </div>
-                        </div>
-                        <div class="reg-form-group">
-                            <label for="regAvatar">Upload Photo</label>
-                            <input type="file" id="regAvatar" accept="image/*">
-                            <div class="reg-avatar-preview" id="regAvatarPreview">
-                                <span>No photo selected</span>
-                            </div>
-                        </div>
-                        <div class="reg-form-group">
-                            <label for="regIdColor">ID Card Color</label>
-                            <div class="reg-color-row">
-                                <input type="color" id="regIdColor" value="#1e40af">
-                                <span id="regColorLabel">#1e40af</span>
-                            </div>
-                        </div>
-                        <div class="reg-form-group">
-                            <label for="regPassword">Password</label>
-                            <div class="reg-password-wrapper">
-                                <input type="password" id="regPassword" placeholder="Enter your password">
-                                <button type="button" class="reg-toggle-pw" onclick="toggleRegPassword('regPassword', this)">
-                                    <span class="reg-eye-open">&#128065;</span>
-                                    <span class="reg-eye-closed" style="display:none;">&#128064;</span>
-                                </button>
-                            </div>
-                            <div class="reg-password-strength" id="regPasswordStrength"></div>
-                        </div>
-                        <div class="reg-form-group">
-                            <label for="regConfirmPassword">Confirm Password</label>
-                            <div class="reg-password-wrapper">
-                                <input type="password" id="regConfirmPassword" placeholder="Confirm your password">
-                                <button type="button" class="reg-toggle-pw" onclick="toggleRegPassword('regConfirmPassword', this)">
-                                    <span class="reg-eye-open">&#128065;</span>
-                                    <span class="reg-eye-closed" style="display:none;">&#128064;</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="regMessage" class="reg-message"></div>
-                        <button type="submit" class="btn btn-primary btn-full">Register</button>
-                    </form>
+            <div class="gallery-grid">
+                <div class="gallery-item gallery-large">
+                    <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&h=600&fit=crop" alt="School Building" loading="lazy">
+                    <div class="gallery-overlay">
+                        <span class="gallery-tag">Campus</span>
+                        <h4>Our School Campus</h4>
+                    </div>
                 </div>
-                <div class="reg-students-area">
-                    <h3>Registered Students</h3>
-                    <p id="regStudentCount">Total students: 0</p>
-                    <div id="regStudentCards"></div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&h=400&fit=crop" alt="Students in Class" loading="lazy">
+                    <div class="gallery-overlay">
+                        <span class="gallery-tag">Learning</span>
+                        <h4>Classroom Sessions</h4>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=600&h=400&fit=crop" alt="Students Playing" loading="lazy">
+                    <div class="gallery-overlay">
+                        <span class="gallery-tag">Activities</span>
+                        <h4>School Activities</h4>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600&h=400&fit=crop" alt="Science Lab" loading="lazy">
+                    <div class="gallery-overlay">
+                        <span class="gallery-tag">Science</span>
+                        <h4>Science Laboratory</h4>
+                    </div>
+                </div>
+                <div class="gallery-item gallery-wide">
+                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&h=500&fit=crop" alt="Students Together" loading="lazy">
+                    <div class="gallery-overlay">
+                        <span class="gallery-tag">Community</span>
+                        <h4>Students &amp; Friends</h4>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&h=400&fit=crop" alt="Sports" loading="lazy">
+                    <div class="gallery-overlay">
+                        <span class="gallery-tag">Sports</span>
+                        <h4>Sports &amp; Recreation</h4>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&h=400&fit=crop" alt="Graduation" loading="lazy">
+                    <div class="gallery-overlay">
+                        <span class="gallery-tag">Achievement</span>
+                        <h4>Graduation Day</h4>
+                    </div>
                 </div>
             </div>
         </div>
