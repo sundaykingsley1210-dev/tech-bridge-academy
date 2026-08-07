@@ -1253,6 +1253,11 @@ a {
     height: 100%;
     object-fit: cover;
     display: block;
+    filter: brightness(1.1) saturate(1.1);
+}
+
+.gallery-item:hover img {
+    filter: brightness(1.2) saturate(1.2);
 }
 
 .gallery-overlay {
@@ -1261,7 +1266,7 @@ a {
     left: 0;
     right: 0;
     padding: 20px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    background: linear-gradient(transparent 0%, rgba(0,0,0,0.5) 100%);
     color: #fff;
     transform: translateY(10px);
     opacity: 0;
