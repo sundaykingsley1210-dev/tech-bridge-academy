@@ -619,7 +619,48 @@
             try {
                 const data = await signIn(email, password);
                 const user = data.user;
-                const profile = await DB.getUserProfile(user.id);
+
+                // Try to get profile, create if missing
+                let profile = null;
+                try {
+                    profile = await DB.getUserProfile(user.id);
+                } catch(e) {
+                    profile = null;
+                }
+
+                if (!profile) {
+                    // Auto-create profile from auth data + form inputs
+                    if (currentRole === 'student') {
+                        if (!selectedClass) {
+                            errorEl.textContent = 'Please select your class.';
+                            errorEl.style.display = 'block';
+                            return;
+                        }
+                        profile = {
+                            id: user.id,
+                            email: user.email,
+                            name: name || user.email.split('@')[0],
+                            role: 'student',
+                            class: selectedClass
+                        };
+                    } else if (currentRole === 'teacher') {
+                        profile = {
+                            id: user.id,
+                            email: user.email,
+                            name: user.user_metadata?.name || user.email.split('@')[0],
+                            role: 'teacher',
+                            subject: user.user_metadata?.subject || ''
+                        };
+                    } else {
+                        profile = {
+                            id: user.id,
+                            email: user.email,
+                            name: user.user_metadata?.name || user.email.split('@')[0],
+                            role: 'admin'
+                        };
+                    }
+                    try { await DB.createUser(profile); } catch(e) { console.warn('Profile save:', e); }
+                }
 
                 if (currentRole === 'student') {
                     if (!selectedClass) {
