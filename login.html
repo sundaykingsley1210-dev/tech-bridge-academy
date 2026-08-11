@@ -504,17 +504,23 @@
 
             try {
                 const data = await signUp(email, password, { name, role: 'teacher', subject, phone });
-                await DB.createUser({
+                const profile = {
                     id: data.user.id,
                     name: name,
                     email: email,
                     role: 'teacher',
                     subject: subject,
                     phone: phone
-                });
-                alert('Registration successful! You can now login with your email and password.');
+                };
+                try {
+                    await DB.createUser(profile);
+                } catch(e) {
+                    console.warn('DB createUser failed, saving locally:', e);
+                }
+                localStorage.setItem('tba_currentUser', JSON.stringify(profile));
+                alert('Registration successful! Redirecting to your dashboard...');
                 closeTeacherReg();
-                document.getElementById('teacherRegForm').reset();
+                window.location.href = 'teacher-dashboard.html';
             } catch (err) {
                 console.error(err);
                 alert(err.message || 'Registration failed. Please try again.');
@@ -566,16 +572,21 @@
 
             try {
                 const data = await signUp(email, password, { name, role: 'admin' });
-                await DB.createUser({
+                const profile = {
                     id: data.user.id,
                     name: name,
                     email: email,
                     role: 'admin'
-                });
-                alert('Admin account created! You can now login.');
+                };
+                try {
+                    await DB.createUser(profile);
+                } catch(e) {
+                    console.warn('DB createUser failed, saving locally:', e);
+                }
+                localStorage.setItem('tba_currentUser', JSON.stringify(profile));
+                alert('Admin account created! Redirecting to dashboard...');
                 closeAdminReg();
-                document.getElementById('adminRegForm').reset();
-                document.getElementById('adminRegLink').style.display = 'none';
+                window.location.href = 'admin-dashboard.html';
             } catch (err) {
                 console.error(err);
                 alert(err.message || 'Registration failed. Please try again.');
