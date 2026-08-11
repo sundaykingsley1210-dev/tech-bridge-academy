@@ -861,13 +861,23 @@
             const reader = new FileReader();
             reader.onload = function(ev) {
                 localStorage.setItem('tba_profile_pic_' + currentUser.id, ev.target.result);
+                try { DB.updateUserProfile(currentUser.id, { profile_pic: ev.target.result }); } catch(e) {}
                 loadProfilePic();
             };
             reader.readAsDataURL(file);
         }
 
-        function loadProfilePic() {
-            const pic = localStorage.getItem('tba_profile_pic_' + currentUser.id);
+        async function loadProfilePic() {
+            let pic = localStorage.getItem('tba_profile_pic_' + currentUser.id);
+            if (!pic) {
+                try {
+                    const profile = await DB.getUserProfile(currentUser.id);
+                    if (profile && profile.profile_pic) {
+                        pic = profile.profile_pic;
+                        localStorage.setItem('tba_profile_pic_' + currentUser.id, pic);
+                    }
+                } catch(e) {}
+            }
             const img = document.getElementById('profilePicImg');
             const text = document.getElementById('avatarText');
             if (pic && img && text) {
@@ -888,6 +898,17 @@
 
         function saveTeacherTimetable(data) {
             localStorage.setItem('tba_teacher_timetable', JSON.stringify(data));
+            try {
+                const allClasses = ['JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
+                const byClass = {};
+                data.forEach(e => {
+                    if (!byClass[e.cls]) byClass[e.cls] = [];
+                    byClass[e.cls].push({ id: e.id, class: e.cls, day: e.day, periods: [{ time: e.period, subject: e.subject, teacher: e.teacher }] });
+                });
+                Object.values(byClass).flat().forEach(entry => {
+                    DB.saveTimetable(entry);
+                });
+            } catch(e) {}
         }
 
         function addTimetableEntry(e) {

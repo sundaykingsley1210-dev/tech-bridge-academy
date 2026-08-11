@@ -1024,13 +1024,23 @@
             const reader = new FileReader();
             reader.onload = function(ev) {
                 localStorage.setItem('tba_profile_pic_admin', ev.target.result);
+                try { DB.updateUserProfile(currentUser.id, { profile_pic: ev.target.result }); } catch(e) {}
                 loadProfilePic();
             };
             reader.readAsDataURL(file);
         }
 
-        function loadProfilePic() {
-            const pic = localStorage.getItem('tba_profile_pic_admin');
+        async function loadProfilePic() {
+            let pic = localStorage.getItem('tba_profile_pic_admin');
+            if (!pic) {
+                try {
+                    const profile = await DB.getUserProfile(currentUser.id);
+                    if (profile && profile.profile_pic) {
+                        pic = profile.profile_pic;
+                        localStorage.setItem('tba_profile_pic_admin', pic);
+                    }
+                } catch(e) {}
+            }
             const img = document.getElementById('profilePicImg');
             const text = document.getElementById('avatarText');
             if (pic && img && text) {
@@ -1086,6 +1096,7 @@
             let schedule = JSON.parse(localStorage.getItem('tba_exam_schedule') || '{}');
             schedule[cls] = { date, time };
             localStorage.setItem('tba_exam_schedule', JSON.stringify(schedule));
+            try { DB.saveExamSchedule({ id: 'SCH-' + cls.replace(/\s/g,''), class: cls, date: date, time: time }); } catch(e) {}
             alert(cls + ' exam scheduled for ' + date + ' at ' + time);
         }
 

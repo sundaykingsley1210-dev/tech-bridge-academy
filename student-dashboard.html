@@ -912,9 +912,25 @@
             }).join('');
         }
 
-        function getTimetable() {
+        async function getTimetable() {
             const saved = localStorage.getItem('tba_timetable_' + currentUser.class);
-            return saved ? JSON.parse(saved) : [];
+            if (saved) return JSON.parse(saved);
+            try {
+                const data = await DB.getTimetable(currentUser.class);
+                if (data && data.length) {
+                    const flattened = [];
+                    data.forEach(entry => {
+                        if (entry.periods && entry.periods.length) {
+                            entry.periods.forEach(p => {
+                                flattened.push({ time: p.time, subject: p.subject, teacher: p.teacher, day: entry.day });
+                            });
+                        }
+                    });
+                    localStorage.setItem('tba_timetable_' + currentUser.class, JSON.stringify(flattened));
+                    return flattened;
+                }
+            } catch(e) {}
+            return [];
         }
 
         function init() {
@@ -1105,10 +1121,19 @@
             }).join('');
         }
 
-        function renderAvailableExams() {
+        async function renderAvailableExams() {
             const allQuestions = JSON.parse(localStorage.getItem('tba_exam_questions') || '[]');
             const mySubmissions = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]');
-            const schedule = JSON.parse(localStorage.getItem('tba_exam_schedule') || '{}');
+            let schedule = JSON.parse(localStorage.getItem('tba_exam_schedule') || '{}');
+            if (!Object.keys(schedule).length) {
+                try {
+                    const data = await DB.getExamSchedule();
+                    if (data && data.length) {
+                        data.forEach(s => { schedule[s.class] = { date: s.date, time: s.time }; });
+                        localStorage.setItem('tba_exam_schedule', JSON.stringify(schedule));
+                    }
+                } catch(e) {}
+            }
             const c = document.getElementById('availableExamsList');
 
             // Group questions by class+subject+term
@@ -1156,8 +1181,17 @@
             }).join('');
         }
 
-        function renderStudentExamSchedule() {
-            const schedule = JSON.parse(localStorage.getItem('tba_exam_schedule') || '{}');
+        async function renderStudentExamSchedule() {
+            let schedule = JSON.parse(localStorage.getItem('tba_exam_schedule') || '{}');
+            if (!Object.keys(schedule).length) {
+                try {
+                    const data = await DB.getExamSchedule();
+                    if (data && data.length) {
+                        data.forEach(s => { schedule[s.class] = { date: s.date, time: s.time }; });
+                        localStorage.setItem('tba_exam_schedule', JSON.stringify(schedule));
+                    }
+                } catch(e) {}
+            }
             const allQuestions = JSON.parse(localStorage.getItem('tba_exam_questions') || '[]');
             const mySubmissions = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]');
             const c = document.getElementById('examScheduleList');
@@ -1569,13 +1603,23 @@
             const reader = new FileReader();
             reader.onload = function(ev) {
                 localStorage.setItem('tba_profile_pic_' + currentUser.id, ev.target.result);
+                try { DB.updateUserProfile(currentUser.id, { profile_pic: ev.target.result }); } catch(e) {}
                 loadProfilePic();
             };
             reader.readAsDataURL(file);
         }
 
-        function loadProfilePic() {
-            const pic = localStorage.getItem('tba_profile_pic_' + currentUser.id);
+        async function loadProfilePic() {
+            let pic = localStorage.getItem('tba_profile_pic_' + currentUser.id);
+            if (!pic) {
+                try {
+                    const profile = await DB.getUserProfile(currentUser.id);
+                    if (profile && profile.profile_pic) {
+                        pic = profile.profile_pic;
+                        localStorage.setItem('tba_profile_pic_' + currentUser.id, pic);
+                    }
+                } catch(e) {}
+            }
             const img = document.getElementById('profilePicImg');
             const text = document.getElementById('avatarText');
             if (pic && img && text) {
