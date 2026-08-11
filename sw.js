@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tba-v5';
+const CACHE_NAME = 'tba-v6';
 const ASSETS = [
   '/',
   '/index.html',

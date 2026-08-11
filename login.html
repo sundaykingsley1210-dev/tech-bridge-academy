@@ -8,8 +8,48 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=5"></script>
-    <script src="db.js?v=5"></script>
+    <script>
+    // Inline Supabase init + auth helpers — no external file dependency
+    var _supabaseClient = null;
+    function _initSupabase() {
+        try {
+            if (_supabaseClient) return;
+            if (window.supabase && window.supabase.createClient) {
+                _supabaseClient = window.supabase.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_3DWixMg6ElVnJD08vOQJAA_-2Y0Pate');
+            } else if (window.createClient) {
+                _supabaseClient = window.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_3DWixMg6ElVnJD08vOQJAA_-2Y0Pate');
+            }
+        } catch(e) { console.error('Supabase init error:', e); }
+    }
+    _initSupabase();
+    setTimeout(_initSupabase, 500);
+    setTimeout(_initSupabase, 1500);
+    setTimeout(_initSupabase, 3000);
+
+    function signUp(email, password, metadata) {
+        _initSupabase();
+        if (!_supabaseClient) return Promise.reject(new Error('Cannot connect to server. Check your internet connection and try again.'));
+        return _supabaseClient.auth.signUp({ email: email, password: password, options: { data: metadata || {} } }).then(function(res) {
+            if (res.error) throw res.error;
+            return res.data;
+        });
+    }
+
+    function signIn(email, password) {
+        _initSupabase();
+        if (!_supabaseClient) return Promise.reject(new Error('Cannot connect to server. Check your internet connection and try again.'));
+        return _supabaseClient.auth.signInWithPassword({ email: email, password: password }).then(function(res) {
+            if (res.error) throw res.error;
+            return res.data;
+        });
+    }
+
+    var supabase = null;
+    var DB = {
+        createUser: function(u) { _initSupabase(); if (!_supabaseClient) return Promise.resolve(); return _supabaseClient.from('users').upsert(u); },
+        getUserProfile: function(id) { _initSupabase(); if (!_supabaseClient) return Promise.reject(new Error('No connection')); return _supabaseClient.from('users').select('*').eq('id', id).single().then(function(r){ if(r.error) throw r.error; return r.data; }); }
+    };
+    </script>
     <style>
         .login-page {
             min-height: 100vh;
@@ -410,13 +450,13 @@
             const email = document.getElementById('resetEmail').value.trim();
             const errorEl = document.getElementById('loginError');
 
+            _initSupabase();
+            if (!_supabaseClient) { alert('Cannot connect to server. Check your internet.'); return; }
+
             try {
-                const { data: user, error: userErr } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('email', email)
-                    .eq('role', role)
-                    .maybeSingle();
+                var userResult = await _supabaseClient.from('users').select('*').eq('email', email).eq('role', role).maybeSingle();
+                var user = userResult.data;
+                var userErr = userResult.error;
 
                 if (userErr) throw userErr;
                 if (!user) {
@@ -424,13 +464,9 @@
                     return;
                 }
 
-                const { data: existing, error: exErr } = await supabase
-                    .from('password_resets')
-                    .select('*')
-                    .eq('email', email)
-                    .eq('role', role)
-                    .eq('status', 'pending')
-                    .maybeSingle();
+                var exResult = await _supabaseClient.from('password_resets').select('*').eq('email', email).eq('role', role).eq('status', 'pending').maybeSingle();
+                var existing = exResult.data;
+                var exErr = exResult.error;
 
                 if (exErr) throw exErr;
                 if (existing) {
@@ -439,7 +475,7 @@
                     return;
                 }
 
-                const { error: insErr } = await supabase.from('password_resets').insert({
+                var insResult = await _supabaseClient.from('password_resets').insert({
                     id: 'RST' + Date.now().toString(36).toUpperCase(),
                     role: role,
                     name: user.name,
@@ -447,7 +483,7 @@
                     status: 'pending',
                     requested_at: new Date().toISOString()
                 });
-                if (insErr) throw insErr;
+                if (insResult.error) throw insResult.error;
 
                 alert('Password reset request sent to admin. You will be able to login with password 123456 once approved.');
                 closeResetModal();

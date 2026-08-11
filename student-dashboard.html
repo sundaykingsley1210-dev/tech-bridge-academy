@@ -8,8 +8,74 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=5"></script>
-    <script src="db.js?v=5"></script>
+    <script>
+    var _supabaseClient = null;
+    function _initSupabase() {
+        try {
+            if (_supabaseClient) return;
+            if (window.supabase && window.supabase.createClient) {
+                _supabaseClient = window.supabase.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_3DWixMg6ElVnJD08vOQJAA_-2Y0Pate');
+            } else if (window.createClient) {
+                _supabaseClient = window.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_3DWixMg6ElVnJD08vOQJAA_-2Y0Pate');
+            }
+        } catch(e) { console.error('Supabase init error:', e); }
+    }
+    _initSupabase();
+    setTimeout(_initSupabase, 500);
+    setTimeout(_initSupabase, 1500);
+    setTimeout(_initSupabase, 3000);
+    var supabase = null;
+    function _s() { _initSupabase(); return _supabaseClient; }
+
+    var DB = {
+        async createUser(u) { var c=_s(); if(!c) return null; var r=await c.from('users').upsert(u); if(r.error) throw r.error; return r.data; },
+        async getUserProfile(id) { var c=_s(); if(!c) throw new Error('No connection'); var r=await c.from('users').select('*').eq('id',id).single(); if(r.error) throw r.error; return r.data; },
+        async updateUserProfile(id, u) { var c=_s(); if(!c) return null; var r=await c.from('users').update(u).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getAllStudents() { var c=_s(); if(!c) return []; var r=await c.from('users').select('*').eq('role','student'); if(r.error) throw r.error; return r.data; },
+        async getStudentsByClass(cls) { var c=_s(); if(!c) return []; var r=await c.from('users').select('*').eq('role','student').eq('class',cls); if(r.error) throw r.error; return r.data; },
+        async getAllTeachers() { var c=_s(); if(!c) return []; var r=await c.from('users').select('*').eq('role','teacher'); if(r.error) throw r.error; return r.data; },
+        async getIdCard(uid) { var c=_s(); if(!c) return null; var r=await c.from('id_cards').select('*').eq('user_id',uid).maybeSingle(); if(r.error) throw r.error; return r.data; },
+        async saveIdCard(d) { var c=_s(); if(!c) return null; var ex=await this.getIdCard(d.user_id); var r=ex? await c.from('id_cards').update(d).eq('user_id',d.user_id).select() : await c.from('id_cards').insert(d).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getStudentResults(sid) { var c=_s(); if(!c) return []; var r=await c.from('results').select('*').eq('student_id',sid); if(r.error) throw r.error; return r.data; },
+        async getClassResults(cls) { var c=_s(); if(!c) return []; var r=await c.from('results').select('*').eq('class',cls); if(r.error) throw r.error; return r.data; },
+        async addResult(res) { var c=_s(); if(!c) return null; var r=await c.from('results').insert(res).select(); if(r.error) throw r.error; return r.data[0]; },
+        async updateResult(id, u) { var c=_s(); if(!c) return null; var r=await c.from('results').update(u).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getAssignments() { var c=_s(); if(!c) return []; var r=await c.from('assignments').select('*'); if(r.error) throw r.error; return r.data; },
+        async getTeacherAssignments(tid) { var c=_s(); if(!c) return []; var r=await c.from('assignments').select('*').eq('teacher_id',tid); if(r.error) throw r.error; return r.data; },
+        async createAssignment(a) { var c=_s(); if(!c) return null; var r=await c.from('assignments').insert(a).select(); if(r.error) throw r.error; return r.data[0]; },
+        async deleteAssignment(id) { var c=_s(); if(!c) return; var r=await c.from('assignments').delete().eq('id',id); if(r.error) throw r.error; },
+        async getStudentSubmissions(sid) { var c=_s(); if(!c) return []; var r=await c.from('submissions').select('*').eq('student_id',sid); if(r.error) throw r.error; return r.data; },
+        async getAssignmentSubmissions(aid) { var c=_s(); if(!c) return []; var r=await c.from('submissions').select('*').eq('assignment_id',aid); if(r.error) throw r.error; return r.data; },
+        async submitAssignment(s) { var c=_s(); if(!c) return null; var r=await c.from('submissions').insert(s).select(); if(r.error) throw r.error; return r.data[0]; },
+        async gradeSubmission(id, sc) { var c=_s(); if(!c) return null; var r=await c.from('submissions').update({score:sc,status:'graded'}).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getExamQuestions(sub, cls, term) { var c=_s(); if(!c) return null; var r=await c.from('exam_questions').select('*').eq('subject',sub).eq('class',cls).eq('term',term).maybeSingle(); if(r.error) throw r.error; return r.data; },
+        async saveExamQuestions(e) { var c=_s(); if(!c) return null; var r=await c.from('exam_questions').upsert(e,{onConflict:'id'}); if(r.error) throw r.error; return e; },
+        async getStudentExamSubmissions(sid) { var c=_s(); if(!c) return []; var r=await c.from('exam_submissions').select('*').eq('student_id',sid); if(r.error) throw r.error; return r.data; },
+        async submitExam(e) { var c=_s(); if(!c) return null; var r=await c.from('exam_submissions').insert(e).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getTimetable(cls) { var c=_s(); if(!c) return []; var r=await c.from('timetable').select('*').eq('class',cls); if(r.error) throw r.error; return r.data; },
+        async saveTimetable(t) { var c=_s(); if(!c) return null; var r=await c.from('timetable').upsert(t,{onConflict:'id'}); if(r.error) throw r.error; return r.data; },
+        async getNotifications(cls, role) { var c=_s(); if(!c) return []; var q=c.from('notifications').select('*'); if(cls) q=q.or('target_class.is.null,target_class.eq.'+cls); if(role) q=q.eq('target_role',role); q=q.order('created_at',{ascending:false}); var r=await q; if(r.error) throw r.error; return r.data; },
+        async sendNotification(n) { var c=_s(); if(!c) return null; var r=await c.from('notifications').insert(n).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getMessages(uid) { var c=_s(); if(!c) return []; var r=await c.from('messages').select('*').or('from_id.eq.'+uid+',to_id.eq.'+uid).order('created_at',{ascending:false}); if(r.error) throw r.error; return r.data; },
+        async sendMessage(m) { var c=_s(); if(!c) return null; var r=await c.from('messages').insert(m).select(); if(r.error) throw r.error; return r.data[0]; },
+        async markMessageRead(id) { var c=_s(); if(!c) return null; var r=await c.from('messages').update({read:true}).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getStudentPayments(sid) { var c=_s(); if(!c) return []; var r=await c.from('payments').select('*').eq('student_id',sid); if(r.error) throw r.error; return r.data; },
+        async getAllPayments() { var c=_s(); if(!c) return []; var r=await c.from('payments').select('*').order('submitted_at',{ascending:false}); if(r.error) throw r.error; return r.data; },
+        async submitPayment(p) { var c=_s(); if(!c) return null; var r=await c.from('payments').insert(p).select(); if(r.error) throw r.error; return r.data[0]; },
+        async updatePaymentStatus(id, s) { var c=_s(); if(!c) return null; var r=await c.from('payments').update({status:s}).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getBankDetails() { var c=_s(); if(!c) return []; var r=await c.from('bank_details').select('*').order('created_at',{ascending:false}); if(r.error) throw r.error; return r.data; },
+        async saveBankDetails(d) { var c=_s(); if(!c) return null; var r=await c.from('bank_details').insert(d).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getFees() { var c=_s(); if(!c) return []; var r=await c.from('fees').select('*'); if(r.error) throw r.error; return r.data; },
+        async updateFee(cls, amt) { var c=_s(); if(!c) return null; var r=await c.from('fees').update({amount:amt}).eq('class',cls).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getExamSchedule() { var c=_s(); if(!c) return []; var r=await c.from('exam_schedule').select('*'); if(r.error) throw r.error; return r.data; },
+        async saveExamSchedule(s) { var c=_s(); if(!c) return null; var r=await c.from('exam_schedule').upsert(s,{onConflict:'id'}); if(r.error) throw r.error; return r.data; },
+        async getApplications() { var c=_s(); if(!c) return []; var r=await c.from('applications').select('*').order('date_submitted',{ascending:false}); if(r.error) throw r.error; return r.data; },
+        async submitApplication(a) { var c=_s(); if(!c) return null; var r=await c.from('applications').insert(a).select(); if(r.error) throw r.error; return r.data[0]; },
+        async updateApplicationStatus(id, s) { var c=_s(); if(!c) return null; var r=await c.from('applications').update({status:s}).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getTeacherResults(tid) { var c=_s(); if(!c) return []; var r=await c.from('teacher_results').select('*').eq('teacher_id',tid); if(r.error) throw r.error; return r.data; },
+        async saveTeacherResults(res) { var c=_s(); if(!c) return null; var r=await c.from('teacher_results').upsert(res,{onConflict:'id'}); if(r.error) throw r.error; return r.data; }
+    };
+    </script>
     <style>
         .dashboard{display:flex;min-height:100vh;background:#f1f3f5}
         .sidebar{width:260px;background:linear-gradient(180deg,#0f172a 0%,#1e293b 100%);color:#fff;padding:30px 20px;position:fixed;height:100vh;overflow-y:auto;z-index:100}
