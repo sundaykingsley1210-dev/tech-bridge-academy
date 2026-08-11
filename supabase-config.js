@@ -5,19 +5,30 @@ const SUPABASE_ANON_KEY = 'sb_publishable_3DWixMg6ElVnJD08vOQJAA_-2Y0Pate';
 
 // Initialize Supabase client
 let supabase = null;
-try {
-    if (window.supabase && window.supabase.createClient) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } else if (window.createClient) {
-        supabase = window.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+function initSupabase() {
+    try {
+        if (window.supabase && window.supabase.createClient) {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } else if (window.createClient) {
+            supabase = window.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+    } catch(e) {
+        console.error('Supabase init error:', e);
     }
-} catch(e) {
-    console.error('Supabase init error:', e);
 }
+initSupabase();
+
+// Retry init if CDN loads late
+setTimeout(initSupabase, 1000);
+setTimeout(initSupabase, 3000);
+setTimeout(initSupabase, 5000);
 
 // Helper: sign up with email/password
 async function signUp(email, password, metadata = {}) {
-    if (!supabase) throw new Error('Supabase not initialized. Check your internet connection.');
+    if (!supabase) {
+        initSupabase();
+        if (!supabase) throw new Error('Supabase not initialized. Check your internet connection and refresh the page.');
+    }
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -29,7 +40,10 @@ async function signUp(email, password, metadata = {}) {
 
 // Helper: sign in with email/password
 async function signIn(email, password) {
-    if (!supabase) throw new Error('Supabase not initialized. Check your internet connection.');
+    if (!supabase) {
+        initSupabase();
+        if (!supabase) throw new Error('Supabase not initialized. Check your internet connection and refresh the page.');
+    }
     const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
