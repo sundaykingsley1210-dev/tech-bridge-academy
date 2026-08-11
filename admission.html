@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script>
     var _supabaseClient = null;
     function _initSupabase() {
@@ -398,8 +397,6 @@
     </div>
 
     <script>
-        emailjs.init({ publicKey: 'X8j9z5L6vj2GOKQiJ' });
-
         const menuToggle = document.getElementById('menuToggle');
         const navLinks = document.getElementById('navLinks');
         menuToggle.addEventListener('click', () => {
@@ -500,24 +497,6 @@
                     }
                 }).catch(function(err) { console.log('Supabase signup:', err.message); });
             }
-
-            // Send welcome email to student
-            emailjs.send('service_sq45hkp', 'template_xh0zn4k', {
-                to_email: application.studentEmail,
-                subject: '[TBA] Welcome to TECH-BRIDGE ACADEMY — Account Created',
-                message: 'Dear ' + application.firstName + ',\n\nYour admission application has been received successfully!\n\nReference: ' + application.id + '\nName: ' + application.firstName + ' ' + application.lastName + '\nClass: ' + application.classApplying + '\nEmail: ' + application.studentEmail + '\n\nYou can now login to your student portal using your email and password.\n\nLogin at: ' + window.location.origin + '/login.html\n\nWelcome to TECH-BRIDGE ACADEMY!',
-                from_name: 'TECH-BRIDGE ACADEMY',
-                from_email: 'techbridgeacademy64@gmail.com'
-            }).catch(err => console.log('Welcome email failed:', err));
-
-            // Send notification to admin
-            emailjs.send('service_sq45hkp', 'template_xh0zn4k', {
-                to_email: 'techbridgeacademy64@gmail.com',
-                subject: '[TBA] New Admission Application — ' + application.firstName + ' ' + application.lastName,
-                message: 'New admission application received.\n\nStudent: ' + application.firstName + ' ' + application.lastName + '\nClass: ' + application.classApplying + '\nParent: ' + application.parentName + '\nPhone: ' + application.parentPhone + '\nEmail: ' + application.parentEmail + '\n\nRef: ' + application.id,
-                from_name: application.parentName,
-                from_email: application.parentEmail
-            }).catch(err => console.log('Admin email failed:', err));
 
             document.getElementById('refNumber').textContent = application.id;
             document.getElementById('successOverlay').classList.add('active');
