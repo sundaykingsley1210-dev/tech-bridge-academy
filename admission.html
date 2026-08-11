@@ -7,7 +7,24 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+    var _supabaseClient = null;
+    function _initSupabase() {
+        try {
+            if (_supabaseClient) return;
+            if (window.supabase && window.supabase.createClient) {
+                _supabaseClient = window.supabase.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_3DWixMg6ElVnJD08vOQJAA_-2Y0Pate');
+            } else if (window.createClient) {
+                _supabaseClient = window.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_3DWixMg6ElVnJD08vOQJAA_-2Y0Pate');
+            }
+        } catch(e) { console.error('Supabase init error:', e); }
+    }
+    _initSupabase();
+    setTimeout(_initSupabase, 500);
+    setTimeout(_initSupabase, 1500);
+    </script>
     <style>
         .admission-page {
             padding: 120px 0 80px;
@@ -461,28 +478,46 @@
             applications.push(application);
             localStorage.setItem('tba_applications', JSON.stringify(applications));
 
-            // Create student account immediately so they can login
-            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
-            const newId = 'STU' + String(users.filter(u => u.role === 'student').length + 1).padStart(3, '0');
-            users.push({
-                id: newId,
-                email: application.studentEmail,
-                password: application.studentPassword,
-                name: application.firstName + ' ' + application.lastName,
-                role: 'student',
-                class: application.classApplying,
-                gender: application.gender
-            });
-            localStorage.setItem('tba_users', JSON.stringify(users));
+            // Create Supabase Auth account + user profile
+            _initSupabase();
+            if (_supabaseClient) {
+                _supabaseClient.auth.signUp({
+                    email: application.studentEmail,
+                    password: application.studentPassword,
+                    options: { data: { name: application.firstName + ' ' + application.lastName, role: 'student', class: application.classApplying } }
+                }).then(function(result) {
+                    if (result.data && result.data.user) {
+                        _supabaseClient.from('users').upsert({
+                            id: result.data.user.id,
+                            email: application.studentEmail,
+                            name: application.firstName + ' ' + application.lastName,
+                            role: 'student',
+                            class: application.classApplying,
+                            gender: application.gender,
+                            phone: application.parentPhone,
+                            address: application.address
+                        }).then(function() { console.log('User profile created in Supabase'); });
+                    }
+                }).catch(function(err) { console.log('Supabase signup:', err.message); });
+            }
 
-            // Send email notification to admin via EmailJS
+            // Send welcome email to student
+            emailjs.send('service_sq45hkp', 'template_xh0zn4k', {
+                to_email: application.studentEmail,
+                subject: '[TBA] Welcome to TECH-BRIDGE ACADEMY — Account Created',
+                message: 'Dear ' + application.firstName + ',\n\nYour admission application has been received successfully!\n\nReference: ' + application.id + '\nName: ' + application.firstName + ' ' + application.lastName + '\nClass: ' + application.classApplying + '\nEmail: ' + application.studentEmail + '\n\nYou can now login to your student portal using your email and password.\n\nLogin at: ' + window.location.origin + '/login.html\n\nWelcome to TECH-BRIDGE ACADEMY!',
+                from_name: 'TECH-BRIDGE ACADEMY',
+                from_email: 'techbridgeacademy64@gmail.com'
+            }).catch(err => console.log('Welcome email failed:', err));
+
+            // Send notification to admin
             emailjs.send('service_sq45hkp', 'template_xh0zn4k', {
                 to_email: 'techbridgeacademy64@gmail.com',
                 subject: '[TBA] New Admission Application — ' + application.firstName + ' ' + application.lastName,
                 message: 'New admission application received.\n\nStudent: ' + application.firstName + ' ' + application.lastName + '\nClass: ' + application.classApplying + '\nParent: ' + application.parentName + '\nPhone: ' + application.parentPhone + '\nEmail: ' + application.parentEmail + '\n\nRef: ' + application.id,
                 from_name: application.parentName,
                 from_email: application.parentEmail
-            }).catch(err => console.log('Email send failed:', err));
+            }).catch(err => console.log('Admin email failed:', err));
 
             document.getElementById('refNumber').textContent = application.id;
             document.getElementById('successOverlay').classList.add('active');
