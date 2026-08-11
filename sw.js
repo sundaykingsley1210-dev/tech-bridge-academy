@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tba-v1';
+const CACHE_NAME = 'tba-v2';
 const ASSETS = [
   '/',
   '/index.html',
@@ -14,7 +14,10 @@ const ASSETS = [
   '/login.html',
   '/admin-dashboard.html',
   '/student-dashboard.html',
-  '/teacher-dashboard.html'
+  '/teacher-dashboard.html',
+  '/supabase-config.js',
+  '/db.js',
+  '/schema.sql'
 ];
 
 // Install

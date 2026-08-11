@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="db.js"></script>
     <style>
         .login-page {
             min-height: 100vh;
@@ -401,65 +404,85 @@
         function closeResetModal() {
             document.getElementById('resetPasswordModal').style.display = 'none';
         }
-        function handleResetRequest(e) {
+        async function handleResetRequest(e) {
             e.preventDefault();
             const role = document.getElementById('resetRole').value;
             const email = document.getElementById('resetEmail').value.trim();
-            let requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
+            const errorEl = document.getElementById('loginError');
 
-            const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
-            const user = users.find(u => u.email === email && u.role === role);
-            if (!user) {
-                alert('No ' + role + ' account found with this email.');
-                return;
-            }
+            try {
+                const { data: user, error: userErr } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('email', email)
+                    .eq('role', role)
+                    .maybeSingle();
 
-            const alreadyPending = requests.find(r => r.email === email && r.role === role && r.status === 'pending');
-            if (alreadyPending) {
-                alert('You already have a pending reset request. Please wait for admin approval.');
+                if (userErr) throw userErr;
+                if (!user) {
+                    alert('No ' + role + ' account found with this email.');
+                    return;
+                }
+
+                const { data: existing, error: exErr } = await supabase
+                    .from('password_resets')
+                    .select('*')
+                    .eq('email', email)
+                    .eq('role', role)
+                    .eq('status', 'pending')
+                    .maybeSingle();
+
+                if (exErr) throw exErr;
+                if (existing) {
+                    alert('You already have a pending reset request. Please wait for admin approval.');
+                    closeResetModal();
+                    return;
+                }
+
+                const { error: insErr } = await supabase.from('password_resets').insert({
+                    id: 'RST' + Date.now().toString(36).toUpperCase(),
+                    role: role,
+                    name: user.name,
+                    email: email,
+                    status: 'pending',
+                    requested_at: new Date().toISOString()
+                });
+                if (insErr) throw insErr;
+
+                alert('Password reset request sent to admin. You will be able to login with password 123456 once approved.');
                 closeResetModal();
-                return;
+                document.getElementById('resetForm').reset();
+            } catch (err) {
+                console.error(err);
+                alert('Something went wrong. Please try again.');
             }
-
-            requests.push({
-                id: 'RST' + Date.now().toString(36).toUpperCase(),
-                role: role,
-                name: user.name,
-                email: email,
-                status: 'pending',
-                requestedAt: new Date().toISOString()
-            });
-            localStorage.setItem('tba_password_resets', JSON.stringify(requests));
-            alert('Password reset request sent to admin. You will be able to login with password 123456 once approved.');
-            closeResetModal();
-            document.getElementById('resetForm').reset();
         }
-        function handleTeacherReg(e) {
+        async function handleTeacherReg(e) {
             e.preventDefault();
             const name = document.getElementById('trName').value.trim();
             const email = document.getElementById('trEmail').value.trim();
             const subject = document.getElementById('trSubject').value.trim();
             const phone = document.getElementById('trPhone').value.trim();
             const password = document.getElementById('trPassword').value;
-            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
-            if (users.some(u => u.email === email)) {
-                alert('This email is already registered. Please login.');
-                return;
+            const errorEl = document.getElementById('loginError');
+
+            try {
+                const data = await signUp(email, password, { name, role: 'teacher', subject, phone });
+                await DB.createUser({
+                    id: data.user.id,
+                    name: name,
+                    email: email,
+                    role: 'teacher',
+                    subject: subject,
+                    phone: phone
+                });
+                alert('Registration successful! You can now login with your email and password.');
+                closeTeacherReg();
+                document.getElementById('teacherRegForm').reset();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Registration failed. Please try again.');
             }
-            const newId = 'TCH' + String(users.filter(u => u.role === 'teacher').length + 1).padStart(3, '0');
-            users.push({
-                id: newId,
-                email: email,
-                password: password,
-                name: name,
-                role: 'teacher',
-                subject: subject,
-                phone: phone
-            });
-            localStorage.setItem('tba_users', JSON.stringify(users));
-            alert('Registration successful! You can now login with your email and password.');
-            closeTeacherReg();
-            document.getElementById('teacherRegForm').reset();
         }
 
         // Admin Registration Modal
@@ -499,29 +522,28 @@
         function closeAdminReg() {
             document.getElementById('adminRegModal').style.display = 'none';
         }
-        function handleAdminReg(e) {
+        async function handleAdminReg(e) {
             e.preventDefault();
             const name = document.getElementById('arName').value.trim();
             const email = document.getElementById('arEmail').value.trim();
             const password = document.getElementById('arPassword').value;
-            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
-            if (users.some(u => u.email === email)) {
-                alert('This email is already registered.');
-                return;
+
+            try {
+                const data = await signUp(email, password, { name, role: 'admin' });
+                await DB.createUser({
+                    id: data.user.id,
+                    name: name,
+                    email: email,
+                    role: 'admin'
+                });
+                alert('Admin account created! You can now login.');
+                closeAdminReg();
+                document.getElementById('adminRegForm').reset();
+                document.getElementById('adminRegLink').style.display = 'none';
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Registration failed. Please try again.');
             }
-            const adminCount = users.filter(u => u.role === 'admin').length;
-            users.push({
-                id: 'ADM' + String(adminCount + 1).padStart(3, '0'),
-                email: email,
-                password: password,
-                name: name,
-                role: 'admin'
-            });
-            localStorage.setItem('tba_users', JSON.stringify(users));
-            alert('Admin account created! You can now login.');
-            closeAdminReg();
-            document.getElementById('adminRegForm').reset();
-            document.getElementById('adminRegLink').style.display = 'none';
         }
 
         // Show admin registration link
@@ -550,7 +572,7 @@
             }
         }
 
-        function handleLogin(e) {
+        async function handleLogin(e) {
             e.preventDefault();
             const name = document.getElementById('loginName').value.trim();
             const email = document.getElementById('loginEmail').value.trim();
@@ -558,53 +580,45 @@
             const selectedClass = document.getElementById('loginClass').value;
             const errorEl = document.getElementById('loginError');
 
-            const users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            try {
+                const data = await signIn(email, password);
+                const user = data.user;
+                const profile = await DB.getUserProfile(user.id);
 
-            if (currentRole === 'student') {
-                if (!selectedClass) {
-                    errorEl.textContent = 'Please select your class.';
-                    errorEl.style.display = 'block';
-                    return;
-                }
-                let user = users.find(u =>
-                    u.email === email &&
-                    u.password === password &&
-                    u.role === 'student' &&
-                    u.class === selectedClass
-                );
-                if (user) {
-                    localStorage.setItem('tba_currentUser', JSON.stringify(user));
-                    window.location.href = 'student-dashboard.html';
+                if (currentRole === 'student') {
+                    if (!selectedClass) {
+                        errorEl.textContent = 'Please select your class.';
+                        errorEl.style.display = 'block';
+                        return;
+                    }
+                    if (profile.role === 'student' && profile.class === selectedClass) {
+                        localStorage.setItem('tba_currentUser', JSON.stringify(profile));
+                        window.location.href = 'student-dashboard.html';
+                    } else {
+                        errorEl.textContent = 'Invalid email, password, or class.';
+                        errorEl.style.display = 'block';
+                    }
+                } else if (currentRole === 'teacher') {
+                    if (profile.role === 'teacher') {
+                        localStorage.setItem('tba_currentUser', JSON.stringify(profile));
+                        window.location.href = 'teacher-dashboard.html';
+                    } else {
+                        errorEl.textContent = 'Invalid email or password.';
+                        errorEl.style.display = 'block';
+                    }
                 } else {
-                    errorEl.textContent = 'Invalid email, password, or class.';
-                    errorEl.style.display = 'block';
+                    if (profile.role === 'admin') {
+                        localStorage.setItem('tba_currentUser', JSON.stringify(profile));
+                        window.location.href = 'admin-dashboard.html';
+                    } else {
+                        errorEl.textContent = 'Invalid admin credentials.';
+                        errorEl.style.display = 'block';
+                    }
                 }
-            } else if (currentRole === 'teacher') {
-                let user = users.find(u =>
-                    u.email === email &&
-                    u.password === password &&
-                    u.role === 'teacher'
-                );
-                if (user) {
-                    localStorage.setItem('tba_currentUser', JSON.stringify(user));
-                    window.location.href = 'teacher-dashboard.html';
-                } else {
-                    errorEl.textContent = 'Invalid email or password.';
-                    errorEl.style.display = 'block';
-                }
-            } else {
-                let user = users.find(u =>
-                    u.email === email &&
-                    u.password === password &&
-                    u.role === 'admin'
-                );
-                if (user) {
-                    localStorage.setItem('tba_currentUser', JSON.stringify(user));
-                    window.location.href = 'admin-dashboard.html';
-                } else {
-                    errorEl.textContent = 'Invalid admin credentials.';
-                    errorEl.style.display = 'block';
-                }
+            } catch (err) {
+                console.error(err);
+                errorEl.textContent = err.message || 'Invalid email or password.';
+                errorEl.style.display = 'block';
             }
         }
 

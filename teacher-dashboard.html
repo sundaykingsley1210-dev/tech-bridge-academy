@@ -8,6 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="db.js"></script>
     <style>
         .dashboard{display:flex;min-height:100vh;background:#f1f3f5}
         .sidebar{width:260px;background:linear-gradient(180deg,#0f172a 0%,#1e293b 100%);color:#fff;padding:30px 20px;position:fixed;height:100vh;overflow-y:auto;z-index:100}
@@ -436,11 +439,12 @@
 
         function renderAll() { renderAssignments(); renderStudents(); renderSentNotifs(); renderNotifBadge(); renderTimetableList(); renderResultList(); updateStats(); renderTeacherIdCard(); }
 
-        function renderTeacherIdCard() {
+        async function renderTeacherIdCard() {
             const profilePic = localStorage.getItem('tba_profile_pic_' + currentUser.id);
             const c = document.getElementById('teacherIdCardPreview');
             if (!c) return;
-            const cardData = JSON.parse(localStorage.getItem('tba_teacher_id_card_' + currentUser.id) || '{}');
+            let cardData = {};
+            try { cardData = await DB.getIdCard(currentUser.id) || {}; } catch(e) { cardData = JSON.parse(localStorage.getItem('tba_teacher_id_card_' + currentUser.id) || '{}'); }
             const name = cardData.name || currentUser.name;
             const subject = document.getElementById('teacherSubjectInput')?.value || cardData.subject || 'Teacher';
             const email = cardData.email || currentUser.email || '';
@@ -511,9 +515,11 @@
                 phone: document.getElementById('editTeacherPhone').value.trim()
             };
             localStorage.setItem('tba_teacher_id_card_' + currentUser.id, JSON.stringify(cardData));
+            try { DB.saveIdCard({ user_id: currentUser.id, ...cardData }); } catch(e) {}
             if (cardData.name) {
                 currentUser.name = cardData.name;
                 localStorage.setItem('tba_currentUser', JSON.stringify(currentUser));
+                try { DB.updateUserProfile(currentUser.id, { name: cardData.name }); } catch(e) {}
             }
             document.querySelector('div[style*=fixed]').remove();
             renderTeacherIdCard();
@@ -663,6 +669,7 @@
             let all = JSON.parse(localStorage.getItem('tba_assignments')||'[]');
             all.push(assignment);
             localStorage.setItem('tba_assignments', JSON.stringify(all));
+            try { DB.createAssignment(assignment); } catch(e) {}
             this.reset();
             questionCount = 1;
             document.getElementById('questionsBuilder').innerHTML = '<div class="question-entry" data-q="0"><div class="q-header"><span class="q-num">Q1</span></div><div class="form-group"><textarea class="q-text" rows="2" placeholder="Type question here..." required></textarea></div></div>';

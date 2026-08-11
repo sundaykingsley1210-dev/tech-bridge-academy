@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="db.js"></script>
     <style>
         .dashboard{display:flex;min-height:100vh;background:#f1f3f5}
         .sidebar{width:260px;background:linear-gradient(180deg,#0f172a 0%,#1e293b 100%);color:#fff;padding:30px 20px;position:fixed;height:100vh;overflow-y:auto;z-index:100}
@@ -472,20 +475,13 @@
 
         let notifFilter = 'all';
 
-        function getResults() {
-            const individual = JSON.parse(localStorage.getItem('tba_student_results_' + currentUser.id) || '[]');
-            const classResults = JSON.parse(localStorage.getItem('tba_results_' + currentUser.class) || '[]');
-            let merged = [...individual];
-            const individualKeys = individual.map(r => r.subject + '|' + r.term);
-            classResults.forEach(r => {
-                if (r.studentId === currentUser.id) {
-                    const key = r.subject + '|' + (r.term || 'First Term');
-                    if (!individualKeys.includes(key)) {
-                        merged.push({...r, term: r.term || 'First Term'});
-                    }
-                }
-            });
-            return merged;
+        async function getResults() {
+            try {
+                const results = await DB.getStudentResults(currentUser.id);
+                return results || [];
+            } catch(e) {
+                return [];
+            }
         }
 
         function ordinalSuffix(n) {
@@ -502,9 +498,10 @@
             return 'F';
         }
 
-        function renderIdCard() {
+        async function renderIdCard() {
             const profilePic = localStorage.getItem('tba_profile_pic_' + currentUser.id);
-            const cardData = JSON.parse(localStorage.getItem('tba_id_card_' + currentUser.id) || '{}');
+            let cardData = {};
+            try { cardData = await DB.getIdCard(currentUser.id) || {}; } catch(e) { cardData = JSON.parse(localStorage.getItem('tba_id_card_' + currentUser.id) || '{}'); }
             const c = document.getElementById('idCardPreview');
             if (!c) return;
             const initials = currentUser.name.split(' ').map(n=>n[0]).join('').substring(0,2);
@@ -580,7 +577,7 @@
             document.body.appendChild(div.firstElementChild);
         }
 
-        function saveIdCard() {
+        async function saveIdCard() {
             const cardData = {
                 name: document.getElementById('editCardName').value.trim(),
                 email: document.getElementById('editCardEmail').value.trim(),
@@ -590,6 +587,7 @@
                 position: document.getElementById('editCardPosition').value
             };
             localStorage.setItem('tba_id_card_' + currentUser.id, JSON.stringify(cardData));
+            try { await DB.saveIdCard({ user_id: currentUser.id, ...cardData }); } catch(e) {}
             if (cardData.name) {
                 currentUser.name = cardData.name;
                 localStorage.setItem('tba_currentUser', JSON.stringify(currentUser));
