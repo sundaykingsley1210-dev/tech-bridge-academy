@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script>
     // Inline Supabase init + auth helpers — no external file dependency
     var _supabaseClient = null;
@@ -49,6 +50,34 @@
         createUser: function(u) { _initSupabase(); if (!_supabaseClient) return Promise.resolve(); return _supabaseClient.from('users').upsert(u); },
         getUserProfile: function(id) { _initSupabase(); if (!_supabaseClient) return Promise.reject(new Error('No connection')); return _supabaseClient.from('users').select('*').eq('id', id).single().then(function(r){ if(r.error) throw r.error; return r.data; }); }
     };
+
+    try { emailjs.init({ publicKey: 'X8j9z5L6vj2GOKQiJ' }); } catch(e) {}
+
+    function sendCongratsEmail(toEmail, name, role) {
+        try {
+            emailjs.send('service_sq45hkp', 'template_xh0zn4k', {
+                to_email: toEmail,
+                subject: 'Welcome to TECH-BRIDGE ACADEMY!',
+                message: 'Dear ' + name + ',\n\nCongratulations! Your ' + role + ' account has been successfully created at TECH-BRIDGE ACADEMY.\n\nEmail: ' + toEmail + '\nRole: ' + role.charAt(0).toUpperCase() + role.slice(1) + '\n\nYou can now login to your portal at ' + window.location.origin + '/login.html using your email and password.\n\nWe wish you success!\n\nBest regards,\nTECH-BRIDGE ACADEMY',
+                from_name: 'TECH-BRIDGE ACADEMY',
+                from_email: 'techbridgeacademy64@gmail.com'
+            }).then(function() { console.log('Congrats email sent to ' + toEmail); }).catch(function(err) { console.log('Email failed:', err); });
+        } catch(e) { console.log('EmailJS not available:', e); }
+    }
+
+    function sendNotifToAdmin(title, message) {
+        _initSupabase();
+        if (!_supabaseClient) return;
+        try {
+            _supabaseClient.from('notifications').insert({
+                title: title,
+                message: message,
+                target_role: 'admin',
+                from_name: 'System',
+                from_role: 'system'
+            }).then(function() {}).catch(function() {});
+        } catch(e) {}
+    }
     </script>
     <style>
         .login-page {
@@ -518,6 +547,8 @@
                     console.warn('DB createUser failed, saving locally:', e);
                 }
                 localStorage.setItem('tba_currentUser', JSON.stringify(profile));
+                sendCongratsEmail(email, name, 'teacher');
+                sendNotifToAdmin('New Teacher Registered', name + ' (' + email + ') has created a teacher account.');
                 alert('Registration successful! Redirecting to your dashboard...');
                 closeTeacherReg();
                 window.location.href = 'teacher-dashboard.html';
@@ -584,6 +615,7 @@
                     console.warn('DB createUser failed, saving locally:', e);
                 }
                 localStorage.setItem('tba_currentUser', JSON.stringify(profile));
+                sendCongratsEmail(email, name, 'admin');
                 alert('Admin account created! Redirecting to dashboard...');
                 closeAdminReg();
                 window.location.href = 'admin-dashboard.html';

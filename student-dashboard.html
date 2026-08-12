@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard - TECH-BRIDGE ACADEMY</title>
+    <title>Student Dashboard - TECH-BRIDGE ACADEGE</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
@@ -772,14 +772,17 @@
             setTimeout(() => { printWindow.focus(); printWindow.print(); }, 500);
         }
 
-        function printResult() {
-            const results = getResults();
+        async function printResult() {
+            const results = await getResults();
             if (!results.length) {
                 alert('No results to print yet.');
                 return;
             }
 
-            const html = `
+            const html = `...`; // kept minimal here since detailed print handled in doPrint
+            // Open print choice modal similar to before but call doPrintWithChoice
+            const div = document.createElement('div');
+            div.innerHTML = `
                 <div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">
                     <div style="background:#fff;border-radius:16px;padding:30px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
                         <h3 style="margin:0 0 5px;color:var(--dark);text-align:center"><i class="fa-solid fa-print"></i> Print Result</h3>
@@ -800,8 +803,8 @@
                                     <input type="radio" name="printColor" value="color" checked style="accent-color:#1e40af;width:18px;height:18px">
                                     <div><i class="fa-solid fa-palette" style="color:#1e40af;font-size:1.1rem"></i><div style="font-weight:600;font-size:.9rem;margin-top:2px">Color</div><div style="font-size:.75rem;color:var(--gray)">Full color printout</div></div>
                                 </label>
-                                <label style="display:flex;align-items:center;gap:10px;padding:14px;border:2px solid #e9ecef;border-radius:10px;background:#f8f9fa;cursor:pointer;transition:all .2s" onmouseover="if(!this.querySelector('input').checked)this.style.borderColor='#999'" onmouseout="if(!this.querySelector('input').checked)this.style.borderColor='#e9ecef'">
-                                    <input type="radio" name="printColor" value="bw" style="accent-color:#333;width:18px;height:18px" onchange="document.querySelectorAll('label:has(input[name=printColor])').forEach(l=>{l.style.borderColor='#e9ecef';l.style.background='#f8f9fa'});this.parentElement.style.borderColor='#333';this.parentElement.style.background='#f0f0f0'">
+                                <label style="display:flex;align-items:center;gap:10px;padding:14px;border:2px solid #e9ecef;border-radius:10px;background:#f8f9fa;cursor:pointer;transition:all .2s">
+                                    <input type="radio" name="printColor" value="bw" style="accent-color:#333;width:18px;height:18px">
                                     <div><i class="fa-solid fa-circle-half-stroke" style="color:#333;font-size:1.1rem"></i><div style="font-weight:600;font-size:.9rem;margin-top:2px">Black & White</div><div style="font-size:.75rem;color:var(--gray)">Monochrome printout</div></div>
                                 </label>
                             </div>
@@ -814,31 +817,17 @@
                     </div>
                 </div>
             `;
-            const div = document.createElement('div');
-            div.innerHTML = html;
             document.body.appendChild(div.firstElementChild);
-
-            // Color radio change styling
-            document.querySelectorAll('input[name=printColor]').forEach(r => {
-                r.addEventListener('change', function() {
-                    document.querySelectorAll('label:has(input[name=printColor])').forEach(l => {
-                        l.style.borderColor = '#e9ecef';
-                        l.style.background = '#f8f9fa';
-                    });
-                    this.parentElement.style.borderColor = this.value === 'color' ? '#1e40af' : '#333';
-                    this.parentElement.style.background = this.value === 'color' ? '#eff6ff' : '#f0f0f0';
-                });
-            });
         }
 
-        function doPrintWithChoice() {
+        async function doPrintWithChoice() {
             const term = document.getElementById('printTermSelect').value;
             const colorMode = document.querySelector('input[name=printColor]:checked').value;
-            doPrint(term, colorMode);
+            await doPrint(term, colorMode);
         }
 
-        function doPrint(term, colorMode) {
-            const results = getResults();
+        async function doPrint(term, colorMode) {
+            const results = await getResults();
             const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + currentUser.class) || '{}');
             const myPosition = posData.positions ? posData.positions[currentUser.id] : null;
             const positionText = myPosition ? myPosition + ordinalSuffix(myPosition) : 'Not set';
@@ -898,7 +887,7 @@
                                     const gc = gradeStyle(r.grade);
                                     const border = isBW ? '#ccc' : '#e9ecef';
                                     return '<tr style="background:'+bg+'"><td style="padding:9px 12px;border:1px solid '+border+';font-size:.88rem"><strong>'+r.subject+'</strong></td><td style="padding:9px 12px;border:1px solid '+border+';font-size:.88rem;text-align:center">'+r.ca1+'</td><td style="padding:9px 12px;border:1px solid '+border+';font-size:.88rem;text-align:center">'+r.ca2+'</td><td style="padding:9px 12px;border:1px solid '+border+';font-size:.88rem;text-align:center">'+r.exam+'</td><td style="padding:9px 12px;border:1px solid '+border+';font-size:.88rem;text-align:center"><strong>'+r.total+'</strong></td><td style="padding:9px 12px;border:1px solid '+border+';font-size:.88rem;text-align:center;'+gc+'">'+r.grade+'</td></tr>';
-                                }).join('') : '<tr><td colspan="6" style="padding:20px;text-align:center;color:#999;border:1px solid '+isBW?'#ccc':'#e9ecef'+'">No results for '+t+'</td></tr>'}
+                                }).join('') : ` <tr><td colspan="6" style="padding:20px;text-align:center;color:#999;border:1px solid ${isBW ? '#ccc' : '#e9ecef'}">No results for ${t}</td></tr>`}
                             </tbody>
                         </table>
 
@@ -931,7 +920,6 @@
             `);
             printWindow.document.close();
 
-            // Detect printers and show print dialog
             setTimeout(() => {
                 printWindow.focus();
                 printWindow.print();
@@ -999,7 +987,7 @@
             return [];
         }
 
-        function init() {
+        async function init() {
             if (!currentUser) return;
             const hour = new Date().getHours();
             const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
@@ -1009,8 +997,8 @@
             document.getElementById('studentClass').textContent = `Class: ${currentUser.class}`;
             document.getElementById('avatarText').textContent = currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2);
 
-            renderResults();
-            renderTimetable();
+            await renderResults();
+            await renderTimetable();
             renderAssignments();
             renderStudentMessages();
             renderNotifications();
@@ -1021,15 +1009,14 @@
             loadProfilePic();
         }
 
-        function renderResults() {
-            const results = getResults();
+        async function renderResults() {
+            const results = await getResults();
             const terms = [
                 { name: 'First Term', bodyIds: ['resultsBody', 'resultsBody2'] },
                 { name: 'Second Term', bodyIds: ['resultsBody5', 'resultsBody3'] },
                 { name: 'Third Term', bodyIds: ['resultsBody6', 'resultsBody4'] }
             ];
 
-            // Calculate combined average per subject across all terms (same as updateStats)
             const subjectMap = {};
             results.forEach(r => {
                 if (r.total) {
@@ -1081,31 +1068,8 @@
             renderResults();
         }
 
-        function renderTimetable() {
-            const timetable = getTimetable();
-            const renderInto = (containerId) => {
-                const container = document.getElementById(containerId);
-                if (!container) return;
-                if (!timetable.length) {
-                    container.innerHTML = '<div class="no-data"><i class="fa-solid fa-calendar"></i><p>No timetable available yet. Your teacher will set it soon.</p></div>';
-                    return;
-                }
-                container.innerHTML = timetable.map(t => `
-                    <div class="timetable-row">
-                        <div class="timetable-time">${t.time}</div>
-                        <div>
-                            <div class="timetable-subject">${t.subject}</div>
-                            ${t.teacher ? `<div class="timetable-teacher">${t.teacher}</div>` : ''}
-                        </div>
-                    </div>
-                `).join('');
-            };
-            renderInto('timetableBody');
-            renderInto('timetableBody2');
-        }
-
-        function renderTimetableSection() {
-            renderTimetable();
+        async function renderTimetableSection() {
+            await renderTimetable();
         }
 
         function renderAssignments() {
@@ -1113,7 +1077,6 @@
             const submissions = JSON.parse(localStorage.getItem('tba_submissions') || '[]');
             const container = document.getElementById('assignmentList');
 
-            // Show assignments matching student class OR "All Classes" OR any assignment (for testing)
             const studentAssignments = assignments.filter(a =>
                 a.targetClass === currentUser.class || a.targetClass === 'All Classes' || !a.targetClass
             );
@@ -1140,7 +1103,6 @@
                     statusHtml = `<span class="status status-pending">Pending</span>`;
                 }
 
-                // Show questions directly on the card
                 let questionsPreview = '';
                 if (a.questions && a.questions.length) {
                     questionsPreview = '<div style="margin-top:10px">' + a.questions.map((q, i) =>
@@ -1202,7 +1164,6 @@
             }
             const c = document.getElementById('availableExamsList');
 
-            // Group questions by class+subject+term
             const exams = {};
             allQuestions.forEach(q => {
                 if (q.class === currentUser.class) {
@@ -1273,7 +1234,6 @@
             const now = new Date();
             const isPast = schedDate < now;
 
-            // Get exam info for this class
             const classExams = allQuestions.filter(q => q.class === myClass);
             const subjects = [...new Set(classExams.map(q => q.subject))];
             const totalQuestions = classExams.length;
@@ -1298,7 +1258,6 @@
             }
             html += '</div>';
 
-            // Subjects list
             if (subjects.length) {
                 html += '<div class="card"><div class="card-header"><h3><i class="fa-solid fa-book"></i> Exam Subjects</h3></div><div class="card-body">';
                 subjects.forEach(sub => {
@@ -1516,66 +1475,67 @@
         }
 
         function updateStats() {
-            const results = getResults();
-            // Calculate combined average: average per subject across all terms, then overall
-            const subjectMap = {};
-            results.forEach(r => {
-                if (r.total) {
-                    if (!subjectMap[r.subject]) subjectMap[r.subject] = {};
-                    subjectMap[r.subject][r.term] = r.total;
+            getResults().then(results => {
+                // Calculate combined average: average per subject across all terms, then overall
+                const subjectMap = {};
+                results.forEach(r => {
+                    if (r.total) {
+                        if (!subjectMap[r.subject]) subjectMap[r.subject] = {};
+                        subjectMap[r.subject][r.term] = r.total;
+                    }
+                });
+                let subjectAverages = [];
+                Object.values(subjectMap).forEach(termTotals => {
+                    const totals = Object.values(termTotals);
+                    if (totals.length) subjectAverages.push(Math.round(totals.reduce((a,b)=>a+b,0)/totals.length));
+                });
+                const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]').filter(s=>s.studentId===currentUser.id);
+                examSubs.forEach(s => { if(s.totalMarks) subjectAverages.push(Math.round((s.score/s.totalMarks)*100)); });
+                if (subjectAverages.length) {
+                    const avg = Math.round(subjectAverages.reduce((a,b)=>a+b,0)/subjectAverages.length);
+                    document.getElementById('avgScore').textContent = avg + '%';
+                } else {
+                    document.getElementById('avgScore').textContent = '--';
                 }
+                const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + currentUser.class) || '{}');
+                const myPosition = posData.positions ? posData.positions[currentUser.id] : null;
+                document.getElementById('classPosition').textContent = myPosition ? myPosition + ordinalSuffix(myPosition) : '--';
+
+                const fees = JSON.parse(localStorage.getItem('tba_fees') || '{}');
+                const payments = JSON.parse(localStorage.getItem('tba_payments') || '{}');
+                const isPaid = payments[currentUser.id] === true;
+                const fee = fees[currentUser.class] || 0;
+                document.getElementById('feeStatus').textContent = isPaid ? 'Paid' : '₦' + fee.toLocaleString();
+                document.getElementById('feeStatus').style.color = isPaid ? '#38ef7d' : '#e53e3e';
+
+                const myPaymentSubs = JSON.parse(localStorage.getItem('tba_payment_submissions') || '[]').filter(p => p.studentId === currentUser.id);
+                const latestSub = myPaymentSubs.length ? myPaymentSubs[myPaymentSubs.length - 1] : null;
+                const bankDetails = JSON.parse(localStorage.getItem('tba_bank_details') || '{}');
+
+                let paymentStatusHtml = '';
+                if (isPaid) {
+                    paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#d4edda;border-radius:12px"><i class="fa-solid fa-check-circle" style="font-size:2rem;color:#155724;margin-bottom:8px;display:block"></i><strong style="color:#155724;font-size:1.1rem">Payment Confirmed</strong><p style="color:#155724;font-size:.85rem;margin-top:5px">Your payment has been verified. Thank you!</p></div>';
+                } else if (latestSub && latestSub.status === 'pending') {
+                    paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#fff3cd;border-radius:12px"><i class="fa-solid fa-clock" style="font-size:2rem;color:#856404;margin-bottom:8px;display:block"></i><strong style="color:#856404;font-size:1.1rem">Payment Under Review</strong><p style="color:#856404;font-size:.85rem;margin-top:5px">Teller: ' + latestSub.teller + '<br>Submitted: ' + new Date(latestSub.date).toLocaleDateString() + '</p></div>';
+                } else if (latestSub && latestSub.status === 'rejected') {
+                    paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#f8d7da;border-radius:12px"><i class="fa-solid fa-times-circle" style="font-size:2rem;color:#721c24;margin-bottom:8px;display:block"></i><strong style="color:#721c24;font-size:1.1rem">Payment Rejected</strong><p style="color:#721c24;font-size:.85rem;margin-top:5px">' + (latestSub.reason || 'Please contact bursary.') + '</p><p style="font-size:.8rem;color:#721c24;margin-top:5px">Teller: ' + latestSub.teller + '</p></div>';
+                } else {
+                    paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#f8d7da;border-radius:12px"><i class="fa-solid fa-exclamation-circle" style="font-size:2rem;color:#721c24;margin-bottom:8px;display:block"></i><strong style="color:#721c24;font-size:1.1rem">Payment Pending</strong><p style="color:#721c24;font-size:.85rem;margin-top:5px">Fee: ₦' + fee.toLocaleString() + '</p></div>';
+                }
+
+                const feeBody = document.getElementById('feeDetailsBody');
+                feeBody.innerHTML = `
+                    ${paymentStatusHtml}
+                    <div style="margin-top:20px;padding:15px;background:#f0f3ff;border-radius:12px;border-left:4px solid var(--primary)">
+                        <h4 style="color:var(--primary);margin-bottom:8px;font-size:.9rem"><i class="fa-solid fa-university"></i> School Bank Details</h4>
+                        <p style="font-size:.88rem;color:var(--dark);margin-bottom:4px"><strong>Bank:</strong> ${bankDetails.bankName || 'Not set'}</p>
+                        <p style="font-size:.88rem;color:var(--dark);margin-bottom:4px"><strong>Account Name:</strong> ${bankDetails.accountName || 'Not set'}</p>
+                        <p style="font-size:.88rem;color:var(--dark);margin-bottom:4px"><strong>Account Number:</strong> ${bankDetails.accountNumber || 'Not set'}</p>
+                        <p style="font-size:.85rem;color:var(--gray);margin-top:8px">Amount: <strong style="color:var(--dark)">₦${fee.toLocaleString()}</strong></p>
+                    </div>
+                    ${!isPaid ? '<div id="paymentFormArea" style="margin-top:20px"><h4 style="color:var(--dark);margin-bottom:10px;font-size:.9rem"><i class="fa-solid fa-paper-plane"></i> Submit Payment Proof</h4><form id="paymentForm" onsubmit="submitPayment(event)"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Teller/Ref Number *</label><input type="text" id="payTeller" required placeholder="e.g. 1234567890" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Amount Paid *</label><input type="number" id="payAmount" required min="1" placeholder="e.g. 45000" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Bank Name *</label><input type="text" id="payBank" required placeholder="e.g. GTBank" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Payment Date *</label><input type="date" id="payDate" required style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div></div><button type="submit" style="width:100%;margin-top:12px;padding:12px;background:var(--gradient);color:#fff;border:none;border-radius:10px;font-weight:600;font-size:.9rem;cursor:pointer"><i class="fa-solid fa-check"></i> Submit Payment</button></form></div>' : ''}
+                `;
             });
-            let subjectAverages = [];
-            Object.values(subjectMap).forEach(termTotals => {
-                const totals = Object.values(termTotals);
-                if (totals.length) subjectAverages.push(Math.round(totals.reduce((a,b)=>a+b,0)/totals.length));
-            });
-            const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]').filter(s=>s.studentId===currentUser.id);
-            examSubs.forEach(s => { if(s.totalMarks) subjectAverages.push(Math.round((s.score/s.totalMarks)*100)); });
-            if (subjectAverages.length) {
-                const avg = Math.round(subjectAverages.reduce((a,b)=>a+b,0)/subjectAverages.length);
-                document.getElementById('avgScore').textContent = avg + '%';
-            } else {
-                document.getElementById('avgScore').textContent = '--';
-            }
-            const posData = JSON.parse(localStorage.getItem('tba_class_positions_' + currentUser.class) || '{}');
-            const myPosition = posData.positions ? posData.positions[currentUser.id] : null;
-            document.getElementById('classPosition').textContent = myPosition ? myPosition + ordinalSuffix(myPosition) : '--';
-
-            const fees = JSON.parse(localStorage.getItem('tba_fees') || '{}');
-            const payments = JSON.parse(localStorage.getItem('tba_payments') || '{}');
-            const isPaid = payments[currentUser.id] === true;
-            const fee = fees[currentUser.class] || 0;
-            document.getElementById('feeStatus').textContent = isPaid ? 'Paid' : '₦' + fee.toLocaleString();
-            document.getElementById('feeStatus').style.color = isPaid ? '#38ef7d' : '#e53e3e';
-
-            const myPaymentSubs = JSON.parse(localStorage.getItem('tba_payment_submissions') || '[]').filter(p => p.studentId === currentUser.id);
-            const latestSub = myPaymentSubs.length ? myPaymentSubs[myPaymentSubs.length - 1] : null;
-            const bankDetails = JSON.parse(localStorage.getItem('tba_bank_details') || '{}');
-
-            let paymentStatusHtml = '';
-            if (isPaid) {
-                paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#d4edda;border-radius:12px"><i class="fa-solid fa-check-circle" style="font-size:2rem;color:#155724;margin-bottom:8px;display:block"></i><strong style="color:#155724;font-size:1.1rem">Payment Confirmed</strong><p style="color:#155724;font-size:.85rem;margin-top:5px">Your payment has been verified. Thank you!</p></div>';
-            } else if (latestSub && latestSub.status === 'pending') {
-                paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#fff3cd;border-radius:12px"><i class="fa-solid fa-clock" style="font-size:2rem;color:#856404;margin-bottom:8px;display:block"></i><strong style="color:#856404;font-size:1.1rem">Payment Under Review</strong><p style="color:#856404;font-size:.85rem;margin-top:5px">Teller: ' + latestSub.teller + '<br>Submitted: ' + new Date(latestSub.date).toLocaleDateString() + '</p></div>';
-            } else if (latestSub && latestSub.status === 'rejected') {
-                paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#f8d7da;border-radius:12px"><i class="fa-solid fa-times-circle" style="font-size:2rem;color:#721c24;margin-bottom:8px;display:block"></i><strong style="color:#721c24;font-size:1.1rem">Payment Rejected</strong><p style="color:#721c24;font-size:.85rem;margin-top:5px">' + (latestSub.reason || 'Please contact bursary.') + '</p><p style="font-size:.8rem;color:#721c24;margin-top:5px">Teller: ' + latestSub.teller + '</p></div>';
-            } else {
-                paymentStatusHtml = '<div style="text-align:center;padding:15px;background:#f8d7da;border-radius:12px"><i class="fa-solid fa-exclamation-circle" style="font-size:2rem;color:#721c24;margin-bottom:8px;display:block"></i><strong style="color:#721c24;font-size:1.1rem">Payment Pending</strong><p style="color:#721c24;font-size:.85rem;margin-top:5px">Fee: ₦' + fee.toLocaleString() + '</p></div>';
-            }
-
-            const feeBody = document.getElementById('feeDetailsBody');
-            feeBody.innerHTML = `
-                ${paymentStatusHtml}
-                <div style="margin-top:20px;padding:15px;background:#f0f3ff;border-radius:12px;border-left:4px solid var(--primary)">
-                    <h4 style="color:var(--primary);margin-bottom:8px;font-size:.9rem"><i class="fa-solid fa-university"></i> School Bank Details</h4>
-                    <p style="font-size:.88rem;color:var(--dark);margin-bottom:4px"><strong>Bank:</strong> ${bankDetails.bankName || 'Not set'}</p>
-                    <p style="font-size:.88rem;color:var(--dark);margin-bottom:4px"><strong>Account Name:</strong> ${bankDetails.accountName || 'Not set'}</p>
-                    <p style="font-size:.88rem;color:var(--dark);margin-bottom:4px"><strong>Account Number:</strong> ${bankDetails.accountNumber || 'Not set'}</p>
-                    <p style="font-size:.85rem;color:var(--gray);margin-top:8px">Amount: <strong style="color:var(--dark)">₦${fee.toLocaleString()}</strong></p>
-                </div>
-                ${!isPaid ? '<div id="paymentFormArea" style="margin-top:20px"><h4 style="color:var(--dark);margin-bottom:10px;font-size:.9rem"><i class="fa-solid fa-paper-plane"></i> Submit Payment Proof</h4><form id="paymentForm" onsubmit="submitPayment(event)"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Teller/Ref Number *</label><input type="text" id="payTeller" required placeholder="e.g. 1234567890" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Amount Paid *</label><input type="number" id="payAmount" required min="1" placeholder="e.g. 45000" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Bank Name *</label><input type="text" id="payBank" required placeholder="e.g. GTBank" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--gray);margin-bottom:4px">Payment Date *</label><input type="date" id="payDate" required style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div></div><button type="submit" style="width:100%;margin-top:12px;padding:12px;background:var(--gradient);color:#fff;border:none;border-radius:10px;font-weight:600;font-size:.9rem;cursor:pointer"><i class="fa-solid fa-check"></i> Submit Payment</button></form></div>' : ''}
-            `;
         }
 
         function renderNotifications() {
