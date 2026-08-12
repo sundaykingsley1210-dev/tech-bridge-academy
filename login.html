@@ -663,9 +663,31 @@
             const password = document.getElementById('loginPassword').value;
             const selectedClass = document.getElementById('loginClass').value;
             const errorEl = document.getElementById('loginError');
+            errorEl.style.display = 'none';
 
             try {
-                const data = await signIn(email, password);
+                let data;
+                try {
+                    data = await signIn(email, password);
+                } catch(signInErr) {
+                    // signIn failed — try creating the auth account
+                    _initSupabase();
+                    if (!_supabaseClient) throw new Error('Cannot connect to server.');
+                    try {
+                        var signUpResult = await _supabaseClient.auth.signUp({
+                            email: email,
+                            password: password,
+                            options: { data: { name: name || email.split('@')[0], role: currentRole } }
+                        });
+                        if (signUpResult.error) throw signUpResult.error;
+                        // Sign out the auto-signed-in user, then sign in properly
+                        await _supabaseClient.auth.signOut();
+                        data = await signIn(email, password);
+                    } catch(signUpErr) {
+                        throw new Error('Invalid email or password. Please check your credentials.');
+                    }
+                }
+
                 const user = data.user;
 
                 // Try to get profile, create if missing
@@ -677,7 +699,6 @@
                 }
 
                 if (!profile) {
-                    // Auto-create profile from auth data + form inputs
                     if (currentRole === 'student') {
                         if (!selectedClass) {
                             errorEl.textContent = 'Please select your class.';
