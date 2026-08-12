@@ -9,7 +9,7 @@
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-    // Inline Supabase init + auth helpers — no external file dependency
+    // Inline Supabase init + direct database auth (no Supabase Auth dependency)
     var _supabaseClient = null;
     function _initSupabase() {
         try {
@@ -24,42 +24,63 @@
     _initSupabase();
     setTimeout(_initSupabase, 500);
     setTimeout(_initSupabase, 1500);
-    setTimeout(_initSupabase, 3000);
 
+    function _s() { _initSupabase(); return _supabaseClient; }
+
+    // Sign up — direct database insert
     function signUp(email, password, metadata) {
-        _initSupabase();
-        if (!_supabaseClient) return Promise.reject(new Error('Cannot connect to server. Check your internet connection and try again.'));
-        return _supabaseClient.auth.signUp({ email: email, password: password, options: { data: metadata || {} } }).then(function(res) {
-            if (res.error) throw res.error;
-            return res.data;
+        return new Promise(function(resolve, reject) {
+            var c = _s();
+            if (!c) return reject(new Error('Cannot connect to server.'));
+            var user = {
+                id: crypto.randomUUID ? crypto.randomUUID() : 'U' + Date.now().toString(36) + Math.random().toString(36).substr(2),
+                email: email,
+                password: password,
+                name: (metadata && metadata.name) || email.split('@')[0],
+                role: (metadata && metadata.role) || 'student',
+                class: (metadata && metadata.class) || null,
+                subject: (metadata && metadata.subject) || null,
+                phone: (metadata && metadata.phone) || null
+            };
+            c.from('users').insert(user).select().then(function(res) {
+                if (res.error) return reject(new Error(res.error.message));
+                resolve({ user: res.data[0] });
+            }).catch(function(err) { reject(err); });
         });
     }
 
+    // Sign in — direct database query
     function signIn(email, password) {
-        _initSupabase();
-        if (!_supabaseClient) return Promise.reject(new Error('Cannot connect to server. Check your internet connection and try again.'));
-        return _supabaseClient.auth.signInWithPassword({ email: email, password: password }).then(function(res) {
-            if (res.error) throw res.error;
-            return res.data;
+        return new Promise(function(resolve, reject) {
+            var c = _s();
+            if (!c) return reject(new Error('Cannot connect to server.'));
+            c.from('users').select('*').eq('email', email).eq('password', password).maybeSingle().then(function(res) {
+                if (res.error) return reject(new Error('Invalid email or password.'));
+                if (!res.data) return reject(new Error('Invalid email or password.'));
+                resolve({ user: res.data });
+            }).catch(function(err) { reject(new Error('Invalid email or password.')); });
         });
     }
 
     var supabase = null;
     var DB = {
-        createUser: function(u) { _initSupabase(); if (!_supabaseClient) return Promise.resolve(); return _supabaseClient.from('users').upsert(u); },
-        getUserProfile: function(id) { _initSupabase(); if (!_supabaseClient) return Promise.reject(new Error('No connection')); return _supabaseClient.from('users').select('*').eq('id', id).single().then(function(r){ if(r.error) throw r.error; return r.data; }); }
+        createUser: function(u) { var c=_s(); if(!c) return Promise.resolve(); return c.from('users').upsert(u); },
+        getUserProfile: function(id) { var c=_s(); if(!c) return Promise.reject(new Error('No connection')); return c.from('users').select('*').eq('id',id).single().then(function(r){ if(r.error) throw r.error; return r.data; }); },
+        updateUserProfile: function(id, u) { var c=_s(); if(!c) return Promise.resolve(); return c.from('users').update(u).eq('id',id).select(); },
+        getAllStudents: function() { var c=_s(); if(!c) return Promise.resolve([]); return c.from('users').select('*').eq('role','student').then(function(r){ return r.data||[]; }); },
+        getStudentsByClass: function(cls) { var c=_s(); if(!c) return Promise.resolve([]); return c.from('users').select('*').eq('role','student').eq('class',cls).then(function(r){ return r.data||[]; }); },
+        getAllTeachers: function() { var c=_s(); if(!c) return Promise.resolve([]); return c.from('users').select('*').eq('role','teacher').then(function(r){ return r.data||[]; }); }
     };
 
     function sendCongratsEmail(toEmail, name, role) {
-        // School notification — stored in Supabase notifications
         sendNotifToAdmin('New ' + role.charAt(0).toUpperCase() + role.slice(1) + ' Registered', name + ' (' + toEmail + ') has created a ' + role + ' account.');
     }
 
     function sendNotifToAdmin(title, message) {
-        _initSupabase();
-        if (!_supabaseClient) return;
+        var c = _s();
+        if (!c) return;
         try {
-            _supabaseClient.from('notifications').insert({
+            c.from('notifications').insert({
                 title: title,
                 message: message,
                 target_role: 'admin',
@@ -519,28 +540,11 @@
             const subject = document.getElementById('trSubject').value.trim();
             const phone = document.getElementById('trPhone').value.trim();
             const password = document.getElementById('trPassword').value;
-            const errorEl = document.getElementById('loginError');
 
             try {
-                const data = await signUp(email, password, { name, role: 'teacher', subject, phone });
-                const profile = {
-                    id: data.user.id,
-                    name: name,
-                    email: email,
-                    role: 'teacher',
-                    subject: subject,
-                    phone: phone
-                };
-                try {
-                    await DB.createUser(profile);
-                } catch(e) {
-                    console.warn('DB createUser failed, saving locally:', e);
-                }
-                localStorage.setItem('tba_currentUser', JSON.stringify(profile));
+                const data = await signUp(email, password, { name: name, role: 'teacher', subject: subject, phone: phone });
+                localStorage.setItem('tba_currentUser', JSON.stringify(data.user));
                 sendCongratsEmail(email, name, 'teacher');
-                sendNotifToAdmin('New Teacher Registered', name + ' (' + email + ') has created a teacher account.');
-                _initSupabase();
-                if (_supabaseClient) { try { await _supabaseClient.auth.signOut(); } catch(e) {} }
                 alert('Registration successful! Redirecting to your dashboard...');
                 closeTeacherReg();
                 window.location.href = 'teacher-dashboard.html';
@@ -594,22 +598,9 @@
             const password = document.getElementById('arPassword').value;
 
             try {
-                const data = await signUp(email, password, { name, role: 'admin' });
-                const profile = {
-                    id: data.user.id,
-                    name: name,
-                    email: email,
-                    role: 'admin'
-                };
-                try {
-                    await DB.createUser(profile);
-                } catch(e) {
-                    console.warn('DB createUser failed, saving locally:', e);
-                }
-                localStorage.setItem('tba_currentUser', JSON.stringify(profile));
+                const data = await signUp(email, password, { name: name, role: 'admin' });
+                localStorage.setItem('tba_currentUser', JSON.stringify(data.user));
                 sendCongratsEmail(email, name, 'admin');
-                _initSupabase();
-                if (_supabaseClient) { try { await _supabaseClient.auth.signOut(); } catch(e) {} }
                 alert('Admin account created! Redirecting to dashboard...');
                 closeAdminReg();
                 window.location.href = 'admin-dashboard.html';
@@ -654,71 +645,15 @@
             const errorEl = document.getElementById('loginError');
             errorEl.style.display = 'none';
 
+            if (!email || !password) {
+                errorEl.textContent = 'Please enter email and password.';
+                errorEl.style.display = 'block';
+                return;
+            }
+
             try {
-                let data;
-                try {
-                    data = await signIn(email, password);
-                } catch(signInErr) {
-                    // signIn failed — try creating the auth account
-                    _initSupabase();
-                    if (!_supabaseClient) throw new Error('Cannot connect to server.');
-                    try {
-                        var signUpResult = await _supabaseClient.auth.signUp({
-                            email: email,
-                            password: password,
-                            options: { data: { name: name || email.split('@')[0], role: currentRole } }
-                        });
-                        if (signUpResult.error) throw signUpResult.error;
-                        // Sign out the auto-signed-in user, then sign in properly
-                        await _supabaseClient.auth.signOut();
-                        data = await signIn(email, password);
-                    } catch(signUpErr) {
-                        throw new Error('Invalid email or password. Please check your credentials.');
-                    }
-                }
-
-                const user = data.user;
-
-                // Try to get profile, create if missing
-                let profile = null;
-                try {
-                    profile = await DB.getUserProfile(user.id);
-                } catch(e) {
-                    profile = null;
-                }
-
-                if (!profile) {
-                    if (currentRole === 'student') {
-                        if (!selectedClass) {
-                            errorEl.textContent = 'Please select your class.';
-                            errorEl.style.display = 'block';
-                            return;
-                        }
-                        profile = {
-                            id: user.id,
-                            email: user.email,
-                            name: name || user.email.split('@')[0],
-                            role: 'student',
-                            class: selectedClass
-                        };
-                    } else if (currentRole === 'teacher') {
-                        profile = {
-                            id: user.id,
-                            email: user.email,
-                            name: user.user_metadata?.name || user.email.split('@')[0],
-                            role: 'teacher',
-                            subject: user.user_metadata?.subject || ''
-                        };
-                    } else {
-                        profile = {
-                            id: user.id,
-                            email: user.email,
-                            name: user.user_metadata?.name || user.email.split('@')[0],
-                            role: 'admin'
-                        };
-                    }
-                    try { await DB.createUser(profile); } catch(e) { console.warn('Profile save:', e); }
-                }
+                const data = await signIn(email, password);
+                const profile = data.user;
 
                 if (currentRole === 'student') {
                     if (!selectedClass) {
