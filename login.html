@@ -51,19 +51,8 @@
     };
 
     function sendCongratsEmail(toEmail, name, role) {
-        fetch('https://formsubmit.co/' + toEmail, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                _subject: 'Welcome to TECH-BRIDGE ACADEMY!',
-                name: name,
-                email: toEmail,
-                role: role,
-                message: 'Dear ' + name + ',\n\nCongratulations! Your ' + role + ' account has been successfully created at TECH-BRIDGE ACADEMY.\n\nEmail: ' + toEmail + '\nRole: ' + role.charAt(0).toUpperCase() + role.slice(1) + '\n\nYou can now login to your portal at ' + window.location.origin + '/login.html using your email and password.\n\nWe wish you success!\n\nBest regards,\nTECH-BRIDGE ACADEMY',
-                _captcha: 'false',
-                _template: 'box'
-            })
-        }).then(function() { console.log('Welcome email sent to ' + toEmail); }).catch(function(err) { console.log('Email failed:', err); });
+        // School notification — stored in Supabase notifications
+        sendNotifToAdmin('New ' + role.charAt(0).toUpperCase() + role.slice(1) + ' Registered', name + ' (' + toEmail + ') has created a ' + role + ' account.');
     }
 
     function sendNotifToAdmin(title, message) {

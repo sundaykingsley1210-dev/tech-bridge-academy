@@ -858,20 +858,16 @@
                 notifs.push(notif);
                 localStorage.setItem('tba_notifications', JSON.stringify(notifs));
 
-                // Send email to admin via Formsubmit
-                fetch('https://formsubmit.co/techbridgeacademy64@gmail.com', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        _subject: '[TBA] ' + title + ' — ' + cls,
+                // Store notification in Supabase
+                try {
+                    DB.sendNotification({
+                        title: '[TBA] ' + title + ' — ' + cls,
+                        message: 'From: ' + currentUser.name + '\nClass: ' + cls + '\n\n' + message,
+                        target_class: cls,
                         from_name: currentUser.name,
-                        teacherEmail: currentUser.email,
-                        class: cls,
-                        message: message,
-                        _captcha: 'false',
-                        _template: 'box'
-                    })
-                }).catch(err => console.log('Email send failed:', err));
+                        from_role: 'teacher'
+                    });
+                } catch(err) { console.log('Notification failed:', err); }
             });
             document.getElementById('notifForm').reset();
             renderSentNotifs();

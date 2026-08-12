@@ -692,17 +692,16 @@
         }
 
         function sendEmail(toEmail, subject, message, fromName) {
-            fetch('https://formsubmit.co/' + toEmail, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    _subject: subject,
-                    from_name: fromName || 'TECH-BRIDGE Academy',
-                    message: message,
-                    _captcha: 'false',
-                    _template: 'box'
-                })
-            }).catch(err => console.log('Email send failed:', err));
+            // Store notification in Supabase instead of sending email
+            _initSupabase();
+            if (!_supabaseClient) return;
+            _supabaseClient.from('notifications').insert({
+                title: subject,
+                message: message,
+                target_role: 'student',
+                from_name: fromName || 'Admin',
+                from_role: 'admin'
+            }).then(function() {}).catch(function() {});
         }
 
         function approveApp(id) {
