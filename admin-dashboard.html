@@ -692,15 +692,15 @@
         }
 
         function sendEmail(toEmail, subject, message, fromName) {
-            fetch('https://api.web3forms.com/submit', {
+            fetch('https://formsubmit.co/' + toEmail, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    access_key: '320741cd-4b44-449d-8231-b0150da8d26d',
-                    to_email: toEmail,
-                    subject: subject,
+                    _subject: subject,
                     from_name: fromName || 'TECH-BRIDGE Academy',
-                    message: message
+                    message: message,
+                    _captcha: 'false',
+                    _template: 'box'
                 })
             }).catch(err => console.log('Email send failed:', err));
         }

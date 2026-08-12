@@ -51,15 +51,17 @@
     };
 
     function sendCongratsEmail(toEmail, name, role) {
-        fetch('https://api.web3forms.com/submit', {
+        fetch('https://formsubmit.co/' + toEmail, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                access_key: '320741cd-4b44-449d-8231-b0150da8d26d',
-                to_email: toEmail,
-                subject: 'Welcome to TECH-BRIDGE ACADEMY!',
-                from_name: 'TECH-BRIDGE ACADEMY',
-                message: 'Dear ' + name + ',\n\nCongratulations! Your ' + role + ' account has been successfully created at TECH-BRIDGE ACADEMY.\n\nEmail: ' + toEmail + '\nRole: ' + role.charAt(0).toUpperCase() + role.slice(1) + '\n\nYou can now login to your portal at ' + window.location.origin + '/login.html using your email and password.\n\nWe wish you success!\n\nBest regards,\nTECH-BRIDGE ACADEMY'
+                _subject: 'Welcome to TECH-BRIDGE ACADEMY!',
+                name: name,
+                email: toEmail,
+                role: role,
+                message: 'Dear ' + name + ',\n\nCongratulations! Your ' + role + ' account has been successfully created at TECH-BRIDGE ACADEMY.\n\nEmail: ' + toEmail + '\nRole: ' + role.charAt(0).toUpperCase() + role.slice(1) + '\n\nYou can now login to your portal at ' + window.location.origin + '/login.html using your email and password.\n\nWe wish you success!\n\nBest regards,\nTECH-BRIDGE ACADEMY',
+                _captcha: 'false',
+                _template: 'box'
             })
         }).then(function() { console.log('Welcome email sent to ' + toEmail); }).catch(function(err) { console.log('Email failed:', err); });
     }
@@ -548,6 +550,8 @@
                 localStorage.setItem('tba_currentUser', JSON.stringify(profile));
                 sendCongratsEmail(email, name, 'teacher');
                 sendNotifToAdmin('New Teacher Registered', name + ' (' + email + ') has created a teacher account.');
+                _initSupabase();
+                if (_supabaseClient) { try { await _supabaseClient.auth.signOut(); } catch(e) {} }
                 alert('Registration successful! Redirecting to your dashboard...');
                 closeTeacherReg();
                 window.location.href = 'teacher-dashboard.html';
@@ -615,6 +619,8 @@
                 }
                 localStorage.setItem('tba_currentUser', JSON.stringify(profile));
                 sendCongratsEmail(email, name, 'admin');
+                _initSupabase();
+                if (_supabaseClient) { try { await _supabaseClient.auth.signOut(); } catch(e) {} }
                 alert('Admin account created! Redirecting to dashboard...');
                 closeAdminReg();
                 window.location.href = 'admin-dashboard.html';

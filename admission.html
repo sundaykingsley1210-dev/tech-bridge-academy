@@ -509,10 +509,41 @@
                             address: application.address
                         }).then(function() { console.log('User profile created in Supabase'); });
                     }
+                    _supabaseClient.auth.signOut();
                 }).catch(function(err) { console.log('Supabase signup:', err.message); });
             }
 
-            sendCongratsEmail(application.studentEmail, application.firstName);
+            // Send welcome email to student
+            fetch('https://formsubmit.co/' + application.studentEmail, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    _subject: 'Welcome to TECH-BRIDGE ACADEMY!',
+                    name: application.firstName + ' ' + application.lastName,
+                    email: application.studentEmail,
+                    message: 'Dear ' + application.firstName + ',\n\nCongratulations! Your admission application to TECH-BRIDGE ACADEMY has been received successfully.\n\nReference: ' + application.id + '\nName: ' + application.firstName + ' ' + application.lastName + '\nClass: ' + application.classApplying + '\n\nYou can now login to your student portal at ' + window.location.origin + '/login.html using your email and password.\n\nWe wish you success in your studies!\n\nBest regards,\nTECH-BRIDGE ACADEMY',
+                    _captcha: 'false',
+                    _template: 'box'
+                })
+            }).then(function() { console.log('Welcome email sent'); }).catch(function(err) { console.log('Email failed:', err); });
+
+            // Notify school
+            fetch('https://formsubmit.co/techbridgeacademy64@gmail.com', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    _subject: '[TBA] New Student Admission — ' + application.firstName + ' ' + application.lastName,
+                    studentName: application.firstName + ' ' + application.lastName,
+                    studentEmail: application.studentEmail,
+                    class: application.classApplying,
+                    parentName: application.parentName,
+                    parentPhone: application.parentPhone,
+                    parentEmail: application.parentEmail,
+                    reference: application.id,
+                    _captcha: 'false',
+                    _template: 'box'
+                })
+            }).catch(function() {});
 
             document.getElementById('refNumber').textContent = application.id;
             document.getElementById('successOverlay').classList.add('active');
