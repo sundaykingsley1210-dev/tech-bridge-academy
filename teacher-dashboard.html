@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
     var _supabaseClient = null;
@@ -836,8 +835,6 @@
             document.getElementById('totalExams').textContent = examQuestions.length;
         }
 
-        emailjs.init({ publicKey: 'X8j9z5L6vj2GOKQiJ' });
-
         function sendNotification(e) {
             e.preventDefault();
             const selectedClasses = Array.from(document.querySelectorAll('.class-cb:checked')).map(cb => cb.value);
@@ -861,13 +858,17 @@
                 notifs.push(notif);
                 localStorage.setItem('tba_notifications', JSON.stringify(notifs));
 
-                // Send email to admin via EmailJS
-                emailjs.send('service_b0wvx85', 'template_xh0zn4k', {
-                    to_email: 'techbridgeacademy64@gmail.com',
-                    subject: '[TBA] ' + title + ' — ' + cls,
-                    message: 'From: ' + currentUser.name + '\nClass: ' + cls + '\n\n' + message,
-                    from_name: currentUser.name,
-                    from_email: currentUser.email
+                // Send email to admin via Web3Forms
+                fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        access_key: '320741cd-4b44-449d-8231-b0150da8d26d',
+                        to_email: 'techbridgeacademy64@gmail.com',
+                        subject: '[TBA] ' + title + ' — ' + cls,
+                        from_name: currentUser.name,
+                        message: 'From: ' + currentUser.name + '\nClass: ' + cls + '\n\n' + message
+                    })
                 }).catch(err => console.log('Email send failed:', err));
             });
             document.getElementById('notifForm').reset();

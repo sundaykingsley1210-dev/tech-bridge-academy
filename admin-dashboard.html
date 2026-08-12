@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
     var _supabaseClient = null;
@@ -543,8 +542,6 @@
         const currentUser = JSON.parse(localStorage.getItem('tba_currentUser'));
         if (!currentUser || currentUser.role !== 'admin') { window.location.href = 'login.html'; }
 
-        emailjs.init({ publicKey: 'X8j9z5L6vj2GOKQiJ' });
-
         let currentFilter = 'all';
         let searchQuery = '';
         let approvedSearchQuery = '';
@@ -695,12 +692,16 @@
         }
 
         function sendEmail(toEmail, subject, message, fromName) {
-            emailjs.send('service_b0wvx85', 'template_xh0zn4k', {
-                to_email: toEmail,
-                subject: subject,
-                message: message,
-                from_name: fromName || 'TECH-BRIDGE Academy',
-                from_email: 'techbridgeacademy64@gmail.com'
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    access_key: '320741cd-4b44-449d-8231-b0150da8d26d',
+                    to_email: toEmail,
+                    subject: subject,
+                    from_name: fromName || 'TECH-BRIDGE Academy',
+                    message: message
+                })
             }).catch(err => console.log('Email send failed:', err));
         }
 
