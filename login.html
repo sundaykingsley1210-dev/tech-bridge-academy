@@ -55,7 +55,7 @@
 
     function sendCongratsEmail(toEmail, name, role) {
         try {
-            emailjs.send('service_sq45hkp', 'template_xh0zn4k', {
+            emailjs.send('service_sq45hkp', 'template_sskvudj', {
                 to_email: toEmail,
                 subject: 'Welcome to TECH-BRIDGE ACADEMY!',
                 message: 'Dear ' + name + ',\n\nCongratulations! Your ' + role + ' account has been successfully created at TECH-BRIDGE ACADEMY.\n\nEmail: ' + toEmail + '\nRole: ' + role.charAt(0).toUpperCase() + role.slice(1) + '\n\nYou can now login to your portal at ' + window.location.origin + '/login.html using your email and password.\n\nWe wish you success!\n\nBest regards,\nTECH-BRIDGE ACADEMY',
