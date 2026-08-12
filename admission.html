@@ -479,20 +479,28 @@
             applications.push(application);
             localStorage.setItem('tba_applications', JSON.stringify(applications));
 
-            // Create student account directly in database
+            // Create student account via Supabase Auth (sends confirmation email)
             _initSupabase();
             if (_supabaseClient) {
-                _supabaseClient.from('users').insert({
-                    id: crypto.randomUUID ? crypto.randomUUID() : 'U' + Date.now().toString(36) + Math.random().toString(36).substr(2),
+                _supabaseClient.auth.signUp({
                     email: application.studentEmail,
                     password: application.studentPassword,
-                    name: application.firstName + ' ' + application.lastName,
-                    role: 'student',
-                    class: application.classApplying,
-                    gender: application.gender,
-                    phone: application.parentPhone,
-                    address: application.address
-                }).then(function() { console.log('Student account created'); }).catch(function(err) { console.log('DB insert:', err.message); });
+                    options: { data: { name: application.firstName + ' ' + application.lastName, role: 'student', class: application.classApplying } }
+                }).then(function(result) {
+                    if (result.data && result.data.user) {
+                        _supabaseClient.from('users').upsert({
+                            id: result.data.user.id,
+                            email: application.studentEmail,
+                            password: application.studentPassword,
+                            name: application.firstName + ' ' + application.lastName,
+                            role: 'student',
+                            class: application.classApplying,
+                            gender: application.gender,
+                            phone: application.parentPhone,
+                            address: application.address
+                        }).then(function() { console.log('Student profile created'); });
+                    }
+                }).catch(function(err) { console.log('Supabase signup:', err.message); });
             }
 
             sendCongratsEmail(application.studentEmail, application.firstName);
