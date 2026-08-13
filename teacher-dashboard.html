@@ -875,8 +875,8 @@
                         var notifs = rows.data.map(function(n) {
                             return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, date: n.created_at };
                         });
-                        var c = document.getElementById('sentNotifs');
-                        c.innerHTML = notifs.map(n => '<div class="assignment-item"><h4>'+n.title+'</h4><div class="meta"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span><span><i class="fa-solid fa-clock"></i> '+new Date(n.date).toLocaleDateString()+'</span></div><p style="margin-top:5px">'+n.message+'</p></div>').join('');
+                        var sentEl = document.getElementById('sentNotifs');
+                        sentEl.innerHTML = notifs.map(n => '<div class="assignment-item"><h4>'+n.title+'</h4><div class="meta"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span><span><i class="fa-solid fa-clock"></i> '+new Date(n.date).toLocaleDateString()+'</span></div><p style="margin-top:5px">'+n.message+'</p></div>').join('');
                         return;
                     }
                 }

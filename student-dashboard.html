@@ -973,7 +973,7 @@
                 if (_supabaseClient) {
                     var rows = await DB.getMessages(currentUser.id);
                     if (rows && rows.length) {
-                        var messages = rows.map(function(m) {
+                        var supaMsgs = rows.map(function(m) {
                             return {
                                 id: m.id,
                                 studentId: m.from_id,
@@ -986,7 +986,7 @@
                                 repliedAt: null
                             };
                         });
-                        localStorage.setItem('tba_messages', JSON.stringify(messages));
+                        localStorage.setItem('tba_messages', JSON.stringify(supaMsgs));
                     }
                 }
             } catch(e) { console.log('Load messages from Supabase:', e); }
@@ -1649,10 +1649,10 @@
                 if (_supabaseClient) {
                     var rows = await DB.getNotifications(currentUser.class, 'student');
                     if (rows && rows.length) {
-                        var notifs = rows.map(function(n) {
+                        var supaN = rows.map(function(n) {
                             return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, from: n.from_name || 'System', date: n.created_at };
                         });
-                        localStorage.setItem('tba_notifications', JSON.stringify(notifs));
+                        localStorage.setItem('tba_notifications', JSON.stringify(supaN));
                     }
                 }
             } catch(e) { console.log('Load notifs from Supabase:', e); }
@@ -1679,10 +1679,10 @@
                 if (_supabaseClient) {
                     var rows = await DB.getNotifications(currentUser.class, 'student');
                     if (rows && rows.length) {
-                        var notifs = rows.map(function(n) {
+                        var supaN2 = rows.map(function(n) {
                             return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, from: n.from_name || 'System', date: n.created_at };
                         });
-                        localStorage.setItem('tba_notifications', JSON.stringify(notifs));
+                        localStorage.setItem('tba_notifications', JSON.stringify(supaN2));
                     }
                 }
             } catch(e) {}
@@ -1702,10 +1702,10 @@
                 if (_supabaseClient) {
                     var rows = await DB.getNotifications(currentUser.class, 'student');
                     if (rows && rows.length) {
-                        var notifs = rows.map(function(n) {
+                        var supaN3 = rows.map(function(n) {
                             return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, from: n.from_name || 'System', date: n.created_at };
                         });
-                        localStorage.setItem('tba_notifications', JSON.stringify(notifs));
+                        localStorage.setItem('tba_notifications', JSON.stringify(supaN3));
                     }
                 }
             } catch(e) {}

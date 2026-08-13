@@ -1522,7 +1522,7 @@
                 if (_supabaseClient) {
                     var rows = await DB.getAllMessages();
                     if (rows && rows.length) {
-                        var messages = rows.map(function(m) {
+                        var supaMsgs = rows.map(function(m) {
                             return {
                                 id: m.id,
                                 studentId: m.from_id,
@@ -1537,7 +1537,7 @@
                                 supabaseToId: m.to_id
                             };
                         });
-                        localStorage.setItem('tba_messages', JSON.stringify(messages));
+                        localStorage.setItem('tba_messages', JSON.stringify(supaMsgs));
                     }
                 }
             } catch(e) { console.log('Load admin messages from Supabase:', e); }
@@ -1582,8 +1582,8 @@
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    var messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
-                    var msg = messages.find(function(m) { return m.id === msgId; });
+                    var allMsgs = JSON.parse(localStorage.getItem('tba_messages') || '[]');
+                    var msg = allMsgs.find(function(m) { return m.id === msgId; });
                     var targetId = (msg && msg.studentId) ? msg.studentId : null;
                     await _supabaseClient.from('messages').insert({
                         from_id: currentUser.id,
@@ -1653,8 +1653,8 @@
                         var notifs = rows.data.map(function(n) {
                             return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, from: n.from_name || 'Admin', date: n.created_at };
                         });
-                        var c = document.getElementById('adminSentNotifs');
-                        c.innerHTML = notifs.map(n => '<div style="padding:12px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border-left:3px solid var(--primary)"><div style="display:flex;justify-content:space-between;align-items:start"><h4 style="margin:0">'+n.title+'</h4><span style="font-size:.75rem;color:var(--gray)">'+new Date(n.date).toLocaleString()+'</span></div><div class="meta" style="margin-top:5px"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span></div><p style="margin:8px 0 0;font-size:.9rem;color:#555">'+n.message+'</p></div>').join('');
+                        var sentEl = document.getElementById('adminSentNotifs');
+                        sentEl.innerHTML = notifs.map(n => '<div style="padding:12px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border-left:3px solid var(--primary)"><div style="display:flex;justify-content:space-between;align-items:start"><h4 style="margin:0">'+n.title+'</h4><span style="font-size:.75rem;color:var(--gray)">'+new Date(n.date).toLocaleString()+'</span></div><div class="meta" style="margin-top:5px"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span></div><p style="margin:8px 0 0;font-size:.9rem;color:#555">'+n.message+'</p></div>').join('');
                         return;
                     }
                 }
