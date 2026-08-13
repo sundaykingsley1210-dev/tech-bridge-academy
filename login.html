@@ -31,71 +31,27 @@
         return new Promise(function(resolve, reject) {
             var c = _s();
             if (!c) return reject(new Error('Cannot connect to server.'));
-
-            // First check if email already exists in users table
-            c.from('users').select('id').eq('email', email).maybeSingle().then(function(existing) {
-                if (existing && existing.data) {
-                    return reject(new Error('An account with this email already exists. Please login instead.'));
+            c.auth.signUp({
+                email: email,
+                password: password,
+                options: { data: metadata || {} }
+            }).then(function(res) {
+                if (res.error) return reject(new Error(res.error.message));
+                var user = res.data.user;
+                if (user) {
+                    c.from('users').upsert({
+                        id: user.id,
+                        email: email,
+                        password: password,
+                        name: (metadata && metadata.name) || email.split('@')[0],
+                        role: (metadata && metadata.role) || 'student',
+                        class: (metadata && metadata.class) || null,
+                        subject: (metadata && metadata.subject) || null,
+                        phone: (metadata && metadata.phone) || null
+                    }).then(function() {}).catch(function() {});
                 }
-
-                // Email is unique — create Supabase Auth account
-                c.auth.signUp({
-                    email: email,
-                    password: password
-                }).then(function(res) {
-                    if (res.error) {
-                        var msg = res.error.message;
-                        if (msg && msg.toLowerCase().includes('already registered')) {
-                            return reject(new Error('An account with this email already exists. Please login instead.'));
-                        }
-                        return reject(new Error('Signup error: ' + msg));
-                    }
-                    var user = res.data.user;
-                    if (user) {
-                        var profile = {
-                            id: user.id,
-                            email: email,
-                            name: (metadata && metadata.name) || email.split('@')[0],
-                            role: (metadata && metadata.role) || 'student',
-                            class: (metadata && metadata.class) || null,
-                            subject: (metadata && metadata.subject) || null,
-                            phone: (metadata && metadata.phone) || null
-                        };
-                        c.from('users').upsert(profile).then(function() {}).catch(function() {});
-                    }
-                    resolve(res.data);
-                }).catch(function(err) {
-                    var msg = err.message || 'Signup failed.';
-                    if (msg.toLowerCase().includes('already registered')) {
-                        msg = 'An account with this email already exists. Please login instead.';
-                    }
-                    reject(new Error('Signup error: ' + msg));
-                });
-            }).catch(function() {
-                // If DB check fails, try signup anyway
-                c.auth.signUp({
-                    email: email,
-                    password: password
-                }).then(function(res) {
-                    if (res.error) return reject(new Error('Signup error: ' + res.error.message));
-                    var user = res.data.user;
-                    if (user) {
-                        var profile = {
-                            id: user.id,
-                            email: email,
-                            name: (metadata && metadata.name) || email.split('@')[0],
-                            role: (metadata && metadata.role) || 'student',
-                            class: (metadata && metadata.class) || null,
-                            subject: (metadata && metadata.subject) || null,
-                            phone: (metadata && metadata.phone) || null
-                        };
-                        c.from('users').upsert(profile).then(function() {}).catch(function() {});
-                    }
-                    resolve(res.data);
-                }).catch(function(err) {
-                    reject(new Error('Signup error: ' + (err.message || 'Unknown error')));
-                });
-            });
+                resolve(res.data);
+            }).catch(function(err) { reject(err); });
         });
     }
 
@@ -105,13 +61,9 @@
             var c = _s();
             if (!c) return reject(new Error('Cannot connect to server.'));
             c.auth.signInWithPassword({ email: email, password: password }).then(function(res) {
-                if (res.error) {
-                    return reject(new Error(res.error.message || 'Invalid email or password.'));
-                }
+                if (res.error) return reject(new Error(res.error.message));
                 resolve(res.data);
-            }).catch(function(err) {
-                reject(new Error('Invalid email or password.'));
-            });
+            }).catch(function(err) { reject(new Error('Invalid email or password.')); });
         });
     }
 
@@ -129,6 +81,20 @@
         var c = _s();
         if (!c) return;
         c.from('notifications').insert({ title: title, message: message, target_role: 'admin', from_name: 'System', from_role: 'system' }).then(function() {}).catch(function() {});
+    }
+
+    function sendCongratsEmail(toEmail, name, role) {
+        fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                access_key: '320741cd-4b44-449d-8231-b0150da8d26d',
+                subject: 'Welcome to TECH-BRIDGE ACADEMY!',
+                from_name: 'TECH-BRIDGE ACADEMY',
+                email: toEmail,
+                message: 'Dear ' + name + ',\n\nCongratulations! Your ' + role + ' account has been successfully created at TECH-BRIDGE ACADEMY.\n\nEmail: ' + toEmail + '\nRole: ' + role.charAt(0).toUpperCase() + role.slice(1) + '\n\nYou can now login to your portal at ' + window.location.origin + '/login.html using your email and password.\n\nWe wish you success!\n\nBest regards,\nTECH-BRIDGE ACADEMY'
+            })
+        }).then(function() { console.log('Welcome email sent'); }).catch(function(err) { console.log('Email failed:', err); });
     }
     </script>
     <style>
@@ -584,9 +550,11 @@
 
             try {
                 const data = await signUp(email, password, { name: name, role: 'teacher', subject: subject, phone: phone });
+                sendCongratsEmail(email, name, 'teacher');
                 sendNotifToAdmin('New Teacher Registered', name + ' (' + email + ') has created a teacher account.');
-                alert('Registration successful! A confirmation email has been sent to ' + email + '. Please check your inbox (and spam folder), confirm your email, then login.');
+                alert('Registration successful! Redirecting to your dashboard...');
                 closeTeacherReg();
+                window.location.href = 'teacher-dashboard.html';
             } catch (err) {
                 console.error(err);
                 alert(err.message || 'Registration failed. Please try again.');
@@ -638,8 +606,10 @@
 
             try {
                 const data = await signUp(email, password, { name: name, role: 'admin' });
-                alert('Admin account created! A confirmation email has been sent to ' + email + '. Please check your inbox (and spam folder), confirm your email, then login.');
+                sendCongratsEmail(email, name, 'admin');
+                alert('Admin account created! Redirecting to dashboard...');
                 closeAdminReg();
+                window.location.href = 'admin-dashboard.html';
             } catch (err) {
                 console.error(err);
                 alert(err.message || 'Registration failed. Please try again.');

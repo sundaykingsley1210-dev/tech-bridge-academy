@@ -388,8 +388,8 @@
             <h3>Application Submitted!</h3>
             <p>Thank you for applying to TECH-BRIDGE ACADEMY. Your account has been created.</p>
             <p style="font-size: 0.85rem; color: var(--gray);">Reference: <strong id="refNumber"></strong></p>
-            <p style="font-size: 0.95rem; color: #e53e3e; font-weight: 600; margin: 15px 0;">A confirmation email has been sent to your email address. Please check your inbox (and spam folder), confirm your email, then you can login.</p>
-            <a href="login.html" class="btn btn-primary" style="margin-bottom:10px">Go to Login</a>
+            <p style="font-size: 0.95rem; color: var(--primary); font-weight: 600; margin: 15px 0;">You can now log in to your student portal!</p>
+            <a href="login.html" class="btn btn-primary" style="margin-bottom:10px">Login Now</a>
             <br>
             <a href="index.html" class="btn btn-primary">Back to Home</a>
             <button onclick="closeSuccess()" class="btn btn-secondary" style="color: var(--dark); border-color: var(--gray-light);">Submit Another</button>
@@ -478,52 +478,34 @@
             // Create student account via Supabase Auth (sends confirmation email)
             _initSupabase();
             if (_supabaseClient) {
-                // Check if email already exists
-                _supabaseClient.from('users').select('id').eq('email', application.studentEmail).maybeSingle().then(function(existing) {
-                    if (existing && existing.data) {
-                        alert('An account with this email already exists. Please login instead.');
-                        return;
+                _supabaseClient.auth.signUp({
+                    email: application.studentEmail,
+                    password: application.studentPassword,
+                    options: { data: { name: application.firstName + ' ' + application.lastName, role: 'student', class: application.classApplying } }
+                }).then(function(result) {
+                    if (result.data && result.data.user) {
+                        var profile = {
+                            id: result.data.user.id,
+                            email: application.studentEmail,
+                            password: application.studentPassword,
+                            name: application.firstName + ' ' + application.lastName,
+                            role: 'student',
+                            class: application.classApplying,
+                            gender: application.gender,
+                            phone: application.parentPhone,
+                            address: application.address
+                        };
+                        _supabaseClient.from('users').select('id').eq('email', application.studentEmail).maybeSingle().then(function(existing) {
+                            if (existing && existing.data) {
+                                _supabaseClient.from('users').update(profile).eq('email', application.studentEmail).then(function() { console.log('Student profile updated'); });
+                            } else {
+                                _supabaseClient.from('users').upsert(profile).then(function() { console.log('Student profile created'); });
+                            }
+                        }).catch(function() {
+                            _supabaseClient.from('users').upsert(profile).then(function() { console.log('Student profile created'); });
+                        });
                     }
-                    // Create Supabase Auth account (sends confirmation email)
-                    _supabaseClient.auth.signUp({
-                        email: application.studentEmail,
-                        password: application.studentPassword
-                    }).then(function(result) {
-                        if (result.data && result.data.user) {
-                            var profile = {
-                                id: result.data.user.id,
-                                email: application.studentEmail,
-                                name: application.firstName + ' ' + application.lastName,
-                                role: 'student',
-                                class: application.classApplying,
-                                gender: application.gender,
-                                phone: application.parentPhone,
-                                address: application.address
-                            };
-                            _supabaseClient.from('users').upsert(profile).then(function() { console.log('Student profile created'); });
-                        }
-                    }).catch(function(err) { console.log('Supabase signup:', err.message); });
-                }).catch(function() {
-                    // If DB check fails, try signup anyway
-                    _supabaseClient.auth.signUp({
-                        email: application.studentEmail,
-                        password: application.studentPassword
-                    }).then(function(result) {
-                        if (result.data && result.data.user) {
-                            var profile = {
-                                id: result.data.user.id,
-                                email: application.studentEmail,
-                                name: application.firstName + ' ' + application.lastName,
-                                role: 'student',
-                                class: application.classApplying,
-                                gender: application.gender,
-                                phone: application.parentPhone,
-                                address: application.address
-                            };
-                            _supabaseClient.from('users').upsert(profile).then(function() { console.log('Student profile created'); });
-                        }
-                    }).catch(function(err) { console.log('Supabase signup:', err.message); });
-                });
+                }).catch(function(err) { console.log('Supabase signup:', err.message); });
             }
 
             // Notify school via Supabase
