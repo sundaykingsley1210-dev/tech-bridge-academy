@@ -113,19 +113,11 @@
             if (!c) return reject(new Error('Cannot connect to server.'));
             c.auth.signInWithPassword({ email: email, password: password }).then(function(res) {
                 if (res.error) {
-                    var msg = res.error.message;
-                    if (msg && msg.toLowerCase().includes('email not confirmed')) {
-                        return reject(new Error('Please confirm your email before logging in. Check your inbox for the confirmation link.'));
-                    }
-                    return reject(new Error(msg || 'Invalid email or password.'));
+                    return reject(new Error(res.error.message || 'Invalid email or password.'));
                 }
                 resolve(res.data);
             }).catch(function(err) {
-                var msg = err.message || 'Invalid email or password.';
-                if (msg.toLowerCase().includes('email not confirmed')) {
-                    msg = 'Please confirm your email before logging in. Check your inbox for the confirmation link.';
-                }
-                reject(new Error(msg));
+                reject(new Error('Invalid email or password.'));
             });
         });
     }
