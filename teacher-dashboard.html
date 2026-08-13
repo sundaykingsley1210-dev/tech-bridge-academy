@@ -69,6 +69,7 @@
         async updateFee(cls, amt) { var c=_s(); if(!c) return null; var r=await c.from('fees').update({amount:amt}).eq('class',cls).select(); if(r.error) throw r.error; return r.data[0]; },
         async getExamSchedule() { var c=_s(); if(!c) return []; var r=await c.from('exam_schedule').select('*'); if(r.error) throw r.error; return r.data; },
         async saveExamSchedule(s) { var c=_s(); if(!c) return null; var r=await c.from('exam_schedule').upsert(s,{onConflict:'id'}); if(r.error) throw r.error; return r.data; },
+        async getExamQuestionsByClass(cls) { var c=_s(); if(!c) return []; var r=await c.from('exam_questions').select('*').eq('class',cls); if(r.error) throw r.error; return r.data; },
         async getApplications() { var c=_s(); if(!c) return []; var r=await c.from('applications').select('*').order('date_submitted',{ascending:false}); if(r.error) throw r.error; return r.data; },
         async submitApplication(a) { var c=_s(); if(!c) return null; var r=await c.from('applications').insert(a).select(); if(r.error) throw r.error; return r.data[0]; },
         async updateApplicationStatus(id, s) { var c=_s(); if(!c) return null; var r=await c.from('applications').update({status:s}).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
@@ -844,29 +845,19 @@
             const message = document.getElementById('notifMessage').value;
 
             selectedClasses.forEach(cls => {
-                const notif = {
-                    id: 'NOTIF-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).substring(2,5),
-                    title: title,
-                    targetClass: cls,
-                    message: message,
-                    from: currentUser.name,
-                    fromId: currentUser.id,
-                    date: new Date().toISOString(),
-                    readBy: []
-                };
-                let notifs = JSON.parse(localStorage.getItem('tba_notifications')||'[]');
-                notifs.push(notif);
-                localStorage.setItem('tba_notifications', JSON.stringify(notifs));
-
-                // Store notification in Supabase
+                // Save to Supabase
                 try {
-                    DB.sendNotification({
-                        title: '[TBA] ' + title + ' — ' + cls,
-                        message: 'From: ' + currentUser.name + '\nClass: ' + cls + '\n\n' + message,
-                        target_class: cls,
-                        from_name: currentUser.name,
-                        from_role: 'teacher'
-                    });
+                    _initSupabase();
+                    if (_supabaseClient) {
+                        _supabaseClient.from('notifications').insert({
+                            title: title,
+                            message: message,
+                            target_class: cls,
+                            target_role: 'student',
+                            from_name: currentUser.name,
+                            from_role: 'teacher'
+                        }).then(function(){}).catch(function(e){console.log('Notif save error:',e);});
+                    }
                 } catch(err) { console.log('Notification failed:', err); }
             });
             document.getElementById('notifForm').reset();
@@ -874,18 +865,40 @@
             alert('Notification sent to '+selectedClasses.join(', ')+'!');
         }
 
-        function renderSentNotifs() {
-            const notifs = JSON.parse(localStorage.getItem('tba_notifications')||'[]').filter(n=>n.fromId===currentUser.id);
+        async function renderSentNotifs() {
+            // Load from Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var rows = await _supabaseClient.from('notifications').select('*').eq('from_name', currentUser.name).order('created_at',{ascending:false});
+                    if (rows && rows.data && rows.data.length) {
+                        var notifs = rows.data.map(function(n) {
+                            return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, date: n.created_at };
+                        });
+                        var c = document.getElementById('sentNotifs');
+                        c.innerHTML = notifs.map(n => '<div class="assignment-item"><h4>'+n.title+'</h4><div class="meta"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span><span><i class="fa-solid fa-clock"></i> '+new Date(n.date).toLocaleDateString()+'</span></div><p style="margin-top:5px">'+n.message+'</p></div>').join('');
+                        return;
+                    }
+                }
+            } catch(e) {}
             const c = document.getElementById('sentNotifs');
-            if (!notifs.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-bell"></i><p>No notifications sent yet</p></div>'; return; }
-            c.innerHTML = notifs.slice().reverse().map(n => '<div class="assignment-item"><h4>'+n.title+'</h4><div class="meta"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span><span><i class="fa-solid fa-clock"></i> '+new Date(n.date).toLocaleDateString()+'</span></div><p style="margin-top:5px">'+n.message+'</p></div>').join('');
+            c.innerHTML = '<div class="no-data"><i class="fa-solid fa-bell"></i><p>No notifications sent yet</p></div>';
         }
 
-        function renderNotifBadge() {
-            const notifs = JSON.parse(localStorage.getItem('tba_notifications')||'[]');
-            const sent = notifs.filter(n=>n.fromId===currentUser.id);
-            document.getElementById('notifBadge').textContent = sent.length;
-            document.getElementById('notifBadge').style.display = sent.length > 0 ? 'flex' : 'none';
+        async function renderNotifBadge() {
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var rows = await _supabaseClient.from('notifications').select('*').eq('from_name', currentUser.name);
+                    if (rows && rows.data) {
+                        document.getElementById('notifBadge').textContent = rows.data.length;
+                        document.getElementById('notifBadge').style.display = rows.data.length > 0 ? 'flex' : 'none';
+                        return;
+                    }
+                }
+            } catch(e) {}
+            document.getElementById('notifBadge').textContent = '0';
+            document.getElementById('notifBadge').style.display = 'none';
         }
 
         function toggleNotifDropdown(e) {
@@ -1441,7 +1454,7 @@
         }
 
         // Exam Functions
-        function addExamQuestion(e) {
+        async function addExamQuestion(e) {
             e.preventDefault();
             const question = {
                 id: 'EXQ-' + Date.now().toString(36).toUpperCase(),
@@ -1462,9 +1475,32 @@
                 createdAt: new Date().toISOString()
             };
 
+            // Save to localStorage
             let exams = JSON.parse(localStorage.getItem('tba_exam_questions') || '[]');
             exams.push(question);
             localStorage.setItem('tba_exam_questions', JSON.stringify(exams));
+
+            // Save to Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var existing = await _supabaseClient.from('exam_questions').select('id,questions').eq('subject',question.subject).eq('class',question.class).eq('term',question.term).maybeSingle();
+                    if (existing && existing.data) {
+                        var updatedQuestions = existing.data.questions || [];
+                        updatedQuestions.push(question);
+                        await _supabaseClient.from('exam_questions').update({questions: updatedQuestions}).eq('id', existing.data.id);
+                    } else {
+                        await _supabaseClient.from('exam_questions').insert({
+                            subject: question.subject,
+                            class: question.class,
+                            term: question.term,
+                            questions: [question],
+                            teacher_id: currentUser.id
+                        });
+                    }
+                }
+            } catch(err) { console.log('Supabase exam save error:', err); }
+
             document.getElementById('examForm').reset();
             alert('Question added successfully!');
             renderExamQuestions();

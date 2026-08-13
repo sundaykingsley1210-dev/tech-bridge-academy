@@ -59,6 +59,8 @@
         async getMessages(uid) { var c=_s(); if(!c) return []; var r=await c.from('messages').select('*').or('from_id.eq.'+uid+',to_id.eq.'+uid).order('created_at',{ascending:false}); if(r.error) throw r.error; return r.data; },
         async sendMessage(m) { var c=_s(); if(!c) return null; var r=await c.from('messages').insert(m).select(); if(r.error) throw r.error; return r.data[0]; },
         async markMessageRead(id) { var c=_s(); if(!c) return null; var r=await c.from('messages').update({read:true}).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getAllMessages() { var c=_s(); if(!c) return []; var r=await c.from('messages').select('*').order('created_at',{ascending:false}); if(r.error) throw r.error; return r.data; },
+        async updateMessage(id, data) { var c=_s(); if(!c) return null; var r=await c.from('messages').update(data).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
         async getStudentPayments(sid) { var c=_s(); if(!c) return []; var r=await c.from('payments').select('*').eq('student_id',sid); if(r.error) throw r.error; return r.data; },
         async getAllPayments() { var c=_s(); if(!c) return []; var r=await c.from('payments').select('*').order('submitted_at',{ascending:false}); if(r.error) throw r.error; return r.data; },
         async submitPayment(p) { var c=_s(); if(!c) return null; var r=await c.from('payments').insert(p).select(); if(r.error) throw r.error; return r.data[0]; },
@@ -1513,7 +1515,33 @@
             renderAdminResults();
         }
 
-        function renderAdminMessages() {
+        async function renderAdminMessages() {
+            // Load from Supabase first
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var rows = await DB.getAllMessages();
+                    if (rows && rows.length) {
+                        var messages = rows.map(function(m) {
+                            return {
+                                id: m.id,
+                                studentId: m.from_id,
+                                studentName: m.from_name || 'Student',
+                                studentClass: '',
+                                text: m.message,
+                                sentAt: m.created_at,
+                                from: m.from_role || 'student',
+                                reply: m.read ? (m.subject || '') : null,
+                                repliedAt: m.read ? m.created_at : null,
+                                supabaseFromId: m.from_id,
+                                supabaseToId: m.to_id
+                            };
+                        });
+                        localStorage.setItem('tba_messages', JSON.stringify(messages));
+                    }
+                }
+            } catch(e) { console.log('Load admin messages from Supabase:', e); }
+
             const messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
             const c = document.getElementById('adminMessagesList');
             if (!messages.length) {
@@ -1546,15 +1574,37 @@
             }).join('');
         }
 
-        function replyToStudent(msgId) {
+        async function replyToStudent(msgId) {
             const replyText = document.getElementById('adminReply_' + msgId).value.trim();
             if (!replyText) return alert('Please type a reply');
+
+            // Save reply to Supabase as a new message from admin
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
+                    var msg = messages.find(function(m) { return m.id === msgId; });
+                    var targetId = (msg && msg.studentId) ? msg.studentId : null;
+                    await _supabaseClient.from('messages').insert({
+                        from_id: currentUser.id,
+                        from_name: currentUser.name,
+                        from_role: 'admin',
+                        to_id: targetId,
+                        message: replyText,
+                        subject: 'Reply to: ' + (msg ? msg.text.substring(0, 50) : ''),
+                        read: false
+                    });
+                }
+            } catch(e) { console.log('Reply save error:', e); }
+
+            // Also update localStorage
             let messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
             const idx = messages.findIndex(m => m.id === msgId);
-            if (idx === -1) return;
-            messages[idx].reply = replyText;
-            messages[idx].repliedAt = new Date().toISOString();
-            localStorage.setItem('tba_messages', JSON.stringify(messages));
+            if (idx !== -1) {
+                messages[idx].reply = replyText;
+                messages[idx].repliedAt = new Date().toISOString();
+                localStorage.setItem('tba_messages', JSON.stringify(messages));
+            }
             renderAdminMessages();
             alert('Reply sent!');
         }
@@ -1573,30 +1623,44 @@
             const title = document.getElementById('adminNotifTitle').value;
             const message = document.getElementById('adminNotifMessage').value;
             selectedClasses.forEach(cls => {
-                const notif = {
-                    id: 'NOTIF-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).substring(2,5),
-                    title: title,
-                    targetClass: cls,
-                    message: message,
-                    from: currentUser.name,
-                    fromId: 'admin',
-                    date: new Date().toISOString(),
-                    readBy: []
-                };
-                let notifs = JSON.parse(localStorage.getItem('tba_notifications')||'[]');
-                notifs.push(notif);
-                localStorage.setItem('tba_notifications', JSON.stringify(notifs));
+                // Save to Supabase
+                try {
+                    _initSupabase();
+                    if (_supabaseClient) {
+                        _supabaseClient.from('notifications').insert({
+                            title: title,
+                            message: message,
+                            target_class: cls,
+                            target_role: 'student',
+                            from_name: currentUser.name,
+                            from_role: 'admin'
+                        }).then(function(){}).catch(function(e){console.log('Admin notif save error:',e);});
+                    }
+                } catch(err) { console.log('Admin notification failed:', err); }
             });
             document.getElementById('adminNotifForm').reset();
             renderAdminSentNotifs();
             alert('Notification sent to '+selectedClasses.join(', ')+'!');
         }
 
-        function renderAdminSentNotifs() {
-            const notifs = JSON.parse(localStorage.getItem('tba_notifications')||'[]').filter(n=>n.fromId==='admin');
+        async function renderAdminSentNotifs() {
+            // Load from Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var rows = await _supabaseClient.from('notifications').select('*').eq('from_role','admin').order('created_at',{ascending:false});
+                    if (rows && rows.data && rows.data.length) {
+                        var notifs = rows.data.map(function(n) {
+                            return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, from: n.from_name || 'Admin', date: n.created_at };
+                        });
+                        var c = document.getElementById('adminSentNotifs');
+                        c.innerHTML = notifs.map(n => '<div style="padding:12px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border-left:3px solid var(--primary)"><div style="display:flex;justify-content:space-between;align-items:start"><h4 style="margin:0">'+n.title+'</h4><span style="font-size:.75rem;color:var(--gray)">'+new Date(n.date).toLocaleString()+'</span></div><div class="meta" style="margin-top:5px"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span></div><p style="margin:8px 0 0;font-size:.9rem;color:#555">'+n.message+'</p></div>').join('');
+                        return;
+                    }
+                }
+            } catch(e) { console.log('Load admin notifs from Supabase:', e); }
             const c = document.getElementById('adminSentNotifs');
-            if (!notifs.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-bell"></i><p>No notifications sent yet</p></div>'; return; }
-            c.innerHTML = notifs.slice().reverse().map(n => '<div style="padding:12px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border-left:3px solid var(--primary)"><div style="display:flex;justify-content:space-between;align-items:start"><h4 style="margin:0">'+n.title+'</h4><span style="font-size:.75rem;color:var(--gray)">'+new Date(n.date).toLocaleString()+'</span></div><div class="meta" style="margin-top:5px"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span></div><p style="margin:8px 0 0;font-size:.9rem;color:#555">'+n.message+'</p></div>').join('');
+            c.innerHTML = '<div class="no-data"><i class="fa-solid fa-bell"></i><p>No notifications sent yet</p></div>';
         }
 
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }

@@ -50,6 +50,7 @@
         async gradeSubmission(id, sc) { var c=_s(); if(!c) return null; var r=await c.from('submissions').update({score:sc,status:'graded'}).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
         async getExamQuestions(sub, cls, term) { var c=_s(); if(!c) return null; var r=await c.from('exam_questions').select('*').eq('subject',sub).eq('class',cls).eq('term',term).maybeSingle(); if(r.error) throw r.error; return r.data; },
         async saveExamQuestions(e) { var c=_s(); if(!c) return null; var r=await c.from('exam_questions').upsert(e,{onConflict:'id'}); if(r.error) throw r.error; return e; },
+        async getExamQuestionsByClass(cls) { var c=_s(); if(!c) return []; var r=await c.from('exam_questions').select('*').eq('class',cls); if(r.error) throw r.error; return r.data; },
         async getStudentExamSubmissions(sid) { var c=_s(); if(!c) return []; var r=await c.from('exam_submissions').select('*').eq('student_id',sid); if(r.error) throw r.error; return r.data; },
         async submitExam(e) { var c=_s(); if(!c) return null; var r=await c.from('exam_submissions').insert(e).select(); if(r.error) throw r.error; return r.data[0]; },
         async getTimetable(cls) { var c=_s(); if(!c) return []; var r=await c.from('timetable').select('*').eq('class',cls); if(r.error) throw r.error; return r.data; },
@@ -926,10 +927,26 @@
             }, 500);
         }
 
-        function sendStudentMessage(e) {
+        async function sendStudentMessage(e) {
             e.preventDefault();
             const text = document.getElementById('studentMsgText').value.trim();
             if (!text) return;
+
+            // Save to Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    await _supabaseClient.from('messages').insert({
+                        from_id: currentUser.id,
+                        from_name: currentUser.name,
+                        from_role: 'student',
+                        message: text,
+                        subject: 'Message from ' + currentUser.name
+                    });
+                }
+            } catch(e) { console.log('Message save error:', e); }
+
+            // Also save to localStorage as fallback
             const msg = {
                 id: 'MSG-' + Date.now().toString(36).toUpperCase(),
                 studentId: currentUser.id,
@@ -949,7 +966,31 @@
             alert('Message sent to admin!');
         }
 
-        function renderStudentMessages() {
+        async function renderStudentMessages() {
+            // Load from Supabase first
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var rows = await DB.getMessages(currentUser.id);
+                    if (rows && rows.length) {
+                        var messages = rows.map(function(m) {
+                            return {
+                                id: m.id,
+                                studentId: m.from_id,
+                                studentName: m.from_name || 'Student',
+                                studentClass: '',
+                                text: m.message,
+                                sentAt: m.created_at,
+                                from: m.from_role || 'student',
+                                reply: null,
+                                repliedAt: null
+                            };
+                        });
+                        localStorage.setItem('tba_messages', JSON.stringify(messages));
+                    }
+                }
+            } catch(e) { console.log('Load messages from Supabase:', e); }
+
             const messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
             const myMsgs = messages.filter(m => m.studentId === currentUser.id);
             const c = document.getElementById('studentMessages');
@@ -1150,8 +1191,52 @@
         }
 
         async function renderAvailableExams() {
-            const allQuestions = JSON.parse(localStorage.getItem('tba_exam_questions') || '[]');
-            const mySubmissions = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]');
+            // Load exam questions from Supabase first, fall back to localStorage
+            let allQuestions = JSON.parse(localStorage.getItem('tba_exam_questions') || '[]');
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var rows = await DB.getExamQuestionsByClass(currentUser.class);
+                    if (rows && rows.length) {
+                        allQuestions = [];
+                        rows.forEach(function(row) {
+                            (row.questions || []).forEach(function(q) {
+                                allQuestions.push(q);
+                            });
+                        });
+                        localStorage.setItem('tba_exam_questions', JSON.stringify(allQuestions));
+                    }
+                }
+            } catch(e) { console.log('Load exam questions from Supabase:', e); }
+
+            // Load exam submissions from Supabase first
+            let mySubmissions = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]');
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var subs = await DB.getStudentExamSubmissions(currentUser.id);
+                    if (subs && subs.length) {
+                        mySubmissions = subs.map(function(s) {
+                            return {
+                                id: s.id,
+                                studentId: s.student_id,
+                                studentName: s.student_name,
+                                studentClass: s.student_class,
+                                subject: s.subject,
+                                term: s.term,
+                                answers: s.answers,
+                                score: s.score,
+                                totalMarks: s.total_marks,
+                                grade: s.grade,
+                                graded: s.graded,
+                                submittedAt: s.submitted_at
+                            };
+                        });
+                        localStorage.setItem('tba_exam_submissions', JSON.stringify(mySubmissions));
+                    }
+                }
+            } catch(e) { console.log('Load exam subs from Supabase:', e); }
+
             let schedule = JSON.parse(localStorage.getItem('tba_exam_schedule') || '{}');
             if (!Object.keys(schedule).length) {
                 try {
@@ -1342,6 +1427,25 @@
                 let subs = JSON.parse(localStorage.getItem('tba_exam_submissions') || '[]');
                 subs.push(submission);
                 localStorage.setItem('tba_exam_submissions', JSON.stringify(subs));
+
+                // Save to Supabase
+                try {
+                    _initSupabase();
+                    if (_supabaseClient) {
+                        _supabaseClient.from('exam_submissions').insert({
+                            student_id: currentUser.id,
+                            student_name: currentUser.name,
+                            student_class: currentUser.class,
+                            subject: s,
+                            term: t,
+                            answers: answerDetails,
+                            score: score,
+                            total_marks: totalMarks,
+                            grade: grade,
+                            graded: false
+                        }).then(function(){}).catch(function(e){console.log('Exam sub save error:',e);});
+                    }
+                } catch(e) { console.log('Supabase exam sub save error:', e); }
 
                 closeModal('viewModal');
                 alert('Exam submitted successfully! Your score: ' + percentage + '% (' + grade + ')');
@@ -1538,7 +1642,21 @@
             });
         }
 
-        function renderNotifications() {
+        async function renderNotifications() {
+            // Load from Supabase first
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var rows = await DB.getNotifications(currentUser.class, 'student');
+                    if (rows && rows.length) {
+                        var notifs = rows.map(function(n) {
+                            return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, from: n.from_name || 'System', date: n.created_at };
+                        });
+                        localStorage.setItem('tba_notifications', JSON.stringify(notifs));
+                    }
+                }
+            } catch(e) { console.log('Load notifs from Supabase:', e); }
+
             const notifs = JSON.parse(localStorage.getItem('tba_notifications')||'[]');
             let myNotifs = notifs.filter(n => n.targetClass === 'All Classes' || n.targetClass === currentUser.class);
             if (notifFilter === 'My Class') myNotifs = myNotifs.filter(n => n.targetClass === currentUser.class);
@@ -1555,17 +1673,42 @@
             renderNotifications();
         }
 
-        function renderNotifBadge() {
+        async function renderNotifBadge() {
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var rows = await DB.getNotifications(currentUser.class, 'student');
+                    if (rows && rows.length) {
+                        var notifs = rows.map(function(n) {
+                            return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, from: n.from_name || 'System', date: n.created_at };
+                        });
+                        localStorage.setItem('tba_notifications', JSON.stringify(notifs));
+                    }
+                }
+            } catch(e) {}
             const notifs = JSON.parse(localStorage.getItem('tba_notifications')||'[]');
             const myNotifs = notifs.filter(n => n.targetClass === 'All Classes' || n.targetClass === currentUser.class);
             document.getElementById('notifBadge').textContent = myNotifs.length;
             document.getElementById('notifBadge').style.display = myNotifs.length > 0 ? 'flex' : 'none';
         }
 
-        function toggleNotifDropdown(e) {
+        async function toggleNotifDropdown(e) {
             e.stopPropagation();
             const dd = document.getElementById('notifDropdown');
             dd.classList.toggle('show');
+            // Refresh from Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var rows = await DB.getNotifications(currentUser.class, 'student');
+                    if (rows && rows.length) {
+                        var notifs = rows.map(function(n) {
+                            return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, from: n.from_name || 'System', date: n.created_at };
+                        });
+                        localStorage.setItem('tba_notifications', JSON.stringify(notifs));
+                    }
+                }
+            } catch(e) {}
             const notifs = JSON.parse(localStorage.getItem('tba_notifications')||'[]');
             const myNotifs = notifs.filter(n => n.targetClass === 'All Classes' || n.targetClass === currentUser.class);
             const list = document.getElementById('notifList');
@@ -1597,6 +1740,8 @@
             if (sectionId === 'timetableSection') renderTimetableSection();
             if (sectionId === 'takeExamSection') renderAvailableExams();
             if (sectionId === 'examScheduleSection') renderStudentExamSchedule();
+            if (sectionId === 'notificationsSection') renderNotifications();
+            if (sectionId === 'messageSection') renderStudentMessages();
         }
 
         function submitPayment(e) {

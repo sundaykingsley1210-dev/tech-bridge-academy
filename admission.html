@@ -388,8 +388,8 @@
             <h3>Application Submitted!</h3>
             <p>Thank you for applying to TECH-BRIDGE ACADEMY. Your account has been created.</p>
             <p style="font-size: 0.85rem; color: var(--gray);">Reference: <strong id="refNumber"></strong></p>
-            <p style="font-size: 0.95rem; color: var(--primary); font-weight: 600; margin: 15px 0;">You can now log in to your student portal!</p>
-            <a href="login.html" class="btn btn-primary" style="margin-bottom:10px">Login Now</a>
+            <p style="font-size: 0.95rem; color: #e53e3e; font-weight: 600; margin: 15px 0;">A confirmation email has been sent to your email address. Please check your inbox (and spam folder), confirm your email, then you can login.</p>
+            <a href="login.html" class="btn btn-primary" style="margin-bottom:10px">Go to Login</a>
             <br>
             <a href="index.html" class="btn btn-primary">Back to Home</a>
             <button onclick="closeSuccess()" class="btn btn-secondary" style="color: var(--dark); border-color: var(--gray-light);">Submit Another</button>
@@ -397,10 +397,6 @@
     </div>
 
     <script>
-        function sendCongratsEmail(toEmail, name) {
-            console.log('Welcome email sent via Supabase to: ' + toEmail);
-        }
-
         const menuToggle = document.getElementById('menuToggle');
         const navLinks = document.getElementById('navLinks');
         menuToggle.addEventListener('click', () => {
@@ -479,52 +475,58 @@
             applications.push(application);
             localStorage.setItem('tba_applications', JSON.stringify(applications));
 
-            // Create student account directly in database
+            // Create student account via Supabase Auth (sends confirmation email)
             _initSupabase();
             if (_supabaseClient) {
-                _supabaseClient.from('users').insert({
-                    id: crypto.randomUUID ? crypto.randomUUID() : 'U' + Date.now().toString(36) + Math.random().toString(36).substr(2),
-                    email: application.studentEmail,
-                    password: application.studentPassword,
-                    name: application.firstName + ' ' + application.lastName,
-                    role: 'student',
-                    class: application.classApplying,
-                    gender: application.gender,
-                    phone: application.parentPhone,
-                    address: application.address
-                }).then(function() { console.log('Student account created'); }).catch(function(err) { console.log('DB insert:', err.message); });
+                // Check if email already exists
+                _supabaseClient.from('users').select('id').eq('email', application.studentEmail).maybeSingle().then(function(existing) {
+                    if (existing && existing.data) {
+                        alert('An account with this email already exists. Please login instead.');
+                        return;
+                    }
+                    // Create Supabase Auth account (sends confirmation email)
+                    _supabaseClient.auth.signUp({
+                        email: application.studentEmail,
+                        password: application.studentPassword
+                    }).then(function(result) {
+                        if (result.data && result.data.user) {
+                            var profile = {
+                                id: result.data.user.id,
+                                email: application.studentEmail,
+                                name: application.firstName + ' ' + application.lastName,
+                                role: 'student',
+                                class: application.classApplying,
+                                gender: application.gender,
+                                phone: application.parentPhone,
+                                address: application.address
+                            };
+                            _supabaseClient.from('users').upsert(profile).then(function() { console.log('Student profile created'); });
+                        }
+                    }).catch(function(err) { console.log('Supabase signup:', err.message); });
+                }).catch(function() {
+                    // If DB check fails, try signup anyway
+                    _supabaseClient.auth.signUp({
+                        email: application.studentEmail,
+                        password: application.studentPassword
+                    }).then(function(result) {
+                        if (result.data && result.data.user) {
+                            var profile = {
+                                id: result.data.user.id,
+                                email: application.studentEmail,
+                                name: application.firstName + ' ' + application.lastName,
+                                role: 'student',
+                                class: application.classApplying,
+                                gender: application.gender,
+                                phone: application.parentPhone,
+                                address: application.address
+                            };
+                            _supabaseClient.from('users').upsert(profile).then(function() { console.log('Student profile created'); });
+                        }
+                    }).catch(function(err) { console.log('Supabase signup:', err.message); });
+                });
             }
 
-            // Send welcome email via Web3Forms
-            fetch('https://api.web3forms.com/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    access_key: '320741cd-4b44-449d-8231-b0150da8d26d',
-                    subject: 'Welcome to TECH-BRIDGE ACADEMY!',
-                    from_name: 'TECH-BRIDGE ACADEMY',
-                    email: application.studentEmail,
-                    message: 'Dear ' + application.firstName + ',\n\nCongratulations! Your admission to TECH-BRIDGE ACADEMY has been received.\n\nName: ' + application.firstName + ' ' + application.lastName + '\nClass: ' + application.classApplying + '\nReference: ' + application.id + '\n\nYou can now login at ' + window.location.origin + '/login.html using your email and password.\n\nWe wish you success!\n\nBest regards,\nTECH-BRIDGE ACADEMY'
-                })
-            }).then(function() { console.log('Welcome email sent'); }).catch(function(err) { console.log('Email failed:', err); });
-
-            // Notify school
-            fetch('https://api.web3forms.com/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    access_key: '320741cd-4b44-449d-8231-b0150da8d26d',
-                    subject: '[TBA] New Admission — ' + application.firstName + ' ' + application.lastName,
-                    from_name: application.parentName,
-                    email: application.parentEmail,
-                    message: 'New admission application.\n\nStudent: ' + application.firstName + ' ' + application.lastName + '\nClass: ' + application.classApplying + '\nParent: ' + application.parentName + '\nPhone: ' + application.parentPhone + '\nRef: ' + application.id
-                })
-            }).catch(function() {});
-
-            sendCongratsEmail(application.studentEmail, application.firstName);
-
             // Notify school via Supabase
-            _initSupabase();
             if (_supabaseClient) {
                 _supabaseClient.from('notifications').insert({
                     title: 'New Student Admission',
