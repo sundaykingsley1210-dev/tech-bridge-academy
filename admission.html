@@ -475,37 +475,25 @@
             applications.push(application);
             localStorage.setItem('tba_applications', JSON.stringify(applications));
 
-            // Create student account via Supabase Auth (sends confirmation email)
+            // Create student account directly in DB (bypasses Supabase Auth)
             _initSupabase();
             if (_supabaseClient) {
-                _supabaseClient.auth.signUp({
+                var userId = crypto.randomUUID();
+                var profile = {
+                    id: userId,
                     email: application.studentEmail,
                     password: application.studentPassword,
-                    options: { data: { name: application.firstName + ' ' + application.lastName, role: 'student', class: application.classApplying } }
-                }).then(function(result) {
-                    if (result.data && result.data.user) {
-                        var profile = {
-                            id: result.data.user.id,
-                            email: application.studentEmail,
-                            password: application.studentPassword,
-                            name: application.firstName + ' ' + application.lastName,
-                            role: 'student',
-                            class: application.classApplying,
-                            gender: application.gender,
-                            phone: application.parentPhone,
-                            address: application.address
-                        };
-                        _supabaseClient.from('users').select('id').eq('email', application.studentEmail).maybeSingle().then(function(existing) {
-                            if (existing && existing.data) {
-                                _supabaseClient.from('users').update(profile).eq('email', application.studentEmail).then(function() { console.log('Student profile updated'); });
-                            } else {
-                                _supabaseClient.from('users').upsert(profile).then(function() { console.log('Student profile created'); });
-                            }
-                        }).catch(function() {
-                            _supabaseClient.from('users').upsert(profile).then(function() { console.log('Student profile created'); });
-                        });
-                    }
-                }).catch(function(err) { console.log('Supabase signup:', err.message); });
+                    name: application.firstName + ' ' + application.lastName,
+                    role: 'student',
+                    class: application.classApplying,
+                    gender: application.gender,
+                    phone: application.parentPhone,
+                    address: application.address
+                };
+                _supabaseClient.from('users').upsert(profile).then(function(result) {
+                    if (result.error) console.log('Student signup:', result.error.message);
+                    else console.log('Student account created');
+                }).catch(function(err) { console.log('Student signup:', err.message); });
             }
 
             // Notify school via Supabase

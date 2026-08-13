@@ -26,43 +26,38 @@
 
     function _s() { _initSupabase(); return _supabaseClient; }
 
-    // Sign up — Supabase Auth (sends confirmation email automatically)
+    // Sign up — Direct DB insert (bypasses Supabase Auth)
     function signUp(email, password, metadata) {
         return new Promise(function(resolve, reject) {
             var c = _s();
             if (!c) return reject(new Error('Cannot connect to server.'));
-            c.auth.signUp({
+            var userId = crypto.randomUUID();
+            var profile = {
+                id: userId,
                 email: email,
                 password: password,
-                options: { data: metadata || {} }
-            }).then(function(res) {
+                name: (metadata && metadata.name) || email.split('@')[0],
+                role: (metadata && metadata.role) || 'student',
+                class: (metadata && metadata.class) || null,
+                subject: (metadata && metadata.subject) || null,
+                phone: (metadata && metadata.phone) || null
+            };
+            c.from('users').upsert(profile).then(function(res) {
                 if (res.error) return reject(new Error(res.error.message));
-                var user = res.data.user;
-                if (user) {
-                    c.from('users').upsert({
-                        id: user.id,
-                        email: email,
-                        password: password,
-                        name: (metadata && metadata.name) || email.split('@')[0],
-                        role: (metadata && metadata.role) || 'student',
-                        class: (metadata && metadata.class) || null,
-                        subject: (metadata && metadata.subject) || null,
-                        phone: (metadata && metadata.phone) || null
-                    }).then(function() {}).catch(function() {});
-                }
-                resolve(res.data);
+                resolve({ user: profile });
             }).catch(function(err) { reject(err); });
         });
     }
 
-    // Sign in — Supabase Auth
+    // Sign in — Direct DB query (bypasses Supabase Auth)
     function signIn(email, password) {
         return new Promise(function(resolve, reject) {
             var c = _s();
             if (!c) return reject(new Error('Cannot connect to server.'));
-            c.auth.signInWithPassword({ email: email, password: password }).then(function(res) {
-                if (res.error) return reject(new Error(res.error.message));
-                resolve(res.data);
+            c.from('users').select('*').eq('email', email).eq('password', password).maybeSingle().then(function(res) {
+                if (res.error) return reject(new Error('Invalid email or password.'));
+                if (!res.data) return reject(new Error('Invalid email or password.'));
+                resolve({ user: res.data });
             }).catch(function(err) { reject(new Error('Invalid email or password.')); });
         });
     }
@@ -659,23 +654,7 @@
 
             try {
                 const data = await signIn(email, password);
-                const user = data.user;
-
-                let profile = null;
-                try {
-                    profile = await DB.getUserProfile(user.id);
-                } catch(e) {
-                    profile = {
-                        id: user.id,
-                        email: user.email,
-                        name: user.user_metadata?.name || name || user.email.split('@')[0],
-                        role: user.user_metadata?.role || currentRole,
-                        class: user.user_metadata?.class || null,
-                        subject: user.user_metadata?.subject || null,
-                        phone: user.user_metadata?.phone || null
-                    };
-                    try { await DB.createUser(profile); } catch(e) {}
-                }
+                const profile = data.user;
 
                 if (currentRole === 'student') {
                     if (!selectedClass) {
