@@ -414,64 +414,31 @@
     <!-- Contact Section -->
     <section class="contact" id="contact">
         <div class="container">
-            <div class="contact-wrapper">
-                <div class="contact-info">
-                    <span class="badge">Contact Us</span>
-                    <h2>Start Your<span class="gradient-text">Learning Journey</span></h2>
-                    <p>Ready to give your child the gift of quality education? Contact <b>TECH-BRIDGE ACADEMY</b> today and take the first step toward a brighter future filled with knowledge, excellence, and success.
-.</p>
-                    <div class="contact-details">
-                        <div class="contact-item">
-                            <div class="contact-icon">📍</div>
-                            <div>
-                                <h4>Address</h4>
-                                <p>No.13 Umunkama Street Aba, Abia State </p>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <div class="contact-icon">📧</div>
-                            <div>
-                                <h4>Email</h4>
-                                <p>spnewman1210@gmail.com</p>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <div class="contact-icon">📞</div>
-                            <div>
-                                <h4>Phone</h4>
-                                <p>08039392007</p>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <div class="contact-icon">💬</div>
-                            <div>
-                                <h4>WhatsApp</h4>
-                                <p><a href="https://wa.me/2348039392007" target="_blank" style="color: inherit; text-decoration: underline;">08039392007</a></p>
-                            </div>
-                        </div>
-                    </div>
+            <div style="text-align:center;max-width:800px;margin:0 auto 50px">
+                <span class="badge">Get Started</span>
+                <h2 style="font-size:2.2rem;margin:15px 0">Start Your <span class="gradient-text">Tech Journey</span></h2>
+                <p style="color:var(--gray);font-size:1rem;line-height:1.8">Turn your curiosity into skills. Turn your skills into opportunities.<br>Whether you're a complete beginner or looking to advance your existing skills, Tech-Bridge Academy provides practical, accessible learning to help you grow in the digital world.</p>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:25px;margin-bottom:40px">
+                <div style="background:#fff;padding:35px 30px;border-radius:16px;box-shadow:0 2px 15px rgba(0,0,0,.05);text-align:center;transition:var(--transition)" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
+                    <div style="font-size:2.5rem;margin-bottom:15px">🎯</div>
+                    <h3 style="font-size:1.1rem;color:var(--dark);margin-bottom:10px">Learn Practical Skills</h3>
+                    <p style="color:var(--gray);font-size:.9rem;line-height:1.7">Master relevant technology skills through structured, hands-on learning.</p>
                 </div>
-                <div class="contact-form-wrapper">
-                    <form class="contact-form" id="contactForm">
-                        <div class="form-group">
-                            <input type="text" id="contactName" placeholder="Your Name" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="email" id="contactEmail" placeholder="Your Email" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="tel" id="contactPhone" placeholder="Your Phone Number" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="text" id="contactSubject" placeholder="Subject">
-                        </div>
-                        <div class="form-group">
-                            <textarea rows="5" id="contactMessage" placeholder="Your Message" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-full">Send Message</button>
-                        <div id="contactSuccess" style="display:none; color:#27ae60; text-align:center; margin-top:12px; font-weight:600;"></div>
-                    </form>
+                <div style="background:#fff;padding:35px 30px;border-radius:16px;box-shadow:0 2px 15px rgba(0,0,0,.05);text-align:center;transition:var(--transition)" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
+                    <div style="font-size:2.5rem;margin-bottom:15px">💻</div>
+                    <h3 style="font-size:1.1rem;color:var(--dark);margin-bottom:10px">Build Real Projects</h3>
+                    <p style="color:var(--gray);font-size:.9rem;line-height:1.7">Apply what you learn by working on practical projects that strengthen your portfolio.</p>
                 </div>
+                <div style="background:#fff;padding:35px 30px;border-radius:16px;box-shadow:0 2px 15px rgba(0,0,0,.05);text-align:center;transition:var(--transition)" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
+                    <div style="font-size:2.5rem;margin-bottom:15px">🚀</div>
+                    <h3 style="font-size:1.1rem;color:var(--dark);margin-bottom:10px">Grow Your Career</h3>
+                    <p style="color:var(--gray);font-size:.9rem;line-height:1.7">Develop skills and confidence for freelancing, employment, entrepreneurship, and further learning.</p>
+                </div>
+            </div>
+            <div style="text-align:center;display:flex;gap:15px;justify-content:center;flex-wrap:wrap">
+                <a href="admission.html" class="btn btn-primary" style="padding:14px 35px;font-size:1rem;font-weight:700;border-radius:12px">Start Learning</a>
+                <a href="#programs" class="btn btn-secondary" style="padding:14px 35px;font-size:1rem;font-weight:700;border-radius:12px">Explore Courses</a>
             </div>
         </div>
     </section>
@@ -540,43 +507,6 @@
     </footer>
 
     <script src="script.js"></script>
-    <script>
-        emailjs.init({ publicKey: 'X8j9z5L6vj2GOKQiJ' });
-
-        document.getElementById('contactForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const name = document.getElementById('contactName').value.trim();
-            const email = document.getElementById('contactEmail').value.trim();
-            const phone = document.getElementById('contactPhone').value.trim();
-            const subject = document.getElementById('contactSubject').value.trim() || 'New Message from Contact Form';
-            const message = document.getElementById('contactMessage').value.trim();
-
-            const btn = this.querySelector('button[type="submit"]');
-            btn.textContent = 'Sending...';
-            btn.disabled = true;
-
-            emailjs.send('default_service', 'template_xh0zn4k', {
-                subject: '[TBA Contact] ' + subject,
-                message: 'Name: ' + name + '\nEmail: ' + email + '\nPhone: ' + phone + '\n\n' + message,
-                from_name: name,
-                from_email: email
-            }).then(function(response) {
-                console.log('SUCCESS!', response.status, response.text);
-                const success = document.getElementById('contactSuccess');
-                success.style.display = 'block';
-                success.textContent = 'Message sent successfully! We will get back to you shortly.';
-                btn.textContent = 'Send Message';
-                btn.disabled = false;
-                document.getElementById('contactForm').reset();
-                setTimeout(() => { success.style.display = 'none'; }, 5000);
-            }).catch(function(err) {
-                console.log('FAILED...', err);
-                alert('Error: ' + JSON.stringify(err));
-                btn.textContent = 'Send Message';
-                btn.disabled = false;
-            });
-        });
-    </script>
     <script>
         // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
