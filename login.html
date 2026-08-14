@@ -545,6 +545,7 @@
 
             try {
                 const data = await signUp(email, password, { name: name, role: 'teacher', subject: subject, phone: phone });
+                localStorage.setItem('tba_currentUser', JSON.stringify(data.user));
                 sendCongratsEmail(email, name, 'teacher');
                 sendNotifToAdmin('New Teacher Registered', name + ' (' + email + ') has created a teacher account.');
                 alert('Registration successful! Redirecting to your dashboard...');
@@ -601,6 +602,7 @@
 
             try {
                 const data = await signUp(email, password, { name: name, role: 'admin' });
+                localStorage.setItem('tba_currentUser', JSON.stringify(data.user));
                 sendCongratsEmail(email, name, 'admin');
                 alert('Admin account created! Redirecting to dashboard...');
                 closeAdminReg();

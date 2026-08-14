@@ -1028,6 +1028,16 @@
             return [];
         }
 
+        async function renderTimetable() {
+            const data = await getTimetable();
+            const container = document.getElementById('timetableBody');
+            if (!container) return;
+            if (!data.length) { container.innerHTML = '<div class="no-data"><i class="fa-solid fa-calendar"></i><p>No timetable yet</p></div>'; return; }
+            container.innerHTML = data.map(t => '<div class="timetable-row"><div class="timetable-time">'+t.time+'</div><div><div class="timetable-subject">'+t.subject+'</div><div class="timetable-teacher">'+t.teacher+' | '+t.day+'</div></div></div>').join('');
+            const container2 = document.getElementById('timetableBody2');
+            if (container2) container2.innerHTML = container.innerHTML;
+        }
+
         async function init() {
             if (!currentUser) return;
             const hour = new Date().getHours();
