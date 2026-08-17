@@ -555,7 +555,7 @@
             if (!_supabaseClient) { alert('Cannot connect to server.'); return; }
 
             try {
-                var result = await _supabaseClient.from('password_resets').select('*').eq('email', email).eq('role', role).order('created_at', {ascending: false}).limit(1).maybeSingle();
+                var result = await _supabaseClient.from('password_resets').select('*').eq('email', email).eq('role', role).order('requested_at', {ascending: false}).limit(1).maybeSingle();
                 if (result.error) throw result.error;
                 if (!result.data) {
                     resultDiv.innerHTML = '<div style="padding:12px;background:#f8d7da;border-radius:10px;border-left:4px solid #e53e3e"><strong style="color:#721c24"><i class="fa-solid fa-exclamation-circle"></i> No Request Found</strong><p style="margin:5px 0 0;font-size:.85rem;color:#721c24">No reset request found for this email. Please submit a new request.</p></div>';
@@ -567,7 +567,7 @@
                 } else if (req.status === 'rejected') {
                     resultDiv.innerHTML = '<div style="padding:12px;background:#f8d7da;border-radius:10px;border-left:4px solid #e53e3e"><strong style="color:#721c24"><i class="fa-solid fa-times-circle"></i> Request Rejected</strong><p style="margin:5px 0 0;font-size:.85rem;color:#721c24">Your reset request was rejected. Please submit a new one.</p></div>';
                 } else if (req.status === 'approved') {
-                    resultDiv.innerHTML = '<div style="padding:12px;background:#d4edda;border-radius:10px;border-left:4px solid #155724"><strong style="color:#155724"><i class="fa-solid fa-check-circle"></i> Request Approved!</strong><p style="margin:5px 0 0;font-size:.85rem;color:#155724">Your request has been approved. You can now log in with the temporary password given to you by the admin, then change it from your dashboard.</p><div style="margin-top:10px"><button onclick="showSetNewPasswordForm(\'' + email + '\',\'' + role + '\')" style="padding:10px 20px;background:var(--gradient);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer"><i class="fa-solid fa-key"></i> Set New Password Now</button></div></div>';
+                    resultDiv.innerHTML = '<div style="padding:12px;background:#d4edda;border-radius:10px;border-left:4px solid #155724"><strong style="color:#155724"><i class="fa-solid fa-check-circle"></i> Request Approved!</strong><p style="margin:5px 0 0;font-size:.85rem;color:#155724">Your request has been approved. Your new password is: <strong>123456</strong><br>You can now log in with this password, then change it from your dashboard.</p></div>';
                 }
             } catch(err) {
                 resultDiv.innerHTML = '<div style="padding:12px;background:#f8d7da;border-radius:10px;border-left:4px solid #e53e3e"><strong style="color:#721c24">Error checking status. Please try again.</strong></div>';
