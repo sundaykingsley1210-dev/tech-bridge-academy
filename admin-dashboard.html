@@ -2269,22 +2269,55 @@
                 }
             } catch(e) {}
 
+            const masterAdminId = localStorage.getItem('tba_master_admin');
+            const isMaster = masterAdminId === currentUser.id;
+
             const container = document.getElementById('allAdminsList');
             if (!admins.length) {
                 container.innerHTML = '<div class="no-data"><i class="fa-solid fa-user-shield"></i><p>No admin accounts found</p></div>';
                 return;
             }
 
-            container.innerHTML = admins.map(a => {
+            // If no master admin set, auto-set the first admin as master
+            if (!masterAdminId && admins.length > 0) {
+                localStorage.setItem('tba_master_admin', admins[0].id);
+            }
+            const currentMasterId = localStorage.getItem('tba_master_admin') || (admins.length > 0 ? admins[0].id : null);
+
+            let html = '';
+            if (!currentMasterId) {
+                html = '<div style="padding:15px;background:#fff3cd;border-radius:10px;border-left:4px solid #d69e2e;margin-bottom:15px"><strong style="color:#856404"><i class="fa-solid fa-exclamation-triangle"></i> No Master Admin Set</strong><p style="margin:5px 0 0;font-size:.85rem;color:#856404">Select a master admin below. The master admin can manage other admin accounts.</p></div>';
+            }
+
+            html += admins.map(a => {
                 const initials = (a.name || '').split(' ').map(n=>n[0]).join('').substring(0,2);
                 const isCurrentAdmin = a.id === currentUser.id;
+                const isMasterAdmin = a.id === currentMasterId;
+
+                let actions = '';
+                if (isMasterAdmin && isCurrentAdmin) {
+                    actions = '<span style="padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600;color:#d69e2e;background:#fefce8"><i class="fa-solid fa-crown"></i> Master Admin (You)</span>';
+                } else if (isMasterAdmin && !isCurrentAdmin) {
+                    actions = '<span style="padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600;color:#d69e2e;background:#fefce8"><i class="fa-solid fa-crown"></i> Master Admin</span>';
+                } else if (isMaster && !isMasterAdmin) {
+                    actions = `
+                        <button class="btn-action btn-accept" onclick="setMasterAdmin('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-crown"></i> Set as Master</button>
+                        <button class="btn-action btn-reject" onclick="deleteAdminAccount('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i> Remove</button>
+                    `;
+                } else if (!isMaster && !isMasterAdmin) {
+                    actions = '<span style="font-size:.8rem;color:var(--gray)">Only master admin can manage</span>';
+                }
+
                 return `
-                <div class="app-item" style="border-left-color:#d69e2e">
+                <div class="app-item" style="border-left-color:${isMasterAdmin ? '#d69e2e' : '#94a3b8'}">
                     <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
                         <div style="display:flex;align-items:center;gap:12px">
-                            <div style="width:50px;height:50px;background:linear-gradient(135deg,#d69e2e,#f6e05e);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.9rem;flex-shrink:0">${initials}</div>
+                            <div style="width:50px;height:50px;background:linear-gradient(135deg,${isMasterAdmin ? '#d69e2e,#f6e05e' : '#64748b,#94a3b8'});border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.9rem;flex-shrink:0;position:relative">
+                                ${initials}
+                                ${isMasterAdmin ? '<div style="position:absolute;bottom:-2px;right:-2px;width:20px;height:20px;background:#d69e2e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;border:2px solid #fff"><i class="fa-solid fa-crown" style="color:#fff"></i></div>' : ''}
+                            </div>
                             <div>
-                                <h4 style="margin:0;color:var(--dark)">${a.name} ${isCurrentAdmin ? '<span style="font-size:.75rem;padding:2px 8px;background:#d69e2e;color:#fff;border-radius:8px;margin-left:6px">You</span>' : ''}</h4>
+                                <h4 style="margin:0;color:var(--dark)">${a.name} ${isCurrentAdmin ? '<span style="font-size:.75rem;padding:2px 8px;background:var(--primary);color:#fff;border-radius:8px;margin-left:6px">You</span>' : ''}</h4>
                                 <div class="meta" style="margin-top:4px">
                                     <span><i class="fa-solid fa-id-card"></i> ${a.id}</span>
                                     <span><i class="fa-solid fa-envelope"></i> ${a.email || 'N/A'}</span>
@@ -2292,9 +2325,53 @@
                                 </div>
                             </div>
                         </div>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${actions}</div>
                     </div>
                 </div>`;
             }).join('');
+
+            container.innerHTML = html;
+        }
+
+        function setMasterAdmin(adminId, adminName) {
+            if (!confirm('Set ' + adminName + ' as the Master Admin?\n\nThe master admin can manage other admin accounts.')) return;
+            localStorage.setItem('tba_master_admin', adminId);
+
+            // Save to Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    _supabaseClient.from('settings').upsert({key: 'master_admin', value: adminId}).then(function(){}).catch(function(e){});
+                }
+            } catch(e) {}
+
+            renderAllAdmins();
+            alert(adminName + ' is now the Master Admin.');
+        }
+
+        function deleteAdminAccount(adminId, adminName) {
+            const masterAdminId = localStorage.getItem('tba_master_admin');
+            if (masterAdminId !== currentUser.id) {
+                alert('Only the Master Admin can remove other admins.');
+                return;
+            }
+            if (adminId === currentUser.id) {
+                alert('You cannot remove your own account.');
+                return;
+            }
+            if (!confirm('Are you sure you want to REMOVE admin ' + adminName + '?\n\nThis action cannot be undone!')) return;
+            if (!confirm('FINAL CONFIRMATION: Delete admin ' + adminName + '?')) return;
+
+            // Remove from users
+            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            users = users.filter(u => u.id !== adminId);
+            localStorage.setItem('tba_users', JSON.stringify(users));
+
+            // Delete from Supabase
+            try { DB.deleteUser(adminId); } catch(e) { console.log('Supabase delete error:', e); }
+
+            renderAllAdmins();
+            alert(adminName + ' has been removed.');
         }
 
         function logout() { localStorage.removeItem('tba_currentUser'); window.location.href = 'login.html'; }
