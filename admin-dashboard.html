@@ -1840,21 +1840,22 @@
             const requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
             const idx = requests.findIndex(r => r.id === id);
             if (idx === -1) return;
-            if (!confirm('Reject this password reset request?')) return;
+            if (!confirm('Reject and remove this password reset request?')) return;
 
-            // Update status in Supabase
+            // Delete from Supabase
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    await _supabaseClient.from('password_resets').update({status: 'rejected', rejected_at: new Date().toISOString()}).eq('id', id);
+                    await _supabaseClient.from('password_resets').delete().eq('id', id);
                 }
-            } catch(e) { console.log('Supabase reset reject error:', e); }
+            } catch(e) { console.log('Supabase reset delete error:', e); }
 
-            requests[idx].status = 'rejected';
-            requests[idx].rejectedAt = new Date().toISOString();
+            // Remove from localStorage
+            requests.splice(idx, 1);
             localStorage.setItem('tba_password_resets', JSON.stringify(requests));
 
             renderResetsList();
+            alert('Request rejected and removed.');
         }
 
         // ---- Admin Students Section ----
