@@ -2302,17 +2302,15 @@
                 } else if (isMasterAdmin && !isCurrentAdmin) {
                     actions = '<span style="padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600;color:#d69e2e;background:#fefce8"><i class="fa-solid fa-crown"></i> Master Admin</span>';
                 } else if (!masterAdminId) {
-                    // No master set yet - anyone can select
                     actions = `
                         <button class="btn-action btn-accept" onclick="setMasterAdmin('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-crown"></i> Set as Master</button>
                     `;
-                } else if (isMaster && !isMasterAdmin) {
-                    // Master admin can manage others
+                } else if (isMaster) {
                     actions = `
                         <button class="btn-action btn-accept" onclick="setMasterAdmin('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-crown"></i> Set as Master</button>
                         <button class="btn-action btn-reject" onclick="deleteAdminAccount('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i> Remove</button>
                     `;
-                } else if (!isMaster && !isMasterAdmin) {
+                } else {
                     actions = '<span style="font-size:.8rem;color:var(--gray)">Only master admin can manage</span>';
                 }
 
