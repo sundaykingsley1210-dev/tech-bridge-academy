@@ -208,6 +208,7 @@
                 <li><a onclick="showSection(this, 'adminMessagesSection')"><i class="fa-solid fa-envelope"></i> Messages</a></li>
                 <li><a onclick="showSection(this, 'adminNotificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
                 <li><a onclick="showSection(this, 'resetsSection')"><i class="fa-solid fa-key"></i> Password Resets</a></li>
+                <li><a onclick="showSection(this, 'allAdminsSection')"><i class="fa-solid fa-user-shield"></i> All Admins</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
             </ul>
@@ -544,6 +545,18 @@
                     </div>
                     <div class="card-body">
                         <div id="resetsList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Admins Section -->
+            <div id="allAdminsSection" style="display:none">
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-user-shield"></i> All Administrators</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="app-list" id="allAdminsList"></div>
                     </div>
                 </div>
             </div>
@@ -1691,7 +1704,7 @@
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
 
-            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'examResultsSection', 'feesSection', 'examScheduleSection', 'bankSection', 'paymentSubsSection', 'studentPaymentsSection', 'resultsSection', 'adminStudentsSection', 'adminTeachersSection', 'adminMessagesSection', 'adminNotificationsSection', 'resetsSection'];
+            const sections = ['overviewSection', 'applicationsSection', 'approvedSection', 'admittedSection', 'examResultsSection', 'feesSection', 'examScheduleSection', 'bankSection', 'paymentSubsSection', 'studentPaymentsSection', 'resultsSection', 'adminStudentsSection', 'adminTeachersSection', 'adminMessagesSection', 'adminNotificationsSection', 'resetsSection', 'allAdminsSection'];
             sections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -1712,11 +1725,39 @@
             if (sectionId === 'adminMessagesSection') renderAdminMessages();
             if (sectionId === 'adminNotificationsSection') { renderAdminNotifCheckboxes(); renderAdminSentNotifs(); }
             if (sectionId === 'resetsSection') renderResetsList();
+            if (sectionId === 'allAdminsSection') renderAllAdmins();
         }
 
-        function renderResetsList() {
-            const requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
+        async function renderResetsList() {
             const container = document.getElementById('resetsList');
+            let requests = [];
+
+            // Load from Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('password_resets').select('*').order('created_at', {ascending: false});
+                    if (result && result.data && result.data.length) {
+                        requests = result.data.map(r => ({
+                            id: r.id,
+                            role: r.role,
+                            name: r.name,
+                            email: r.email,
+                            status: r.status,
+                            requestedAt: r.requested_at || r.created_at,
+                            approvedAt: r.approved_at,
+                            rejectedAt: r.rejected_at
+                        }));
+                        localStorage.setItem('tba_password_resets', JSON.stringify(requests));
+                    }
+                }
+            } catch(e) { console.log('Load resets from Supabase:', e); }
+
+            // Fallback to localStorage if Supabase empty
+            if (!requests.length) {
+                requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
+            }
+
             if (requests.length === 0) {
                 container.innerHTML = '<div class="no-data"><i class="fa-solid fa-key"></i><p>No password reset requests</p></div>';
                 return;
@@ -1729,7 +1770,7 @@
                             <div class="meta">
                                 <span><i class="fa-solid fa-envelope"></i> ${r.email}</span>
                                 <span><i class="fa-solid fa-${r.role === 'student' ? 'user-graduate' : 'chalkboard-user'}"></i> ${r.role.charAt(0).toUpperCase() + r.role.slice(1)}</span>
-                                <span><i class="fa-solid fa-clock"></i> ${new Date(r.requestedAt).toLocaleString()}</span>
+                                <span><i class="fa-solid fa-clock"></i> ${r.requestedAt ? new Date(r.requestedAt).toLocaleString() : 'N/A'}</span>
                             </div>
                         </div>
                         <span class="status-badge ${r.status === 'pending' ? 'status-pending' : r.status === 'approved' ? 'status-admitted' : 'status-rejected'}">${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</span>
@@ -1744,7 +1785,7 @@
             `).join('');
         }
 
-        function approveReset(id) {
+        async function approveReset(id) {
             const requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
             const idx = requests.findIndex(r => r.id === id);
             if (idx === -1) return;
@@ -1752,13 +1793,32 @@
 
             if (!confirm('Reset password for ' + req.name + ' (' + req.email + ') to 123456?')) return;
 
-            // Update password in users
+            // Update password in Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var userResult = await _supabaseClient.from('users').select('*').eq('email', req.email).eq('role', req.role).maybeSingle();
+                    if (userResult && userResult.data) {
+                        await _supabaseClient.from('users').update({password: '123456'}).eq('id', userResult.data.id);
+                    }
+                }
+            } catch(e) { console.log('Supabase password reset error:', e); }
+
+            // Also update localStorage
             let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
             const userIdx = users.findIndex(u => u.email === req.email && u.role === req.role);
             if (userIdx !== -1) {
                 users[userIdx].password = '123456';
                 localStorage.setItem('tba_users', JSON.stringify(users));
             }
+
+            // Update request status in Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    await _supabaseClient.from('password_resets').update({status: 'approved', approved_at: new Date().toISOString()}).eq('id', id);
+                }
+            } catch(e) { console.log('Supabase reset status error:', e); }
 
             requests[idx].status = 'approved';
             requests[idx].approvedAt = new Date().toISOString();
@@ -1768,11 +1828,19 @@
             renderResetsList();
         }
 
-        function rejectReset(id) {
+        async function rejectReset(id) {
             const requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
             const idx = requests.findIndex(r => r.id === id);
             if (idx === -1) return;
             if (!confirm('Reject this password reset request?')) return;
+
+            // Update status in Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    await _supabaseClient.from('password_resets').update({status: 'rejected', rejected_at: new Date().toISOString()}).eq('id', id);
+                }
+            } catch(e) { console.log('Supabase reset reject error:', e); }
 
             requests[idx].status = 'rejected';
             requests[idx].rejectedAt = new Date().toISOString();
@@ -2179,6 +2247,51 @@
                             </div>
                         </div>
                         <button class="btn-delete" onclick="deleteTeacherAccount('${t.id}','${(t.name||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i> Remove</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function renderAllAdmins() {
+            let admins = JSON.parse(localStorage.getItem('tba_users') || '[]').filter(u => u.role === 'admin');
+
+            // Also load from Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('users').select('*').eq('role', 'admin');
+                    if (result && result.data && result.data.length) {
+                        const existingIds = admins.map(a => a.id);
+                        result.data.forEach(a => {
+                            if (!existingIds.includes(a.id)) admins.push(a);
+                        });
+                    }
+                }
+            } catch(e) {}
+
+            const container = document.getElementById('allAdminsList');
+            if (!admins.length) {
+                container.innerHTML = '<div class="no-data"><i class="fa-solid fa-user-shield"></i><p>No admin accounts found</p></div>';
+                return;
+            }
+
+            container.innerHTML = admins.map(a => {
+                const initials = (a.name || '').split(' ').map(n=>n[0]).join('').substring(0,2);
+                const isCurrentAdmin = a.id === currentUser.id;
+                return `
+                <div class="app-item" style="border-left-color:#d69e2e">
+                    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
+                        <div style="display:flex;align-items:center;gap:12px">
+                            <div style="width:50px;height:50px;background:linear-gradient(135deg,#d69e2e,#f6e05e);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.9rem;flex-shrink:0">${initials}</div>
+                            <div>
+                                <h4 style="margin:0;color:var(--dark)">${a.name} ${isCurrentAdmin ? '<span style="font-size:.75rem;padding:2px 8px;background:#d69e2e;color:#fff;border-radius:8px;margin-left:6px">You</span>' : ''}</h4>
+                                <div class="meta" style="margin-top:4px">
+                                    <span><i class="fa-solid fa-id-card"></i> ${a.id}</span>
+                                    <span><i class="fa-solid fa-envelope"></i> ${a.email || 'N/A'}</span>
+                                    <span><i class="fa-solid fa-phone"></i> ${a.phone || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>`;
             }).join('');
