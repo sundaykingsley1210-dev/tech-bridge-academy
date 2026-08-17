@@ -2278,21 +2278,15 @@
                 return;
             }
 
-            // If no master admin set, auto-set the first admin as master
-            if (!masterAdminId && admins.length > 0) {
-                localStorage.setItem('tba_master_admin', admins[0].id);
-            }
-            const currentMasterId = localStorage.getItem('tba_master_admin') || (admins.length > 0 ? admins[0].id : null);
-
             let html = '';
-            if (!currentMasterId) {
+            if (!masterAdminId) {
                 html = '<div style="padding:15px;background:#fff3cd;border-radius:10px;border-left:4px solid #d69e2e;margin-bottom:15px"><strong style="color:#856404"><i class="fa-solid fa-exclamation-triangle"></i> No Master Admin Set</strong><p style="margin:5px 0 0;font-size:.85rem;color:#856404">Select a master admin below. The master admin can manage other admin accounts.</p></div>';
             }
 
             html += admins.map(a => {
                 const initials = (a.name || '').split(' ').map(n=>n[0]).join('').substring(0,2);
                 const isCurrentAdmin = a.id === currentUser.id;
-                const isMasterAdmin = a.id === currentMasterId;
+                const isMasterAdmin = a.id === masterAdminId;
 
                 let actions = '';
                 if (isMasterAdmin && isCurrentAdmin) {
