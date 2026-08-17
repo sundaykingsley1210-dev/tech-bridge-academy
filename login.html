@@ -30,7 +30,29 @@
     function signUp(email, password, metadata) {
         return new Promise(function(resolve, reject) {
             var c = _s();
-            if (!c) return reject(new Error('Cannot connect to server.'));
+            if (!c) {
+                // Retry after a short delay
+                setTimeout(function() {
+                    var c2 = _s();
+                    if (!c2) return reject(new Error('Cannot connect to server. Please refresh and try again.'));
+                    var userId = crypto.randomUUID();
+                    var profile = {
+                        id: userId,
+                        email: email,
+                        password: password,
+                        name: (metadata && metadata.name) || email.split('@')[0],
+                        role: (metadata && metadata.role) || 'student',
+                        class: (metadata && metadata.class) || null,
+                        subject: (metadata && metadata.subject) || null,
+                        phone: (metadata && metadata.phone) || null
+                    };
+                    c2.from('users').upsert(profile).then(function(res) {
+                        if (res.error) return reject(new Error(res.error.message));
+                        resolve({ user: profile });
+                    }).catch(function(err) { reject(err); });
+                }, 2000);
+                return;
+            }
             var userId = crypto.randomUUID();
             var profile = {
                 id: userId,
@@ -600,6 +622,17 @@
             const email = document.getElementById('arEmail').value.trim();
             const password = document.getElementById('arPassword').value;
 
+            if (!name || !email || !password) {
+                alert('Please fill in all fields.');
+                return;
+            }
+
+            _initSupabase();
+            if (!_supabaseClient) {
+                alert('Connecting to server... Please wait a moment and try again.');
+                return;
+            }
+
             try {
                 const data = await signUp(email, password, { name: name, role: 'admin' });
                 localStorage.setItem('tba_currentUser', JSON.stringify(data.user));
@@ -650,6 +683,13 @@
 
             if (!email || !password) {
                 errorEl.textContent = 'Please enter email and password.';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            _initSupabase();
+            if (!_supabaseClient) {
+                errorEl.textContent = 'Connecting to server... Please wait and try again.';
                 errorEl.style.display = 'block';
                 return;
             }
