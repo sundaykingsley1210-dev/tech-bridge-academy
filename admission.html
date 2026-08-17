@@ -475,9 +475,32 @@
             applications.push(application);
             localStorage.setItem('tba_applications', JSON.stringify(applications));
 
-            // Create student account directly in DB (bypasses Supabase Auth)
+            // Save application to Supabase
             _initSupabase();
             if (_supabaseClient) {
+                _supabaseClient.from('applications').upsert({
+                    id: application.id,
+                    first_name: application.firstName,
+                    last_name: application.lastName,
+                    dob: application.dob,
+                    gender: application.gender,
+                    class_applying: application.classApplying,
+                    prev_school: application.prevSchool,
+                    parent_name: application.parentName,
+                    relationship: application.relationship,
+                    parent_phone: application.parentPhone,
+                    parent_email: application.parentEmail,
+                    address: application.address,
+                    student_email: application.studentEmail,
+                    student_password: application.studentPassword,
+                    date_submitted: application.dateSubmitted,
+                    status: application.status
+                }).then(function(result) {
+                    if (result.error) console.log('Application save:', result.error.message);
+                    else console.log('Application saved to Supabase');
+                }).catch(function(err) { console.log('Application save:', err.message); });
+
+                // Create student account directly in DB (bypasses Supabase Auth)
                 var userId = crypto.randomUUID();
                 var profile = {
                     id: userId,
@@ -494,10 +517,8 @@
                     if (result.error) console.log('Student signup:', result.error.message);
                     else console.log('Student account created');
                 }).catch(function(err) { console.log('Student signup:', err.message); });
-            }
 
-            // Notify school via Supabase
-            if (_supabaseClient) {
+                // Notify school via Supabase
                 _supabaseClient.from('notifications').insert({
                     title: 'New Student Admission',
                     message: application.firstName + ' ' + application.lastName + ' (' + application.studentEmail + ') applied for ' + application.classApplying,
