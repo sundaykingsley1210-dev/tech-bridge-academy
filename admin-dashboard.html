@@ -624,19 +624,43 @@
         }
 
         function seedApplications() {
-            let apps = JSON.parse(localStorage.getItem('tba_applications'));
-            if (!apps || apps.length === 0) {
-                apps = [
-                    { id:'TBA-001', firstName:'Chinedu', lastName:'Okafor', dob:'2012-05-15', gender:'Male', classApplying:'JSS 1', prevSchool:'Royal International School', parentName:'Mr. Okafor', relationship:'Father', parentPhone:'08012345678', parentEmail:'okafor@email.com', address:'12 Palm Avenue, Aba', dateSubmitted:'2026-06-20T10:00:00Z', status:'Pending' },
-                    { id:'TBA-002', firstName:'Ngozi', lastName:'Eze', dob:'2010-08-22', gender:'Female', classApplying:'JSS 3', prevSchool:'Grace Academy', parentName:'Mrs. Eze', relationship:'Mother', parentPhone:'08098765432', parentEmail:'eze.ngozi@email.com', address:'45 Oak Street, Aba', dateSubmitted:'2026-06-21T14:30:00Z', status:'Pending' },
-                    { id:'TBA-003', firstName:'Emeka', lastName:'Adeyemi', dob:'2009-03-10', gender:'Male', classApplying:'SSS 1', prevSchool:'Federal Govt College', parentName:'Mr. Adeyemi', relationship:'Father', parentPhone:'08055551234', parentEmail:'adeyemi@email.com', address:'78 Pine Road, Aba', dateSubmitted:'2026-06-18T09:15:00Z', status:'Pending' },
-                ];
-                localStorage.setItem('tba_applications', JSON.stringify(apps));
-            }
+            // Seeded data removed - all applications come from Supabase
         }
 
-        function renderApps() {
-            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+        async function renderApps() {
+            // Load from Supabase first
+            let apps = [];
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('applications').select('*').order('date_submitted', {ascending: false});
+                    if (result && result.data && result.data.length) {
+                        apps = result.data.map(a => ({
+                            id: a.id,
+                            firstName: a.first_name,
+                            lastName: a.last_name,
+                            dob: a.dob,
+                            gender: a.gender,
+                            classApplying: a.class_applying,
+                            prevSchool: a.prev_school,
+                            parentName: a.parent_name,
+                            relationship: a.relationship,
+                            parentPhone: a.parent_phone,
+                            parentEmail: a.parent_email,
+                            address: a.address,
+                            dateSubmitted: a.date_submitted,
+                            status: a.status
+                        }));
+                        localStorage.setItem('tba_applications', JSON.stringify(apps));
+                    }
+                }
+            } catch(e) { console.log('Load apps from Supabase:', e); }
+
+            // Fallback to localStorage
+            if (!apps.length) {
+                apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            }
+
             const container = document.getElementById('appList');
             let filtered = currentFilter === 'all' ? apps : apps.filter(a => a.status === currentFilter);
 
