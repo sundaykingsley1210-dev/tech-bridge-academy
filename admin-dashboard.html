@@ -1777,7 +1777,7 @@
                     </div>
                     ${r.status === 'pending' ? `
                         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-                            <button class="btn-action btn-accept" onclick="approveReset('${r.id}')"><i class="fa-solid fa-check"></i> Approve & Reset to 123456</button>
+                            <button class="btn-action btn-accept" onclick="approveReset('${r.id}')"><i class="fa-solid fa-check"></i> Approve & Set New Password</button>
                             <button class="btn-action btn-reject" onclick="rejectReset('${r.id}')"><i class="fa-solid fa-times"></i> Reject</button>
                         </div>
                     ` : ''}
@@ -1791,7 +1791,15 @@
             if (idx === -1) return;
             const req = requests[idx];
 
-            if (!confirm('Reset password for ' + req.name + ' (' + req.email + ') to 123456?')) return;
+            const newPassword = prompt('Set new password for ' + req.name + ' (' + req.email + '):\n\nType the new password below:');
+            if (!newPassword || newPassword.trim() === '') {
+                alert('Password cannot be empty. Request not approved.');
+                return;
+            }
+            if (newPassword.length < 4) {
+                alert('Password must be at least 4 characters.');
+                return;
+            }
 
             // Update password in Supabase
             try {
@@ -1799,7 +1807,7 @@
                 if (_supabaseClient) {
                     var userResult = await _supabaseClient.from('users').select('*').eq('email', req.email).eq('role', req.role).maybeSingle();
                     if (userResult && userResult.data) {
-                        await _supabaseClient.from('users').update({password: '123456'}).eq('id', userResult.data.id);
+                        await _supabaseClient.from('users').update({password: newPassword}).eq('id', userResult.data.id);
                     }
                 }
             } catch(e) { console.log('Supabase password reset error:', e); }
@@ -1808,7 +1816,7 @@
             let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
             const userIdx = users.findIndex(u => u.email === req.email && u.role === req.role);
             if (userIdx !== -1) {
-                users[userIdx].password = '123456';
+                users[userIdx].password = newPassword;
                 localStorage.setItem('tba_users', JSON.stringify(users));
             }
 
@@ -1824,7 +1832,7 @@
             requests[idx].approvedAt = new Date().toISOString();
             localStorage.setItem('tba_password_resets', JSON.stringify(requests));
 
-            alert('Password for ' + req.name + ' has been reset to 123456.');
+            alert('Password for ' + req.name + ' has been reset successfully.');
             renderResetsList();
         }
 
@@ -2293,7 +2301,13 @@
                     actions = '<span style="padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600;color:#d69e2e;background:#fefce8"><i class="fa-solid fa-crown"></i> Master Admin (You)</span>';
                 } else if (isMasterAdmin && !isCurrentAdmin) {
                     actions = '<span style="padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600;color:#d69e2e;background:#fefce8"><i class="fa-solid fa-crown"></i> Master Admin</span>';
+                } else if (!masterAdminId) {
+                    // No master set yet - anyone can select
+                    actions = `
+                        <button class="btn-action btn-accept" onclick="setMasterAdmin('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-crown"></i> Set as Master</button>
+                    `;
                 } else if (isMaster && !isMasterAdmin) {
+                    // Master admin can manage others
                     actions = `
                         <button class="btn-action btn-accept" onclick="setMasterAdmin('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-crown"></i> Set as Master</button>
                         <button class="btn-action btn-reject" onclick="deleteAdminAccount('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i> Remove</button>

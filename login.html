@@ -461,7 +461,7 @@
                     <button onclick="closeResetModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)">&times;</button>
                 </div>
                 <div style="padding:30px">
-                    <p style="color:var(--gray);font-size:.9rem;margin-bottom:20px;text-align:center">Enter your email and select your role. The admin will approve your password reset. Your new password will be <strong>123456</strong>.</p>
+                    <p style="color:var(--gray);font-size:.9rem;margin-bottom:20px;text-align:center">Enter your email and select your role. The admin will review your request and reset your password.</p>
                     <form id="resetForm" onsubmit="handleResetRequest(event)">
                         <div style="margin-bottom:18px">
                             <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">I am a *</label>
@@ -527,7 +527,7 @@
                 });
                 if (insResult.error) throw insResult.error;
 
-                alert('Password reset request sent to admin. You will be able to login with password 123456 once approved.');
+                alert('Password reset request sent to admin. You will receive your new password once the admin approves your request.');
                 closeResetModal();
                 document.getElementById('resetForm').reset();
             } catch (err) {
