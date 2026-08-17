@@ -1880,7 +1880,7 @@
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    var result = await _supabaseClient.from('password_resets').select('*').order('created_at', {ascending: false});
+                    var result = await _supabaseClient.from('password_resets').select('*').order('requested_at', {ascending: false});
                     if (result && result.data && result.data.length) {
                         requests = result.data.map(r => ({
                             id: r.id,
@@ -1930,10 +1930,21 @@
         }
 
         async function approveReset(id) {
-            const requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
-            const idx = requests.findIndex(r => r.id === id);
-            if (idx === -1) return;
-            const req = requests[idx];
+            // Read from Supabase directly
+            let req = null;
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('password_resets').select('*').eq('id', id).maybeSingle();
+                    if (result && result.data) req = result.data;
+                }
+            } catch(e) { console.log('Load reset request:', e); }
+            if (!req) {
+                // Fallback to localStorage
+                const requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
+                req = requests.find(r => r.id === id);
+            }
+            if (!req) return;
 
             const newPassword = prompt('Set new password for ' + req.name + ' (' + req.email + '):\n\nType the new password below:');
             if (!newPassword || newPassword.trim() === '') {
@@ -1972,18 +1983,25 @@
                 }
             } catch(e) { console.log('Supabase reset status error:', e); }
 
-            requests[idx].status = 'approved';
-            requests[idx].approvedAt = new Date().toISOString();
-            localStorage.setItem('tba_password_resets', JSON.stringify(requests));
-
             alert('Password for ' + req.name + ' has been reset successfully.');
             renderResetsList();
         }
 
         async function rejectReset(id) {
-            const requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
-            const idx = requests.findIndex(r => r.id === id);
-            if (idx === -1) return;
+            // Read from Supabase directly
+            let req = null;
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('password_resets').select('*').eq('id', id).maybeSingle();
+                    if (result && result.data) req = result.data;
+                }
+            } catch(e) { console.log('Load reset request:', e); }
+            if (!req) {
+                const requests = JSON.parse(localStorage.getItem('tba_password_resets') || '[]');
+                req = requests.find(r => r.id === id);
+            }
+            if (!req) return;
             if (!confirm('Reject and remove this password reset request?')) return;
 
             // Delete from Supabase
@@ -1993,10 +2011,6 @@
                     await _supabaseClient.from('password_resets').delete().eq('id', id);
                 }
             } catch(e) { console.log('Supabase reset delete error:', e); }
-
-            // Remove from localStorage
-            requests.splice(idx, 1);
-            localStorage.setItem('tba_password_resets', JSON.stringify(requests));
 
             renderResetsList();
             alert('Request rejected and removed.');
