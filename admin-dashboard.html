@@ -824,6 +824,42 @@
             alert(a.firstName + ' ' + a.lastName + ' has been admitted!\nStudent ID: ' + newId + '\nLogin: ' + loginEmail);
         }
 
+        function deleteAdmittedStudent(appId, studentName) {
+            if (!confirm('Remove ' + studentName + ' from admitted list?\n\nThis will also remove their student account.')) return;
+
+            // Remove from applications
+            let apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            const app = apps.find(a => a.id === appId);
+            apps = apps.filter(a => a.id !== appId);
+            localStorage.setItem('tba_applications', JSON.stringify(apps));
+
+            // Remove student account from users
+            if (app) {
+                let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+                const student = users.find(u => u.email === (app.studentEmail || app.parentEmail) && u.role === 'student');
+                if (student) {
+                    // Delete from Supabase
+                    try { DB.deleteUser(student.id); } catch(e) {}
+                    users = users.filter(u => u.id !== student.id);
+                    localStorage.setItem('tba_users', JSON.stringify(users));
+                    localStorage.removeItem('tba_student_results_' + student.id);
+                    localStorage.removeItem('tba_profile_pic_' + student.id);
+                }
+            }
+
+            // Delete from Supabase applications
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    _supabaseClient.from('applications').delete().eq('id', appId).then(function(){}).catch(function(e){});
+                }
+            } catch(e) {}
+
+            renderAdmittedList();
+            updateStats();
+            alert(studentName + ' has been removed.');
+        }
+
         function filterApps(status, btn) {
             currentFilter = status;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -910,7 +946,10 @@
                                 <span><i class="fa-solid fa-clock"></i> Admitted ${a.admittedAt ? new Date(a.admittedAt).toLocaleDateString() : ''}</span>
                             </div>
                         </div>
-                        <span class="status-badge status-admitted">Admitted</span>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span class="status-badge status-admitted">Admitted</span>
+                            <button class="btn-delete" onclick="deleteAdmittedStudent('${a.id}','${a.firstName} ${a.lastName}')" title="Remove"><i class="fa-solid fa-trash"></i></button>
+                        </div>
                     </div>
                     <div class="meta">
                         <span><i class="fa-solid fa-user"></i> ${a.parentName}</span>
@@ -1111,8 +1150,33 @@
             setTimeout(() => { printWindow.focus(); printWindow.print(); }, 500);
         }
 
-        function updateStats() {
-            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+        async function updateStats() {
+            // Load from Supabase first
+            let apps = [];
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('applications').select('*');
+                    if (result && result.data && result.data.length) {
+                        apps = result.data.map(a => ({
+                            id: a.id,
+                            firstName: a.first_name,
+                            lastName: a.last_name,
+                            status: a.status,
+                            classApplying: a.class_applying,
+                            gender: a.gender,
+                            dateSubmitted: a.date_submitted
+                        }));
+                        localStorage.setItem('tba_applications', JSON.stringify(apps));
+                    }
+                }
+            } catch(e) { console.log('Load apps for stats:', e); }
+
+            // Fallback to localStorage
+            if (!apps.length) {
+                apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            }
+
             document.getElementById('totalApps').textContent = apps.length;
             document.getElementById('pendingApps').textContent = apps.filter(a => a.status === 'Pending').length;
             document.getElementById('approvedApps').textContent = apps.filter(a => a.status === 'Approved').length;
@@ -1299,6 +1363,7 @@
                 } else {
                     actions = `<span class="fee-status fee-unpaid">Rejected</span>`;
                 }
+                actions += `<button class="btn-delete" onclick="deleteExamResult(${idx})" title="Delete" style="margin-left:auto"><i class="fa-solid fa-trash"></i></button>`;
 
                 return `
                 <div class="app-item" style="border-left-color:${r.passed ? '#38ef7d' : '#e53e3e'}">
@@ -1349,6 +1414,15 @@
             alert('Exam result rejected.');
         }
 
+        function deleteExamResult(idx) {
+            if (!confirm('Delete this exam result?')) return;
+            let results = JSON.parse(localStorage.getItem('tba_exam_results') || '[]');
+            results.splice(idx, 1);
+            localStorage.setItem('tba_exam_results', JSON.stringify(results));
+            renderExamResults();
+            alert('Exam result deleted.');
+        }
+
         function filterExamResults(status, btn) {
             examResultFilter = status;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -1394,7 +1468,7 @@
             c.innerHTML = filtered.slice().reverse().map(s => {
                 const sc = s.status === 'approved' ? 'status-admitted' : s.status === 'rejected' ? 'status-rejected' : 'status-pending';
                 const label = s.status.charAt(0).toUpperCase() + s.status.slice(1);
-                return '<div class="app-item" style="border-left-color:' + (s.status==='approved'?'#38ef7d':s.status==='rejected'?'#e53e3e':'#ffd93d') + '"><div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px"><div><h4>' + s.studentName + '</h4><div class="meta"><span><i class="fa-solid fa-id-card"></i> ' + s.studentId + '</span><span><i class="fa-solid fa-layer-group"></i> ' + s.studentClass + '</span><span><i class="fa-solid fa-hashtag"></i> Teller: ' + s.teller + '</span></div></div><span class="status-badge ' + sc + '">' + label + '</span></div><div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;font-size:.88rem;color:var(--gray)"><span><i class="fa-solid fa-money-bill-wave"></i> ₦' + s.amount.toLocaleString() + '</span><span><i class="fa-solid fa-university"></i> ' + s.bank + '</span><span><i class="fa-solid fa-calendar"></i> ' + new Date(s.payDate).toLocaleDateString() + '</span><span><i class="fa-solid fa-clock"></i> Submitted: ' + new Date(s.submittedAt).toLocaleDateString() + '</span></div>' + (s.status === 'pending' ? '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn-action btn-accept" onclick="approvePayment(\'' + s.id + '\')"><i class="fa-solid fa-check"></i> Approve</button><button class="btn-action btn-reject" onclick="rejectPayment(\'' + s.id + '\')"><i class="fa-solid fa-times"></i> Reject</button></div>' : '') + '</div>';
+                return '<div class="app-item" style="border-left-color:' + (s.status==='approved'?'#38ef7d':s.status==='rejected'?'#e53e3e':'#ffd93d') + '"><div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px"><div><h4>' + s.studentName + '</h4><div class="meta"><span><i class="fa-solid fa-id-card"></i> ' + s.studentId + '</span><span><i class="fa-solid fa-layer-group"></i> ' + s.studentClass + '</span><span><i class="fa-solid fa-hashtag"></i> Teller: ' + s.teller + '</span></div></div><div style="display:flex;align-items:center;gap:8px"><span class="status-badge ' + sc + '">' + label + '</span><button class="btn-delete" onclick="deletePaymentSubmission(\'' + s.id + '\')" title="Delete"><i class="fa-solid fa-trash"></i></button></div></div><div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;font-size:.88rem;color:var(--gray)"><span><i class="fa-solid fa-money-bill-wave"></i> ₦' + s.amount.toLocaleString() + '</span><span><i class="fa-solid fa-university"></i> ' + s.bank + '</span><span><i class="fa-solid fa-calendar"></i> ' + new Date(s.payDate).toLocaleDateString() + '</span><span><i class="fa-solid fa-clock"></i> Submitted: ' + new Date(s.submittedAt).toLocaleDateString() + '</span></div>' + (s.status === 'pending' ? '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn-action btn-accept" onclick="approvePayment(\'' + s.id + '\')"><i class="fa-solid fa-check"></i> Approve</button><button class="btn-action btn-reject" onclick="rejectPayment(\'' + s.id + '\')"><i class="fa-solid fa-times"></i> Reject</button></div>' : '') + '</div>';
             }).join('');
         }
 
@@ -1425,6 +1499,21 @@
             try { DB.updatePaymentStatus(id, 'rejected'); } catch(e) {}
             renderPaymentSubs();
             alert('Payment rejected.');
+        }
+
+        function deletePaymentSubmission(id) {
+            if (!confirm('Delete this payment submission?')) return;
+            let subs = JSON.parse(localStorage.getItem('tba_payment_submissions') || '[]');
+            subs = subs.filter(s => s.id !== id);
+            localStorage.setItem('tba_payment_submissions', JSON.stringify(subs));
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    _supabaseClient.from('payments').delete().eq('id', id).then(function(){}).catch(function(e){});
+                }
+            } catch(e) {}
+            renderPaymentSubs();
+            alert('Payment submission deleted.');
         }
 
         function filterPaymentSubs(status, btn) {
@@ -1598,8 +1687,10 @@
                                 <span><i class="fa-solid fa-clock"></i> ${new Date(m.sentAt).toLocaleString()}</span>
                             </div>
                         </div>
-                        ${!m.reply ? '<span style="padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:600;color:#856404;background:#fff3cd">New Message</span>' : '<span style="padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:600;color:#155724;background:#d4edda">Replied</span>'}
-                    </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            ${!m.reply ? '<span style="padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:600;color:#856404;background:#fff3cd">New Message</span>' : '<span style="padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:600;color:#155724;background:#d4edda">Replied</span>'}
+                            <button class="btn-delete" onclick="deleteMessage('${m.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        </div>
                     <div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:8px;border-left:3px solid #667eea">
                         <p style="font-size:.9rem;color:var(--dark);margin:0">${m.text}</p>
                     </div>
@@ -1644,6 +1735,23 @@
             alert('Reply sent!');
         }
 
+        function deleteMessage(id) {
+            if (!confirm('Delete this message?')) return;
+            // Delete from Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    _supabaseClient.from('messages').delete().eq('id', id).then(function(){}).catch(function(e){});
+                }
+            } catch(e) {}
+            // Remove from localStorage
+            let messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
+            messages = messages.filter(m => m.id !== id);
+            localStorage.setItem('tba_messages', JSON.stringify(messages));
+            renderAdminMessages();
+            alert('Message deleted.');
+        }
+
         const adminNotifClasses = ['All Classes','JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
 
         function renderAdminNotifCheckboxes() {
@@ -1685,17 +1793,28 @@
                 if (_supabaseClient) {
                     var rows = await _supabaseClient.from('notifications').select('*').eq('from_role','admin').order('created_at',{ascending:false});
                     if (rows && rows.data && rows.data.length) {
-                        var notifs = rows.data.map(function(n) {
-                            return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, from: n.from_name || 'Admin', date: n.created_at };
-                        });
+                        var notifs = rows.data;
                         var sentEl = document.getElementById('adminSentNotifs');
-                        sentEl.innerHTML = notifs.map(n => '<div style="padding:12px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border-left:3px solid var(--primary)"><div style="display:flex;justify-content:space-between;align-items:start"><h4 style="margin:0">'+n.title+'</h4><span style="font-size:.75rem;color:var(--gray)">'+new Date(n.date).toLocaleString()+'</span></div><div class="meta" style="margin-top:5px"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span></div><p style="margin:8px 0 0;font-size:.9rem;color:#555">'+n.message+'</p></div>').join('');
+                        sentEl.innerHTML = notifs.map(n => '<div style="padding:12px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border-left:3px solid var(--primary)"><div style="display:flex;justify-content:space-between;align-items:start"><h4 style="margin:0">'+n.title+'</h4><div style="display:flex;align-items:center;gap:8px"><span style="font-size:.75rem;color:var(--gray)">'+new Date(n.created_at).toLocaleString()+'</span><button class="btn-delete" onclick="deleteNotification(\''+n.id+'\')" title="Delete"><i class="fa-solid fa-trash"></i></button></div></div><div class="meta" style="margin-top:5px"><span><i class="fa-solid fa-layer-group"></i> '+(n.target_class||'All Classes')+'</span></div><p style="margin:8px 0 0;font-size:.9rem;color:#555">'+n.message+'</p></div>').join('');
                         return;
                     }
                 }
             } catch(e) { console.log('Load admin notifs from Supabase:', e); }
             const c = document.getElementById('adminSentNotifs');
             c.innerHTML = '<div class="no-data"><i class="fa-solid fa-bell"></i><p>No notifications sent yet</p></div>';
+        }
+
+        function deleteNotification(id) {
+            if (!confirm('Delete this notification?')) return;
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    _supabaseClient.from('notifications').delete().eq('id', id).then(function(){
+                        renderAdminSentNotifs();
+                        alert('Notification deleted.');
+                    }).catch(function(e){ alert('Delete failed.'); });
+                }
+            } catch(e) { alert('Delete failed.'); }
         }
 
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
