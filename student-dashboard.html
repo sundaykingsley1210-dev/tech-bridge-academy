@@ -225,6 +225,7 @@
                 <li><a onclick="showSection(this, 'examScheduleSection')"><i class="fa-solid fa-calendar-days"></i> Exam Schedule</a></li>
                 <li><a onclick="showSection(this, 'notificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
                 <li><a onclick="showSection(this, 'paymentSection')"><i class="fa-solid fa-money-bill-wave"></i> Fee & Payment</a></li>
+                <li><a onclick="showSection(this, 'changePasswordSection')"><i class="fa-solid fa-key"></i> Change Password</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Back to Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
             </ul>
@@ -484,6 +485,32 @@
                         <div class="card-body">
                             <div id="examScheduleList"></div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Password Section -->
+            <div id="changePasswordSection" style="display:none">
+                <div class="card" style="max-width:500px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-key"></i> Change Password</h3>
+                    </div>
+                    <div class="card-body">
+                        <form onsubmit="changeStudentPassword(event)">
+                            <div class="form-group">
+                                <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px">Current Password *</label>
+                                <input type="password" id="currentStudentPass" required placeholder="Enter current password" style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                            </div>
+                            <div class="form-group" style="margin-top:15px">
+                                <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px">New Password *</label>
+                                <input type="password" id="newStudentPass" required minlength="4" placeholder="Enter new password (min 4 chars)" style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                            </div>
+                            <div class="form-group" style="margin-top:15px">
+                                <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px">Confirm New Password *</label>
+                                <input type="password" id="confirmStudentPass" required minlength="4" placeholder="Confirm new password" style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                            </div>
+                            <button type="submit" class="btn-create" style="width:100%;justify-content:center;margin-top:20px;padding:14px;font-size:.95rem"><i class="fa-solid fa-save"></i> Update Password</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -1740,7 +1767,7 @@
         function showSection(el, sectionId) {
             document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
             el.classList.add('active');
-            const allSections = ['overviewSection','resultsSection','timetableSection','assignmentsSection','messageSection','takeExamSection','examScheduleSection','notificationsSection','paymentSection'];
+            const allSections = ['overviewSection','resultsSection','timetableSection','assignmentsSection','messageSection','takeExamSection','examScheduleSection','notificationsSection','paymentSection','changePasswordSection'];
             allSections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -1807,6 +1834,47 @@
                 img.src = pic;
                 img.style.display = 'block';
                 text.style.display = 'none';
+            }
+        }
+
+        async function changeStudentPassword(e) {
+            e.preventDefault();
+            const currentPass = document.getElementById('currentStudentPass').value;
+            const newPass = document.getElementById('newStudentPass').value;
+            const confirmPass = document.getElementById('confirmStudentPass').value;
+
+            if (newPass !== confirmPass) { alert('New passwords do not match!'); return; }
+            if (newPass.length < 4) { alert('Password must be at least 4 characters!'); return; }
+            if (currentPass === newPass) { alert('New password must be different from current password!'); return; }
+
+            // Verify current password
+            _initSupabase();
+            if (!_supabaseClient) { alert('Cannot connect to server.'); return; }
+
+            try {
+                var userResult = await _supabaseClient.from('users').select('*').eq('id', currentUser.id).maybeSingle();
+                if (userResult.error) throw userResult.error;
+                if (!userResult.data) { alert('User not found.'); return; }
+                if (userResult.data.password !== currentPass) { alert('Current password is incorrect!'); return; }
+
+                // Update password in Supabase
+                var updateResult = await _supabaseClient.from('users').update({password: newPass}).eq('id', currentUser.id);
+                if (updateResult.error) throw updateResult.error;
+
+                // Update localStorage
+                let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+                const userIdx = users.findIndex(u => u.id === currentUser.id);
+                if (userIdx !== -1) {
+                    users[userIdx].password = newPass;
+                    localStorage.setItem('tba_users', JSON.stringify(users));
+                }
+
+                document.getElementById('currentStudentPass').value = '';
+                document.getElementById('newStudentPass').value = '';
+                document.getElementById('confirmStudentPass').value = '';
+                alert('Password changed successfully!');
+            } catch(err) {
+                alert('Failed to change password: ' + (err.message || 'Please try again.'));
             }
         }
 

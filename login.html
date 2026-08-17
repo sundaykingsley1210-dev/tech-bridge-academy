@@ -483,30 +483,136 @@
                     <button onclick="closeResetModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)">&times;</button>
                 </div>
                 <div style="padding:30px">
-                    <p style="color:var(--gray);font-size:.9rem;margin-bottom:20px;text-align:center">Enter your email and select your role. The admin will review your request and reset your password.</p>
-                    <form id="resetForm" onsubmit="handleResetRequest(event)">
-                        <div style="margin-bottom:18px">
-                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">I am a *</label>
-                            <select id="resetRole" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                                <option value="student">Student</option>
-                                <option value="teacher">Teacher</option>
-                            </select>
+                    <div id="resetRequestForm">
+                        <p style="color:var(--gray);font-size:.9rem;margin-bottom:20px;text-align:center">Enter your email and select your role. The admin will review your request before your password can be reset.</p>
+                        <form id="resetForm" onsubmit="handleResetRequest(event)">
+                            <div style="margin-bottom:18px">
+                                <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">I am a *</label>
+                                <select id="resetRole" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                                    <option value="student">Student</option>
+                                    <option value="teacher">Teacher</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom:18px">
+                                <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Your Email *</label>
+                                <input type="email" id="resetEmail" placeholder="Enter your email" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                            </div>
+                            <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-key"></i> Request Password Reset</button>
+                        </form>
+                        <div style="text-align:center;margin-top:15px">
+                            <a onclick="showCheckStatusForm()" style="color:var(--primary);font-size:.85rem;font-weight:600;cursor:pointer">Already have an approved request? Set new password</a>
                         </div>
-                        <div style="margin-bottom:18px">
-                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Your Email *</label>
-                            <input type="email" id="resetEmail" placeholder="Enter your email" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                    </div>
+                    <div id="resetCheckStatus" style="display:none">
+                        <p style="color:var(--gray);font-size:.9rem;margin-bottom:20px;text-align:center">Check your reset request status and set a new password if approved by admin.</p>
+                        <form id="checkStatusForm" onsubmit="handleCheckStatus(event)">
+                            <div style="margin-bottom:18px">
+                                <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">I am a *</label>
+                                <select id="checkRole" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                                    <option value="student">Student</option>
+                                    <option value="teacher">Teacher</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom:18px">
+                                <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Your Email *</label>
+                                <input type="email" id="checkEmail" placeholder="Enter your email" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                            </div>
+                            <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-search"></i> Check Status</button>
+                        </form>
+                        <div id="resetStatusResult" style="margin-top:15px"></div>
+                        <div style="text-align:center;margin-top:15px">
+                            <a onclick="showRequestForm()" style="color:var(--primary);font-size:.85rem;font-weight:600;cursor:pointer">Back to Request Form</a>
                         </div>
-                        <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-key"></i> Request Password Reset</button>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>`);
 
         function showResetModal() {
             document.getElementById('resetPasswordModal').style.display = 'flex';
+            showRequestForm();
         }
         function closeResetModal() {
             document.getElementById('resetPasswordModal').style.display = 'none';
+        }
+        function showRequestForm() {
+            document.getElementById('resetRequestForm').style.display = 'block';
+            document.getElementById('resetCheckStatus').style.display = 'none';
+        }
+        function showCheckStatusForm() {
+            document.getElementById('resetRequestForm').style.display = 'none';
+            document.getElementById('resetCheckStatus').style.display = 'block';
+            document.getElementById('resetStatusResult').innerHTML = '';
+        }
+
+        async function handleCheckStatus(e) {
+            e.preventDefault();
+            const role = document.getElementById('checkRole').value;
+            const email = document.getElementById('checkEmail').value.trim();
+            const resultDiv = document.getElementById('resetStatusResult');
+
+            _initSupabase();
+            if (!_supabaseClient) { alert('Cannot connect to server.'); return; }
+
+            try {
+                var result = await _supabaseClient.from('password_resets').select('*').eq('email', email).eq('role', role).order('created_at', {ascending: false}).limit(1).maybeSingle();
+                if (result.error) throw result.error;
+                if (!result.data) {
+                    resultDiv.innerHTML = '<div style="padding:12px;background:#f8d7da;border-radius:10px;border-left:4px solid #e53e3e"><strong style="color:#721c24"><i class="fa-solid fa-exclamation-circle"></i> No Request Found</strong><p style="margin:5px 0 0;font-size:.85rem;color:#721c24">No reset request found for this email. Please submit a new request.</p></div>';
+                    return;
+                }
+                var req = result.data;
+                if (req.status === 'pending') {
+                    resultDiv.innerHTML = '<div style="padding:12px;background:#fff3cd;border-radius:10px;border-left:4px solid #d69e2e"><strong style="color:#856404"><i class="fa-solid fa-clock"></i> Request Pending</strong><p style="margin:5px 0 0;font-size:.85rem;color:#856404">Your request is waiting for admin approval. Please check back later.</p></div>';
+                } else if (req.status === 'rejected') {
+                    resultDiv.innerHTML = '<div style="padding:12px;background:#f8d7da;border-radius:10px;border-left:4px solid #e53e3e"><strong style="color:#721c24"><i class="fa-solid fa-times-circle"></i> Request Rejected</strong><p style="margin:5px 0 0;font-size:.85rem;color:#721c24">Your reset request was rejected. Please submit a new one.</p></div>';
+                } else if (req.status === 'approved') {
+                    resultDiv.innerHTML = '<div style="padding:12px;background:#d4edda;border-radius:10px;border-left:4px solid #155724"><strong style="color:#155724"><i class="fa-solid fa-check-circle"></i> Request Approved!</strong><p style="margin:5px 0 0;font-size:.85rem;color:#155724">Your request has been approved. You can now log in with the temporary password given to you by the admin, then change it from your dashboard.</p><div style="margin-top:10px"><button onclick="showSetNewPasswordForm(\'' + email + '\',\'' + role + '\')" style="padding:10px 20px;background:var(--gradient);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer"><i class="fa-solid fa-key"></i> Set New Password Now</button></div></div>';
+                }
+            } catch(err) {
+                resultDiv.innerHTML = '<div style="padding:12px;background:#f8d7da;border-radius:10px;border-left:4px solid #e53e3e"><strong style="color:#721c24">Error checking status. Please try again.</strong></div>';
+            }
+        }
+
+        function showSetNewPasswordForm(email, role) {
+            var resultDiv = document.getElementById('resetStatusResult');
+            resultDiv.innerHTML = '<div style="padding:15px;background:#f0f7ff;border-radius:10px;border:1px solid #bfdbfe"><h4 style="margin-bottom:10px;color:var(--primary)"><i class="fa-solid fa-key"></i> Set New Password</h4><form onsubmit="handleSetNewPassword(event,\'' + email + '\',\'' + role + '\')"><div style="margin-bottom:12px"><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">New Password *</label><input type="password" id="newResetPassword" required minlength="4" placeholder="Enter new password (min 4 chars)" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div style="margin-bottom:12px"><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Confirm Password *</label><input type="password" id="confirmResetPassword" required minlength="4" placeholder="Confirm new password" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><button type="submit" style="width:100%;padding:12px;background:var(--gradient);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer"><i class="fa-solid fa-save"></i> Save New Password</button></form></div>';
+        }
+
+        async function handleSetNewPassword(e, email, role) {
+            e.preventDefault();
+            var newPass = document.getElementById('newResetPassword').value;
+            var confirmPass = document.getElementById('confirmResetPassword').value;
+
+            if (newPass !== confirmPass) { alert('Passwords do not match!'); return; }
+            if (newPass.length < 4) { alert('Password must be at least 4 characters!'); return; }
+
+            _initSupabase();
+            if (!_supabaseClient) { alert('Cannot connect to server.'); return; }
+
+            try {
+                var userResult = await _supabaseClient.from('users').select('*').eq('email', email).eq('role', role).maybeSingle();
+                if (userResult.error) throw userResult.error;
+                if (!userResult.data) { alert('User not found.'); return; }
+
+                var updateResult = await _supabaseClient.from('users').update({password: newPass}).eq('id', userResult.data.id);
+                if (updateResult.error) throw updateResult.error;
+
+                // Also update localStorage
+                let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+                const userIdx = users.findIndex(u => u.email === email && u.role === role);
+                if (userIdx !== -1) {
+                    users[userIdx].password = newPass;
+                    localStorage.setItem('tba_users', JSON.stringify(users));
+                }
+
+                // Delete the reset request
+                await _supabaseClient.from('password_resets').delete().eq('email', email).eq('role', role);
+
+                document.getElementById('resetStatusResult').innerHTML = '<div style="padding:12px;background:#d4edda;border-radius:10px;border-left:4px solid #155724"><strong style="color:#155724"><i class="fa-solid fa-check-circle"></i> Password Updated!</strong><p style="margin:5px 0 0;font-size:.85rem;color:#155724">Your password has been changed successfully. You can now log in with your new password.</p></div>';
+            } catch(err) {
+                alert('Failed to update password: ' + (err.message || 'Please try again.'));
+            }
         }
         async function handleResetRequest(e) {
             e.preventDefault();

@@ -199,6 +199,7 @@
                 <li><a onclick="showSection(this, 'examsSection')"><i class="fa-solid fa-pen-to-square"></i> Exams</a></li>
                 <li><a onclick="showSection(this, 'timetableSection')"><i class="fa-solid fa-calendar-days"></i> Timetable</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
+                <li><a onclick="showSection(this, 'teacherChangePasswordSection')"><i class="fa-solid fa-key"></i> Change Password</a></li>
                 <li style="margin-top:auto"><a href="index.html"><i class="fa-solid fa-home"></i> Home</a></li>
                 <li><a onclick="logout()" style="color:#ff6b6b"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
             </ul>
@@ -457,6 +458,32 @@
                             <div id="positionStudentList" style="margin-top:15px"></div>
                             <button id="savePositionBtn" style="display:none;margin-top:15px;background:var(--gradient);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-weight:600;font-size:.9rem;cursor:pointer;width:100%" onclick="saveClassPositions()"><i class="fa-solid fa-save"></i> Save All Positions</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Password Section -->
+            <div id="teacherChangePasswordSection" style="display:none">
+                <div class="card" style="max-width:500px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-key"></i> Change Password</h3>
+                    </div>
+                    <div class="card-body">
+                        <form onsubmit="changeTeacherPassword(event)">
+                            <div class="form-group">
+                                <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px">Current Password *</label>
+                                <input type="password" id="currentTeacherPass" required placeholder="Enter current password" style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                            </div>
+                            <div class="form-group" style="margin-top:15px">
+                                <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px">New Password *</label>
+                                <input type="password" id="newTeacherPass" required minlength="4" placeholder="Enter new password (min 4 chars)" style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                            </div>
+                            <div class="form-group" style="margin-top:15px">
+                                <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px">Confirm New Password *</label>
+                                <input type="password" id="confirmTeacherPass" required minlength="4" placeholder="Confirm new password" style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
+                            </div>
+                            <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:20px"><i class="fa-solid fa-save"></i> Update Password</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -919,7 +946,7 @@
         function showSection(el, sectionId) {
             document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
             el.classList.add('active');
-            const sections = ['overviewSection','assignmentsSection','studentsSection','notificationsSection','examsSection','timetableSection','resultsSection'];
+            const sections = ['overviewSection','assignmentsSection','studentsSection','notificationsSection','examsSection','timetableSection','resultsSection','teacherChangePasswordSection'];
             sections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -962,6 +989,44 @@
                 img.src = pic;
                 img.style.display = 'block';
                 text.style.display = 'none';
+            }
+        }
+
+        async function changeTeacherPassword(e) {
+            e.preventDefault();
+            const currentPass = document.getElementById('currentTeacherPass').value;
+            const newPass = document.getElementById('newTeacherPass').value;
+            const confirmPass = document.getElementById('confirmTeacherPass').value;
+
+            if (newPass !== confirmPass) { alert('New passwords do not match!'); return; }
+            if (newPass.length < 4) { alert('Password must be at least 4 characters!'); return; }
+            if (currentPass === newPass) { alert('New password must be different from current password!'); return; }
+
+            _initSupabase();
+            if (!_supabaseClient) { alert('Cannot connect to server.'); return; }
+
+            try {
+                var userResult = await _supabaseClient.from('users').select('*').eq('id', currentUser.id).maybeSingle();
+                if (userResult.error) throw userResult.error;
+                if (!userResult.data) { alert('User not found.'); return; }
+                if (userResult.data.password !== currentPass) { alert('Current password is incorrect!'); return; }
+
+                var updateResult = await _supabaseClient.from('users').update({password: newPass}).eq('id', currentUser.id);
+                if (updateResult.error) throw updateResult.error;
+
+                let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+                const userIdx = users.findIndex(u => u.id === currentUser.id);
+                if (userIdx !== -1) {
+                    users[userIdx].password = newPass;
+                    localStorage.setItem('tba_users', JSON.stringify(users));
+                }
+
+                document.getElementById('currentTeacherPass').value = '';
+                document.getElementById('newTeacherPass').value = '';
+                document.getElementById('confirmTeacherPass').value = '';
+                alert('Password changed successfully!');
+            } catch(err) {
+                alert('Failed to change password: ' + (err.message || 'Please try again.'));
             }
         }
 
