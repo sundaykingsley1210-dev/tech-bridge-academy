@@ -1921,7 +1921,7 @@
                     </div>
                     ${r.status === 'pending' ? `
                         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-                            <button class="btn-action btn-accept" onclick="approveReset('${r.id}')"><i class="fa-solid fa-check"></i> Approve & Set New Password</button>
+                            <button class="btn-action btn-accept" onclick="approveReset('${r.id}')"><i class="fa-solid fa-check"></i> Approve Reset (Password: 123456)</button>
                             <button class="btn-action btn-reject" onclick="rejectReset('${r.id}')"><i class="fa-solid fa-times"></i> Reject</button>
                         </div>
                     ` : ''}
@@ -1946,15 +1946,8 @@
             }
             if (!req) return;
 
-            const newPassword = prompt('Set new password for ' + req.name + ' (' + req.email + '):\n\nType the new password below:');
-            if (!newPassword || newPassword.trim() === '') {
-                alert('Password cannot be empty. Request not approved.');
-                return;
-            }
-            if (newPassword.length < 4) {
-                alert('Password must be at least 4 characters.');
-                return;
-            }
+            const newPassword = '123456';
+            if (!confirm('Approve password reset for ' + req.name + ' (' + req.email + ')?\n\nTheir new password will be: ' + newPassword)) return;
 
             // Update password in Supabase
             try {
