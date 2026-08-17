@@ -624,13 +624,8 @@
         }
 
         function seedApplications() {
-            // Clear any old seed data from localStorage
-            let apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
-            const hasSeedData = apps.some(a => a.id === 'TBA-001' || a.id === 'TBA-002' || a.id === 'TBA-003');
-            if (hasSeedData) {
-                apps = apps.filter(a => a.id !== 'TBA-001' && a.id !== 'TBA-002' && a.id !== 'TBA-003');
-                localStorage.setItem('tba_applications', JSON.stringify(apps));
-            }
+            // Force clear all old seed data from localStorage
+            localStorage.removeItem('tba_applications');
         }
 
         async function renderApps() {
