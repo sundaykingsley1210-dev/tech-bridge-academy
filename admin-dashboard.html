@@ -2277,7 +2277,19 @@
                 }
             } catch(e) {}
 
-            const masterAdminId = localStorage.getItem('tba_master_admin');
+            // Load master admin from Supabase first
+            let masterAdminId = localStorage.getItem('tba_master_admin');
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var settingsResult = await _supabaseClient.from('settings').select('value').eq('key', 'master_admin').maybeSingle();
+                    if (settingsResult && settingsResult.data && settingsResult.data.value) {
+                        masterAdminId = settingsResult.data.value;
+                        localStorage.setItem('tba_master_admin', masterAdminId);
+                    }
+                }
+            } catch(e) { console.log('Load master admin from Supabase:', e); }
+
             const isMaster = masterAdminId === currentUser.id;
 
             const container = document.getElementById('allAdminsList');
@@ -2343,11 +2355,11 @@
             if (!confirm('Set ' + adminName + ' as the Master Admin?\n\nThe master admin can manage other admin accounts.')) return;
             localStorage.setItem('tba_master_admin', adminId);
 
-            // Save to Supabase
+            // Save to Supabase settings table
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    _supabaseClient.from('settings').upsert({key: 'master_admin', value: adminId}).then(function(){}).catch(function(e){});
+                    _supabaseClient.from('settings').upsert({key: 'master_admin', value: adminId}).then(function(){}).catch(function(e){console.log('Settings save error:',e);});
                 }
             } catch(e) {}
 
