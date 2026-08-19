@@ -196,7 +196,7 @@
                 <li><a onclick="showSection(this, 'assignmentsSection')"><i class="fa-solid fa-book"></i> Assignments</a></li>
                 <li><a onclick="showSection(this, 'studentsSection')"><i class="fa-solid fa-users"></i> Students</a></li>
                 <li><a onclick="showSection(this, 'notificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
-                <li><a onclick="showSection(this, 'teacherMessageSection')"><i class="fa-solid fa-envelope"></i> Message Admin</a></li>
+                <li><a onclick="showSection(this, 'teacherMessageSection')"><i class="fa-solid fa-envelope"></i> Message Admin <span class="notif-badge" id="teacherMsgBadge" style="display:none;background:#ef4444;color:#fff;border-radius:50%;padding:2px 7px;font-size:.7rem;margin-left:5px">0</span></a></li>
                 <li><a onclick="showSection(this, 'examsSection')"><i class="fa-solid fa-pen-to-square"></i> Exams</a></li>
                 <li><a onclick="showSection(this, 'timetableSection')"><i class="fa-solid fa-calendar-days"></i> Timetable</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
@@ -602,7 +602,25 @@
             }).join('');
         }
 
-        function renderAll() { renderAssignments(); renderStudents(); renderSentNotifs(); renderNotifBadge(); renderTimetableList(); renderResultList(); updateStats(); renderTeacherIdCard(); }
+        function renderAll() { renderAssignments(); renderStudents(); renderSentNotifs(); renderNotifBadge(); renderTimetableList(); renderResultList(); updateStats(); renderTeacherIdCard(); checkTeacherMsgBadge(); setInterval(checkTeacherMsgBadge, 30000); }
+
+        async function checkTeacherMsgBadge() {
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('messages').select('id').eq('to_id', currentUser.id).eq('from_role', 'admin');
+                    if (result && result.data) {
+                        var badge = document.getElementById('teacherMsgBadge');
+                        if (result.data.length > 0) {
+                            badge.textContent = result.data.length;
+                            badge.style.display = 'inline';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch(e) {}
+        }
 
         async function renderTeacherIdCard() {
             const profilePic = localStorage.getItem('tba_profile_pic_' + currentUser.id);
@@ -1051,7 +1069,7 @@
             if (sectionId === 'assignmentsSection') renderAssignments();
             if (sectionId === 'studentsSection') renderStudents();
             if (sectionId === 'notificationsSection') { renderSentNotifs(); renderClassCheckboxes(); }
-            if (sectionId === 'teacherMessageSection') renderTeacherMessages();
+            if (sectionId === 'teacherMessageSection') { renderTeacherMessages(); document.getElementById('teacherMsgBadge').style.display = 'none'; }
             if (sectionId === 'examsSection') { renderExamQuestions(); renderExamSubmissions(); }
             if (sectionId === 'timetableSection') renderTimetableList();
             if (sectionId === 'resultsSection') renderResultList();

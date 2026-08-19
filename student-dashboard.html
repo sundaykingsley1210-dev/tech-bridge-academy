@@ -220,7 +220,7 @@
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-line"></i> My Results</a></li>
                 <li><a onclick="showSection(this, 'timetableSection')"><i class="fa-solid fa-calendar"></i> Timetable</a></li>
                 <li><a onclick="showSection(this, 'assignmentsSection')"><i class="fa-solid fa-book"></i> Assignments</a></li>
-                <li><a onclick="showSection(this, 'messageSection')"><i class="fa-solid fa-envelope"></i> Message Admin</a></li>
+                <li><a onclick="showSection(this, 'messageSection')"><i class="fa-solid fa-envelope"></i> Message Admin <span class="notif-badge" id="studentMsgBadge" style="display:none;background:#ef4444;color:#fff;border-radius:50%;padding:2px 7px;font-size:.7rem;margin-left:5px">0</span></a></li>
                 <li><a onclick="showSection(this, 'takeExamSection')"><i class="fa-solid fa-pen-to-square"></i> Take Exam</a></li>
                 <li><a onclick="showSection(this, 'examScheduleSection')"><i class="fa-solid fa-calendar-days"></i> Exam Schedule</a></li>
                 <li><a onclick="showSection(this, 'notificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
@@ -1074,6 +1074,26 @@
             renderIdCard();
             updateStats();
             loadProfilePic();
+            checkStudentMsgBadge();
+            setInterval(checkStudentMsgBadge, 30000);
+        }
+
+        async function checkStudentMsgBadge() {
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('messages').select('id').eq('to_id', currentUser.id).eq('from_role', 'admin');
+                    if (result && result.data) {
+                        var badge = document.getElementById('studentMsgBadge');
+                        if (result.data.length > 0) {
+                            badge.textContent = result.data.length;
+                            badge.style.display = 'inline';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch(e) {}
         }
 
         async function renderResults() {
@@ -1767,7 +1787,7 @@
             if (sectionId === 'takeExamSection') renderAvailableExams();
             if (sectionId === 'examScheduleSection') renderStudentExamSchedule();
             if (sectionId === 'notificationsSection') renderNotifications();
-            if (sectionId === 'messageSection') renderStudentMessages();
+            if (sectionId === 'messageSection') { renderStudentMessages(); document.getElementById('studentMsgBadge').style.display = 'none'; }
         }
 
         function submitPayment(e) {
