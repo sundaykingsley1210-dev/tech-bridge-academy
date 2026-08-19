@@ -2186,33 +2186,24 @@
 
         // ---- Admin Students Section ----
         async function renderAdminStudents() {
-            // Load from Supabase first
+            // Load admitted students from Supabase applications table (matches teacher dashboard)
             let studs = [];
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    var result = await _supabaseClient.from('users').select('*').eq('role', 'student');
+                    var result = await _supabaseClient.from('applications').select('*').eq('status', 'Admitted').order('admitted_at', {ascending: false});
                     if (result && result.data && result.data.length) {
-                        studs = result.data.map(u => ({
-                            id: u.id,
-                            name: u.name,
-                            email: u.email,
-                            role: u.role,
-                            class: u.class,
-                            gender: u.gender,
-                            phone: u.phone,
-                            address: u.address,
-                            password: u.password,
-                            created_at: u.created_at
+                        studs = result.data.map(a => ({
+                            id: a.id,
+                            name: (a.first_name || '') + ' ' + (a.last_name || ''),
+                            email: a.student_email || a.parent_email || '',
+                            role: 'student',
+                            class: a.class_applying || '',
+                            gender: a.gender || '',
+                            phone: a.parent_phone || '',
+                            address: a.address || '',
+                            created_at: a.admitted_at || a.date_submitted
                         }));
-                        // Sync to localStorage
-                        let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
-                        studs.forEach(s => {
-                            const idx = users.findIndex(u => u.id === s.id);
-                            if (idx !== -1) users[idx] = s;
-                            else users.push(s);
-                        });
-                        localStorage.setItem('tba_users', JSON.stringify(users));
                     }
                 }
             } catch(e) { console.log('Load students from Supabase:', e); }
