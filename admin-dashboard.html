@@ -1034,15 +1034,34 @@
             renderApprovedList();
         }
 
-        function renderApprovedList() {
-            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
-            const approved = apps.filter(a => a.status === 'Approved');
+        async function renderApprovedList() {
+            // Load from Supabase first
+            let apps = [];
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('applications').select('*').eq('status', 'Approved').order('date_submitted', {ascending: false});
+                    if (result && result.data && result.data.length) {
+                        apps = result.data.map(a => ({
+                            id: a.id, refNumber: a.ref_number || a.id, firstName: a.first_name, lastName: a.last_name,
+                            dob: a.dob, gender: a.gender, classApplying: a.class_applying, prevSchool: a.prev_school,
+                            parentName: a.parent_name, relationship: a.relationship, parentPhone: a.parent_phone,
+                            parentEmail: a.parent_email, address: a.address, studentEmail: a.student_email,
+                            studentPassword: a.student_password, dateSubmitted: a.date_submitted, status: a.status,
+                            approvedAt: a.approved_at
+                        }));
+                    }
+                }
+            } catch(e) { console.log('Load approved from Supabase:', e); }
+            if (!apps.length) {
+                apps = JSON.parse(localStorage.getItem('tba_applications') || '[]').filter(a => a.status === 'Approved');
+            }
             const container = document.getElementById('approvedList');
 
-            let filtered = approved;
+            let filtered = apps;
             if (approvedSearchQuery.trim()) {
                 const q = approvedSearchQuery.toLowerCase();
-                filtered = approved.filter(a =>
+                filtered = apps.filter(a =>
                     (a.firstName + ' ' + a.lastName).toLowerCase().includes(q) ||
                     (a.parentName || '').toLowerCase().includes(q) ||
                     (a.parentPhone || '').toLowerCase().includes(q) ||
@@ -1087,9 +1106,27 @@
             `).join('');
         }
 
-        function renderAdmittedList() {
-            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
-            const admitted = apps.filter(a => a.status === 'Admitted');
+        async function renderAdmittedList() {
+            // Load from Supabase first
+            let apps = [];
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('applications').select('*').eq('status', 'Admitted').order('admitted_at', {ascending: false});
+                    if (result && result.data && result.data.length) {
+                        apps = result.data.map(a => ({
+                            id: a.id, refNumber: a.ref_number || a.id, firstName: a.first_name, lastName: a.last_name,
+                            dob: a.dob, gender: a.gender, classApplying: a.class_applying,
+                            parentName: a.parent_name, parentPhone: a.parent_phone,
+                            dateSubmitted: a.date_submitted, status: a.status, admittedAt: a.admitted_at
+                        }));
+                    }
+                }
+            } catch(e) { console.log('Load admitted from Supabase:', e); }
+            if (!apps.length) {
+                apps = JSON.parse(localStorage.getItem('tba_applications') || '[]').filter(a => a.status === 'Admitted');
+            }
+            const admitted = apps;
             const container = document.getElementById('admittedList');
 
             if (admitted.length === 0) {
