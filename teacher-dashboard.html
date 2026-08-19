@@ -800,7 +800,8 @@
                             gender: u.gender,
                             phone: u.phone,
                             address: u.address,
-                            password: u.password
+                            password: u.password,
+                            created_at: u.created_at
                         }));
                         // Sync to localStorage for offline use
                         let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
@@ -862,6 +863,7 @@
                     html += '</div>';
                     html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #f1f3f5">';
                     html += '<span style="font-size:.8rem;color:var(--gray)"><i class="fa-solid fa-envelope" style="margin-right:4px"></i>'+(s.email||'No email')+'</span>';
+                    html += '<span style="font-size:.75rem;color:var(--gray)"><i class="fa-solid fa-calendar" style="margin-right:3px"></i>'+(s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A')+'</span>';
                     if (avg !== null) html += '<span style="font-size:.85rem;font-weight:700;color:'+avgColor+'">'+avg+'% avg</span>';
                     html += '</div>';
                     html += '</div>';

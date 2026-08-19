@@ -2034,9 +2034,44 @@
         }
 
         // ---- Admin Students Section ----
-        function renderAdminStudents() {
-            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
-            const studs = users.filter(u => u.role==='student');
+        async function renderAdminStudents() {
+            // Load from Supabase first
+            let studs = [];
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('users').select('*').eq('role', 'student');
+                    if (result && result.data && result.data.length) {
+                        studs = result.data.map(u => ({
+                            id: u.id,
+                            name: u.name,
+                            email: u.email,
+                            role: u.role,
+                            class: u.class,
+                            gender: u.gender,
+                            phone: u.phone,
+                            address: u.address,
+                            password: u.password,
+                            created_at: u.created_at
+                        }));
+                        // Sync to localStorage
+                        let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+                        studs.forEach(s => {
+                            const idx = users.findIndex(u => u.id === s.id);
+                            if (idx !== -1) users[idx] = s;
+                            else users.push(s);
+                        });
+                        localStorage.setItem('tba_users', JSON.stringify(users));
+                    }
+                }
+            } catch(e) { console.log('Load students from Supabase:', e); }
+
+            // Fallback to localStorage
+            if (!studs.length) {
+                const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
+                studs = users.filter(u => u.role==='student');
+            }
+
             const filter = document.getElementById('adminClassFilter').value;
             const c = document.getElementById('adminStudentsByClass');
             if (!studs.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-users"></i><p>No students yet</p></div>'; return; }
@@ -2079,6 +2114,7 @@
                     html += '</div>';
                     html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #f1f3f5">';
                     html += '<span style="font-size:.8rem;color:var(--gray)"><i class="fa-solid fa-envelope" style="margin-right:4px"></i>'+(s.email||'No email')+'</span>';
+                    html += '<span style="font-size:.75rem;color:var(--gray)"><i class="fa-solid fa-calendar" style="margin-right:3px"></i>'+(s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A')+'</span>';
                     if (avg !== null) html += '<span style="font-size:.85rem;font-weight:700;color:'+avgColor+'">'+avg+'% avg</span>';
                     html += '</div>';
                     html += '</div>';
