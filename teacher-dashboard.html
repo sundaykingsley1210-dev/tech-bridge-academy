@@ -823,7 +823,18 @@
 
             const filter = document.getElementById('teacherClassFilter').value;
             const c = document.getElementById('studentsByClass');
-            document.getElementById('totalStudents').textContent = studs.length;
+
+            // Count total applications from Supabase to match admin dashboard
+            let totalApps = studs.length;
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var appResult = await _supabaseClient.from('applications').select('id');
+                    if (appResult && appResult.data) totalApps = appResult.data.length;
+                }
+            } catch(e) {}
+            document.getElementById('totalStudents').textContent = totalApps;
+
             if (!studs.length) { c.innerHTML = '<div class="no-data"><i class="fa-solid fa-users"></i><p>No students yet</p></div>'; return; }
 
             const allClasses = ['JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'];
