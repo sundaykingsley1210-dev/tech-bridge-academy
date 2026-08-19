@@ -380,16 +380,6 @@
                             </div>
                         </div>
 
-                        <p class="form-section-title" style="margin-top: 25px;">Student Photo</p>
-                        <div class="form-group" style="max-width:350px">
-                            <div id="photoPreview" style="width:120px;height:120px;border-radius:50%;background:#f0f0f0;border:3px dashed #ccc;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 auto 12px;overflow:hidden" onclick="document.getElementById('studentPhoto').click()">
-                                <i class="fa-solid fa-camera" style="font-size:1.8rem;color:#999" id="photoPlaceholder"></i>
-                                <img id="photoImg" style="display:none;width:100%;height:100%;object-fit:cover" alt="Student Photo">
-                            </div>
-                            <input type="file" id="studentPhoto" accept="image/*" style="display:none" onchange="previewPhoto(event)">
-                            <p style="text-align:center;font-size:.8rem;color:var(--gray)">Upload a passport photograph (optional)</p>
-                        </div>
-
                         <button type="submit" class="btn-submit">
                             <i class="fa-solid fa-paper-plane"></i> Submit Application
                         </button>
@@ -486,7 +476,6 @@
                 address: document.getElementById('address').value,
                 studentEmail: document.getElementById('studentEmail').value,
                 studentPassword: document.getElementById('studentPassword').value,
-                photo: _studentPhotoData || '',
                 dateSubmitted: new Date().toISOString(),
                 status: 'Pending'
             };
@@ -515,7 +504,6 @@
                     address: application.address,
                     student_email: application.studentEmail,
                     student_password: application.studentPassword,
-                    photo: application.photo || null,
                     date_submitted: application.dateSubmitted,
                     status: application.status
                 }).then(function(result) {
@@ -558,33 +546,6 @@
 
         function closeSuccess() {
             document.getElementById('successOverlay').classList.remove('active');
-        }
-
-        var _studentPhotoData = '';
-        function previewPhoto(e) {
-            var file = e.target.files[0];
-            if (!file) return;
-            if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
-            if (file.size > 5 * 1024 * 1024) { alert('Photo must be under 5MB'); return; }
-            var reader = new FileReader();
-            reader.onload = function(ev) {
-                var img = new Image();
-                img.onload = function() {
-                    var canvas = document.createElement('canvas');
-                    var size = 200;
-                    var w = img.width, h = img.height;
-                    if (w > h) { h = Math.round(h * size / w); w = size; }
-                    else { w = Math.round(w * size / h); h = size; }
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    _studentPhotoData = canvas.toDataURL('image/jpeg', 0.7);
-                    document.getElementById('photoImg').src = _studentPhotoData;
-                    document.getElementById('photoImg').style.display = 'block';
-                    document.getElementById('photoPlaceholder').style.display = 'none';
-                };
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(file);
         }
 
         function toggleAdmissionPassword() {
