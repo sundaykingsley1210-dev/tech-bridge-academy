@@ -1004,7 +1004,13 @@
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    var result = await _supabaseClient.from('messages').select('*').or('from_id.eq.'+currentUser.id+',to_id.eq.'+currentUser.id).order('created_at', {ascending: false});
+                    // Get all user IDs for this student's email
+                    var userResult = await _supabaseClient.from('users').select('id').eq('email', currentUser.email).eq('role', 'student');
+                    var myIds = userResult && userResult.data ? userResult.data.map(u => u.id) : [];
+                    myIds.push(currentUser.id);
+                    // Get messages sent by or to any of this student's IDs
+                    var idFilter = myIds.map(id => 'from_id.eq.'+id+',to_id.eq.'+id).join(',');
+                    var result = await _supabaseClient.from('messages').select('*').or(idFilter).order('created_at', {ascending: false});
                     if (result && result.data && result.data.length) {
                         messages = result.data;
                     }
@@ -1015,7 +1021,7 @@
                 return;
             }
             c.innerHTML = messages.map(m => {
-                const isFromMe = m.from_id === currentUser.id;
+                const isFromMe = m.from_id === currentUser.id || (m.from_role === 'student' && m.from_id !== currentUser.id && myIds.includes(m.from_id));
                 const bgColor = isFromMe ? '#f0f7ff' : '#f0fdf4';
                 const borderColor = isFromMe ? '#3b82f6' : '#22c55e';
                 const label = isFromMe ? '<strong style="color:#3b82f6"><i class="fa-solid fa-paper-plane"></i> Sent to Admin</strong>' : '<strong style="color:#22c55e"><i class="fa-solid fa-reply"></i> Admin Reply</strong>';

@@ -579,10 +579,15 @@
             const c = document.getElementById('teacherMessages');
             if (!c) return;
             let messages = [];
+            let myIds = [];
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    var result = await _supabaseClient.from('messages').select('*').or('from_id.eq.'+currentUser.id+',to_id.eq.'+currentUser.id).order('created_at', {ascending: false});
+                    var userResult = await _supabaseClient.from('users').select('id').eq('email', currentUser.email).eq('role', 'teacher');
+                    myIds = userResult && userResult.data ? userResult.data.map(u => u.id) : [];
+                    myIds.push(currentUser.id);
+                    var idFilter = myIds.map(id => 'from_id.eq.'+id+',to_id.eq.'+id).join(',');
+                    var result = await _supabaseClient.from('messages').select('*').or(idFilter).order('created_at', {ascending: false});
                     if (result && result.data && result.data.length) {
                         messages = result.data;
                     }
@@ -593,12 +598,11 @@
                 return;
             }
             c.innerHTML = messages.map(m => {
-                const isFromMe = m.from_id === currentUser.id;
+                const isFromMe = m.from_id === currentUser.id || (m.from_role === 'teacher' && myIds.includes(m.from_id));
                 const bgColor = isFromMe ? '#f0f7ff' : '#f0fdf4';
                 const borderColor = isFromMe ? '#3b82f6' : '#22c55e';
                 const label = isFromMe ? '<strong style="color:#3b82f6"><i class="fa-solid fa-paper-plane"></i> Sent to Admin</strong>' : '<strong style="color:#22c55e"><i class="fa-solid fa-reply"></i> Admin Reply</strong>';
-                const replyHtml = !isFromMe ? '<div style="margin-top:8px;padding:8px;background:#f0fdf4;border-radius:6px;border-left:3px solid #22c55e"><strong style="color:#22c55e;font-size:.8rem"><i class="fa-solid fa-reply"></i> Admin Reply:</strong><p style="margin:4px 0 0;font-size:.85rem">'+m.message+'</p></div>' : '';
-                return '<div style="padding:12px;background:'+bgColor+';border-radius:8px;border-left:4px solid '+borderColor+';margin-bottom:10px">'+label+'<p style="margin:6px 0 0;font-size:.9rem">'+(isFromMe ? m.message : '')+'</p><p style="margin:4px 0 0;font-size:.75rem;color:var(--gray)">'+new Date(m.created_at).toLocaleString()+'</p>'+(!isFromMe ? replyHtml : '')+'</div>';
+                return '<div style="padding:12px;background:'+bgColor+';border-radius:8px;border-left:4px solid '+borderColor+';margin-bottom:10px">'+label+'<p style="margin:6px 0 0;font-size:.9rem">'+m.message+'</p><p style="margin:4px 0 0;font-size:.75rem;color:var(--gray)">'+new Date(m.created_at).toLocaleString()+'</p></div>';
             }).join('');
         }
 
