@@ -608,11 +608,15 @@
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    var result = await _supabaseClient.from('messages').select('id').eq('to_id', currentUser.id).eq('from_role', 'admin');
+                    var result = await _supabaseClient.from('messages').select('id,from_role,to_id,from_id').eq('from_role', 'admin');
                     if (result && result.data) {
+                        var userResult = await _supabaseClient.from('users').select('id').eq('email', currentUser.email).eq('role', 'teacher');
+                        var myIds = userResult && userResult.data ? userResult.data.map(u => u.id) : [];
+                        myIds.push(currentUser.id);
+                        var myMsgs = result.data.filter(m => myIds.includes(m.to_id));
                         var badge = document.getElementById('teacherMsgBadge');
-                        if (result.data.length > 0) {
-                            badge.textContent = result.data.length;
+                        if (myMsgs.length > 0) {
+                            badge.textContent = myMsgs.length;
                             badge.style.display = 'inline';
                         } else {
                             badge.style.display = 'none';
