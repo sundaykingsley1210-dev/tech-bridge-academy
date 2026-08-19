@@ -1876,14 +1876,24 @@
                 }
             } catch(e) { console.log('Load users for messaging:', e); }
 
-            // Load messages from Supabase
+            // Load messages with sender info
             var messages = [];
             try {
                 _initSupabase();
                 if (_supabaseClient) {
                     var result = await _supabaseClient.from('messages').select('*').order('created_at', {ascending: false});
                     if (result && result.data && result.data.length) {
-                        messages = result.data;
+                        // Fetch sender details for each unique from_id
+                        var senderIds = [...new Set(result.data.map(m => m.from_id).filter(Boolean))];
+                        var senders = {};
+                        for (var sid of senderIds) {
+                            var senderResult = await _supabaseClient.from('users').select('id,name,email,role,class,phone,gender,address').eq('id', sid).maybeSingle();
+                            if (senderResult && senderResult.data) senders[sid] = senderResult.data;
+                        }
+                        messages = result.data.map(m => ({
+                            ...m,
+                            senderInfo: senders[m.from_id] || null
+                        }));
                     }
                 }
             } catch(e) { console.log('Load admin messages from Supabase:', e); }
@@ -1897,7 +1907,15 @@
                 const isFromAdmin = m.from_role === 'admin';
                 const roleIcon = m.from_role === 'teacher' ? 'fa-chalkboard-user' : m.from_role === 'admin' ? 'fa-user-shield' : 'fa-user-graduate';
                 const roleColor = m.from_role === 'teacher' ? '#8b5cf6' : m.from_role === 'admin' ? '#3b82f6' : '#22c55e';
-                const direction = isFromAdmin ? 'Sent to: ' + (m.to_id ? m.to_id.substring(0,8)+'...' : 'admin') : 'From: ' + m.from_name;
+                const s = m.senderInfo;
+                const infoHtml = s && !isFromAdmin ? `
+                    <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--gray)">
+                        <span><i class="fa-solid fa-envelope" style="margin-right:4px"></i>${s.email || 'N/A'}</span>
+                        ${s.class ? '<span><i class="fa-solid fa-layer-group" style="margin-right:4px"></i>' + s.class + '</span>' : ''}
+                        ${s.phone ? '<span><i class="fa-solid fa-phone" style="margin-right:4px"></i>' + s.phone + '</span>' : ''}
+                        ${s.gender ? '<span><i class="fa-solid fa-venus-mars" style="margin-right:4px"></i>' + s.gender + '</span>' : ''}
+                        ${s.address ? '<span><i class="fa-solid fa-location-dot" style="margin-right:4px"></i>' + s.address + '</span>' : ''}
+                    </div>` : '';
                 return `
                 <div class="app-item" style="border-left-color:${roleColor}">
                     <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
@@ -1912,6 +1930,7 @@
                             <button class="btn-delete" onclick="deleteMessage('${m.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
+                    ${infoHtml}
                     <div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:8px;border-left:3px solid ${roleColor}">
                         <p style="font-size:.9rem;color:var(--dark);margin:0">${m.message}</p>
                     </div>
