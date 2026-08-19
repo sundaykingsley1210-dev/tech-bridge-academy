@@ -205,7 +205,7 @@
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
                 <li><a onclick="showSection(this, 'adminStudentsSection')"><i class="fa-solid fa-users"></i> Students</a></li>
                 <li><a onclick="showSection(this, 'adminTeachersSection')"><i class="fa-solid fa-chalkboard-user"></i> Teachers</a></li>
-                <li><a onclick="showSection(this, 'adminMessagesSection')"><i class="fa-solid fa-envelope"></i> Messages <span class="notif-badge" id="adminMsgBadge" style="display:none;background:#ef4444;color:#fff;border-radius:50%;padding:2px 7px;font-size:.7rem;margin-left:5px">0</span></a></li>
+                <li><a onclick="showSection(this, 'adminMessagesSection')"><i class="fa-solid fa-envelope"></i> Messages <span class="notif-badge" id="adminMsgBadge" style="display:none;background:#ef4444;color:#fff;border-radius:50%;padding:4px 10px;font-size:.85rem;font-weight:700;margin-left:5px;min-width:22px;text-align:center">0</span></a></li>
                 <li><a onclick="showSection(this, 'adminNotificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
                 <li><a onclick="showSection(this, 'resetsSection')"><i class="fa-solid fa-key"></i> Password Resets</a></li>
                 <li><a onclick="showSection(this, 'allAdminsSection')"><i class="fa-solid fa-user-shield"></i> All Admins</a></li>
@@ -808,6 +808,7 @@
                 <div class="detail-grid">
                     <div class="detail-item"><label>Full Name</label><p>${parentName}</p></div>
                     <div class="detail-item"><label>Relationship</label><p>${a.relationship}</p></div>
+                    <div class="detail-item"><label>Occupation</label><p>${a.parent_occupation || 'N/A'}</p></div>
                     <div class="detail-item"><label>Phone</label><p>${parentPhone}</p></div>
                     <div class="detail-item"><label>Email</label><p>${parentEmail}</p></div>
                 </div>

@@ -350,10 +350,17 @@
                                 <span class="error-message">Valid email is required</span>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Home Address *</label>
-                            <textarea id="address" rows="3" required></textarea>
-                            <span class="error-message">Address is required</span>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Parent Occupation *</label>
+                                <input type="text" id="parentOccupation" placeholder="e.g. Engineer, Teacher, Business" required>
+                                <span class="error-message">Parent occupation is required</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Home Address *</label>
+                                <textarea id="address" rows="3" required></textarea>
+                                <span class="error-message">Address is required</span>
+                            </div>
                         </div>
 
                         <p class="form-section-title" style="margin-top: 25px;">Login Details (for Student Portal)</p>
@@ -462,6 +469,7 @@
                 classApplying: document.getElementById('classApplying').value,
                 prevSchool: document.getElementById('prevSchool').value,
                 parentName: document.getElementById('parentName').value,
+                parentOccupation: document.getElementById('parentOccupation').value,
                 relationship: document.getElementById('relationship').value,
                 parentPhone: document.getElementById('parentPhone').value,
                 parentEmail: document.getElementById('parentEmail').value,
@@ -489,6 +497,7 @@
                     class_applying: application.classApplying,
                     prev_school: application.prevSchool,
                     parent_name: application.parentName,
+                    parent_occupation: application.parentOccupation,
                     relationship: application.relationship,
                     parent_phone: application.parentPhone,
                     parent_email: application.parentEmail,
