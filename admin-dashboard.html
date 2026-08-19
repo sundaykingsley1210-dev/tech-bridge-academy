@@ -965,38 +965,59 @@
             alert(a.firstName + ' ' + a.lastName + ' has been admitted!\nStudent ID: ' + newId + '\nLogin: ' + loginEmail);
         }
 
-        function deleteAdmittedStudent(appId, studentName) {
+        async function deleteAdmittedStudent(appId, studentName) {
             if (!confirm('Remove ' + studentName + ' from admitted list?\n\nThis will also remove their student account.')) return;
 
-            // Remove from applications
-            let apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
-            const app = apps.find(a => a.id === appId);
-            apps = apps.filter(a => a.id !== appId);
-            localStorage.setItem('tba_applications', JSON.stringify(apps));
-
-            // Remove student account from users
-            if (app) {
-                let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
-                const student = users.find(u => u.email === (app.studentEmail || app.parentEmail) && u.role === 'student');
-                if (student) {
-                    // Delete from Supabase
-                    try { DB.deleteUser(student.id); } catch(e) {}
-                    users = users.filter(u => u.id !== student.id);
-                    localStorage.setItem('tba_users', JSON.stringify(users));
-                    localStorage.removeItem('tba_student_results_' + student.id);
-                    localStorage.removeItem('tba_profile_pic_' + student.id);
+            // Find the application to get student info
+            let app = null;
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('applications').select('*').eq('id', appId).maybeSingle();
+                    if (result && result.data) app = result.data;
                 }
+            } catch(e) {}
+            if (!app) {
+                const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+                app = apps.find(a => a.id === appId);
             }
 
             // Delete from Supabase applications
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    _supabaseClient.from('applications').delete().eq('id', appId).then(function(){}).catch(function(e){});
+                    await _supabaseClient.from('applications').delete().eq('id', appId);
                 }
-            } catch(e) {}
+            } catch(e) { console.log('Supabase app delete error:', e); }
+
+            // Remove from localStorage applications
+            let apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            apps = apps.filter(a => a.id !== appId);
+            localStorage.setItem('tba_applications', JSON.stringify(apps));
+
+            // Remove student account from Supabase users
+            if (app) {
+                const studentEmail = app.student_email || app.studentEmail || app.parent_email || app.parentEmail;
+                try {
+                    _initSupabase();
+                    if (_supabaseClient) {
+                        var userResult = await _supabaseClient.from('users').select('id').eq('email', studentEmail).eq('role', 'student').maybeSingle();
+                        if (userResult && userResult.data) {
+                            await _supabaseClient.from('users').delete().eq('id', userResult.data.id);
+                            // Clean up localStorage
+                            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+                            users = users.filter(u => u.id !== userResult.data.id);
+                            localStorage.setItem('tba_users', JSON.stringify(users));
+                            localStorage.removeItem('tba_student_results_' + userResult.data.id);
+                            localStorage.removeItem('tba_profile_pic_' + userResult.data.id);
+                        }
+                    }
+                } catch(e) { console.log('Supabase user delete error:', e); }
+            }
 
             renderAdmittedList();
+            renderAdminStudents();
+            renderApps();
             updateStats();
             alert(studentName + ' has been removed.');
         }
@@ -2409,20 +2430,50 @@
             openAdminStudentProfile(studentId);
         }
 
-        function deleteStudentAccount(studentId, studentName) {
+        async function deleteStudentAccount(studentId, studentName) {
             if (!confirm('Are you sure you want to REMOVE ' + studentName + ' from the school?\n\nThis action will:\n- Delete the student account\n- Remove all results, submissions, and payment records\n\nThis cannot be undone!')) return;
             if (!confirm('FINAL CONFIRMATION: Delete ' + studentName + '? Type OK to confirm.')) return;
 
-            // Remove from users
+            // Find student info before removing
             let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
             const student = users.find(u => u.id === studentId);
+
+            // Remove from Supabase applications (match by student name)
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    // Find matching application by student_email or name
+                    var appResult = await _supabaseClient.from('applications').select('*').eq('status', 'Admitted');
+                    if (appResult && appResult.data) {
+                        for (var app of appResult.data) {
+                            var appStudentEmail = app.student_email || '';
+                            var appStudentName = ((app.first_name || '') + ' ' + (app.last_name || '')).trim();
+                            var studentEmail = student ? student.email : '';
+                            if (appStudentEmail === studentEmail || appStudentName === studentName.trim()) {
+                                await _supabaseClient.from('applications').delete().eq('id', app.id);
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch(e) { console.log('Supabase application delete error:', e); }
+
+            // Remove from localStorage applications
+            let apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            apps = apps.filter(a => !(a.status === 'Admitted' && ((a.firstName || '') + ' ' + (a.lastName || '')).trim() === studentName.trim()));
+            localStorage.setItem('tba_applications', JSON.stringify(apps));
+
+            // Remove from Supabase users
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    await _supabaseClient.from('users').delete().eq('id', studentId);
+                }
+            } catch(e) { console.log('Supabase user delete error:', e); }
+
+            // Remove from localStorage users
             users = users.filter(u => u.id !== studentId);
             localStorage.setItem('tba_users', JSON.stringify(users));
-
-            // Remove from applications (admitted)
-            let apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
-            apps = apps.filter(a => !(a.status === 'Admitted' && a.firstName + ' ' + a.lastName === studentName));
-            localStorage.setItem('tba_applications', JSON.stringify(apps));
 
             // Clean up student data
             localStorage.removeItem('tba_student_results_' + studentId);
@@ -2459,14 +2510,13 @@
                 }
             }
 
-            // Delete from Supabase
-            try { DB.deleteUser(studentId); } catch(e) { console.log('Supabase delete error:', e); }
-
             // Close modal if open
             closeModal('adminStudentProfileModal');
 
             renderAdminStudents();
-            renderAdminTeachers();
+            renderApps();
+            renderAdmittedList();
+            updateStats();
             alert(studentName + ' has been removed from the school.');
         }
 
