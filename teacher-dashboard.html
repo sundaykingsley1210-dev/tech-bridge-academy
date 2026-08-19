@@ -835,13 +835,9 @@
                 classStudents.forEach(s => {
                     const initials = s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
                     const results = JSON.parse(localStorage.getItem('tba_student_results_'+s.id)||'[]');
-                    const classResults = JSON.parse(localStorage.getItem('tba_results_'+s.class)||'[]');
-                    let allResults = [...results];
-                    const keys = results.map(r=>r.subject+'|'+r.term);
-                    classResults.forEach(r => { if(!keys.includes(r.subject+'|'+(r.term||'First Term'))) allResults.push({...r,term:r.term||'First Term'}); });
                     const examSubs = JSON.parse(localStorage.getItem('tba_exam_submissions')||'[]').filter(x=>x.studentId===s.id);
                     let subjectMap = {};
-                    allResults.forEach(r => { if(r.total){ if(!subjectMap[r.subject]) subjectMap[r.subject]={}; subjectMap[r.subject][r.term]=r.total; }});
+                    results.forEach(r => { if(r.total){ if(!subjectMap[r.subject]) subjectMap[r.subject]={}; subjectMap[r.subject][r.term]=r.total; }});
                     let avgs = [];
                     Object.values(subjectMap).forEach(t => { const v=Object.values(t); if(v.length) avgs.push(Math.round(v.reduce((a,b)=>a+b,0)/v.length)); });
                     examSubs.forEach(x => { if(x.totalMarks) avgs.push(Math.round((x.score/x.totalMarks)*100)); });
