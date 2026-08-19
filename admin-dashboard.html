@@ -638,6 +638,7 @@
                     if (result && result.data && result.data.length) {
                         apps = result.data.map(a => ({
                             id: a.id,
+                            refNumber: a.ref_number || a.id,
                             firstName: a.first_name,
                             lastName: a.last_name,
                             dob: a.dob,
@@ -649,6 +650,8 @@
                             parentPhone: a.parent_phone,
                             parentEmail: a.parent_email,
                             address: a.address,
+                            studentEmail: a.student_email,
+                            studentPassword: a.student_password,
                             dateSubmitted: a.date_submitted,
                             status: a.status
                         }));
@@ -710,9 +713,10 @@
                         <div>
                             <h4>${a.firstName} ${a.lastName}</h4>
                             <div class="meta">
+                                <span><i class="fa-solid fa-hashtag"></i> ${a.refNumber || a.id}</span>
                                 <span><i class="fa-solid fa-layer-group"></i> ${a.classApplying}</span>
                                 <span><i class="fa-solid fa-venus-mars"></i> ${a.gender}</span>
-                                <span><i class="fa-solid fa-calendar"></i> ${new Date(a.dateSubmitted).toLocaleDateString()}</span>
+                                <span><i class="fa-solid fa-calendar"></i> ${a.dateSubmitted ? new Date(a.dateSubmitted).toLocaleDateString() : 'N/A'}</span>
                             </div>
                         </div>
                         <span class="status-badge ${sc}">${a.status}</span>
@@ -726,27 +730,46 @@
             }).join('');
         }
 
-        function viewApp(id) {
-            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
-            const a = apps.find(x => x.id === id);
+        async function viewApp(id) {
+            let a = null;
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('applications').select('*').eq('id', id).maybeSingle();
+                    if (result && result.data) a = result.data;
+                }
+            } catch(e) {}
+            if (!a) {
+                const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+                a = apps.find(x => x.id === id);
+            }
             if (!a) return;
+            const ref = a.ref_number || a.id;
+            const firstName = a.first_name || a.firstName;
+            const lastName = a.last_name || a.lastName;
+            const classApplying = a.class_applying || a.classApplying;
+            const prevSchool = a.prev_school || a.prevSchool;
+            const parentName = a.parent_name || a.parentName;
+            const parentPhone = a.parent_phone || a.parentPhone;
+            const parentEmail = a.parent_email || a.parentEmail;
+            const dateSubmitted = a.date_submitted || a.dateSubmitted;
             document.getElementById('viewModalBody').innerHTML = `
                 <div class="detail-grid">
-                    <div class="detail-item"><label>Reference</label><p>${a.id}</p></div>
+                    <div class="detail-item"><label>Reference</label><p>${ref}</p></div>
                     <div class="detail-item"><label>Status</label><p>${a.status}</p></div>
-                    <div class="detail-item"><label>Student Name</label><p>${a.firstName} ${a.lastName}</p></div>
+                    <div class="detail-item"><label>Student Name</label><p>${firstName} ${lastName}</p></div>
                     <div class="detail-item"><label>Date of Birth</label><p>${a.dob}</p></div>
                     <div class="detail-item"><label>Gender</label><p>${a.gender}</p></div>
-                    <div class="detail-item"><label>Class Applying</label><p>${a.classApplying}</p></div>
-                    <div class="detail-item"><label>Previous School</label><p>${a.prevSchool||'N/A'}</p></div>
-                    <div class="detail-item"><label>Date Applied</label><p>${new Date(a.dateSubmitted).toLocaleString()}</p></div>
+                    <div class="detail-item"><label>Class Applying</label><p>${classApplying}</p></div>
+                    <div class="detail-item"><label>Previous School</label><p>${prevSchool||'N/A'}</p></div>
+                    <div class="detail-item"><label>Date Applied</label><p>${dateSubmitted ? new Date(dateSubmitted).toLocaleString() : 'N/A'}</p></div>
                 </div>
                 <h4 style="margin-bottom:12px;color:var(--dark)"><i class="fa-solid fa-user"></i> Parent Info</h4>
                 <div class="detail-grid">
-                    <div class="detail-item"><label>Full Name</label><p>${a.parentName}</p></div>
+                    <div class="detail-item"><label>Full Name</label><p>${parentName}</p></div>
                     <div class="detail-item"><label>Relationship</label><p>${a.relationship}</p></div>
-                    <div class="detail-item"><label>Phone</label><p>${a.parentPhone}</p></div>
-                    <div class="detail-item"><label>Email</label><p>${a.parentEmail}</p></div>
+                    <div class="detail-item"><label>Phone</label><p>${parentPhone}</p></div>
+                    <div class="detail-item"><label>Email</label><p>${parentEmail}</p></div>
                 </div>
                 <div class="detail-item" style="margin-top:12px"><label>Address</label><p>${a.address}</p></div>
             `;
@@ -766,43 +789,90 @@
             }).then(function() {}).catch(function() {});
         }
 
-        function approveApp(id) {
-            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
-            const a = apps.find(x => x.id === id);
+        async function approveApp(id) {
+            // Load from Supabase
+            let a = null;
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('applications').select('*').eq('id', id).maybeSingle();
+                    if (result && result.data) a = result.data;
+                }
+            } catch(e) {}
+            if (!a) {
+                const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+                a = apps.find(x => x.id === id);
+            }
             if (!a) return;
+            const appName = (a.first_name || a.firstName) + ' ' + (a.last_name || a.lastName);
+            const parentEmail = a.parent_email || a.parentEmail;
 
-            if (!confirm('Approve ' + a.firstName + ' ' + a.lastName + '\'s application?')) return;
+            if (!confirm('Approve ' + appName + '\'s application?')) return;
 
+            // Update Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    await _supabaseClient.from('applications').update({status: 'Approved', approved_at: new Date().toISOString()}).eq('id', id);
+                }
+            } catch(e) { console.log('Approve error:', e); }
+
+            // Update localStorage
+            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
             const idx = apps.findIndex(x => x.id === id);
-            apps[idx].status = 'Approved';
-            apps[idx].approvedAt = new Date().toISOString();
-            localStorage.setItem('tba_applications', JSON.stringify(apps));
-            try { DB.updateApplicationStatus(id, 'Approved'); } catch(e) {}
+            if (idx !== -1) {
+                apps[idx].status = 'Approved';
+                apps[idx].approvedAt = new Date().toISOString();
+                localStorage.setItem('tba_applications', JSON.stringify(apps));
+            }
 
-            sendEmail(a.parentEmail, '[TBA] Application Approved — ' + a.firstName + ' ' + a.lastName,
-                'Dear ' + a.parentName + ',\n\nYour child ' + a.firstName + ' ' + a.lastName + '\'s application has been APPROVED.\n\nReference: ' + a.id + '\nClass: ' + a.classApplying + '\n\nPlease proceed for admission.\n\nTECH-BRIDGE Academy');
+            sendEmail(parentEmail, '[TBA] Application Approved — ' + appName,
+                'Dear ' + (a.parent_name || a.parentName) + ',\n\nYour child ' + appName + '\'s application has been APPROVED.\n\nReference: ' + (a.ref_number || a.id) + '\nClass: ' + (a.class_applying || a.classApplying) + '\n\nPlease proceed for admission.\n\nTECH-BRIDGE Academy');
 
             renderApps();
             renderApprovedList();
             renderAdmittedList();
             updateStats();
-            alert(a.firstName + ' ' + a.lastName + '\'s application has been approved!');
+            alert(appName + '\'s application has been approved!');
         }
 
-        function declineApp(id) {
-            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
-            const a = apps.find(x => x.id === id);
+        async function declineApp(id) {
+            let a = null;
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('applications').select('*').eq('id', id).maybeSingle();
+                    if (result && result.data) a = result.data;
+                }
+            } catch(e) {}
+            if (!a) {
+                const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+                a = apps.find(x => x.id === id);
+            }
             if (!a) return;
+            const appName = (a.first_name || a.firstName) + ' ' + (a.last_name || a.lastName);
+            const parentEmail = a.parent_email || a.parentEmail;
 
-            if (!confirm('Decline ' + a.firstName + ' ' + a.lastName + '\'s application?')) return;
+            if (!confirm('Decline ' + appName + '\'s application?')) return;
 
+            // Update Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    await _supabaseClient.from('applications').update({status: 'Rejected'}).eq('id', id);
+                }
+            } catch(e) { console.log('Decline error:', e); }
+
+            // Update localStorage
+            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
             const idx = apps.findIndex(x => x.id === id);
-            apps[idx].status = 'Rejected';
-            localStorage.setItem('tba_applications', JSON.stringify(apps));
-            try { DB.updateApplicationStatus(id, 'Rejected'); } catch(e) {}
+            if (idx !== -1) {
+                apps[idx].status = 'Rejected';
+                localStorage.setItem('tba_applications', JSON.stringify(apps));
+            }
 
-            sendEmail(a.parentEmail, '[TBA] Application Declined — ' + a.firstName + ' ' + a.lastName,
-                'Dear ' + a.parentName + ',\n\nWe regret to inform you that ' + a.firstName + ' ' + a.lastName + '\'s application was not successful at this time.\n\nReference: ' + a.id + '\n\nPlease contact us for more information.\n\nTECH-BRIDGE Academy');
+            sendEmail(parentEmail, '[TBA] Application Declined — ' + appName,
+                'Dear ' + (a.parent_name || a.parentName) + ',\n\nWe regret to inform you that ' + appName + '\'s application was not successful at this time.\n\nReference: ' + (a.ref_number || a.id) + '\n\nPlease contact us for more information.\n\nTECH-BRIDGE Academy');
 
             renderApps();
             renderApprovedList();
@@ -811,39 +881,61 @@
             alert('Application declined.');
         }
 
-        function finalAdmit(id) {
-            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
-            const a = apps.find(x => x.id === id);
-            if (!a) return;
-
-            if (!confirm('Admit ' + a.firstName + ' ' + a.lastName + ' into TECH-BRIDGE ACADEMY?')) return;
-
-            const idx = apps.findIndex(x => x.id === id);
-            apps[idx].status = 'Admitted';
-            apps[idx].admittedAt = new Date().toISOString();
-            localStorage.setItem('tba_applications', JSON.stringify(apps));
-
-            // Update status in Supabase
+        async function finalAdmit(id) {
+            let a = null;
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    _supabaseClient.from('applications').update({status: 'Admitted', admitted_at: new Date().toISOString()}).eq('id', id).then(function(){}).catch(function(e){console.log('Admit update error:',e);});
+                    var result = await _supabaseClient.from('applications').select('*').eq('id', id).maybeSingle();
+                    if (result && result.data) a = result.data;
                 }
-            } catch(e) { console.log('Admit Supabase error:', e); }
+            } catch(e) {}
+            if (!a) {
+                const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+                a = apps.find(x => x.id === id);
+            }
+            if (!a) return;
+            const appName = (a.first_name || a.firstName) + ' ' + (a.last_name || a.lastName);
+            const parentEmail = a.parent_email || a.parentEmail;
+            const parentName = a.parent_name || a.parentName;
+            const parentPhone = a.parent_phone || a.parentPhone;
+            const studentEmail = a.student_email || a.studentEmail;
+            const studentPassword = a.student_password || a.studentPassword;
+            const classApplying = a.class_applying || a.classApplying;
+            const gender = a.gender;
+
+            if (!confirm('Admit ' + appName + ' into TECH-BRIDGE ACADEMY?')) return;
+
+            // Update Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    await _supabaseClient.from('applications').update({status: 'Admitted', admitted_at: new Date().toISOString()}).eq('id', id);
+                }
+            } catch(e) { console.log('Admit update error:', e); }
+
+            // Update localStorage
+            const apps = JSON.parse(localStorage.getItem('tba_applications') || '[]');
+            const idx = apps.findIndex(x => x.id === id);
+            if (idx !== -1) {
+                apps[idx].status = 'Admitted';
+                apps[idx].admittedAt = new Date().toISOString();
+                localStorage.setItem('tba_applications', JSON.stringify(apps));
+            }
 
             // Create student account
             const newId = 'STU' + String(Date.now()).slice(-6);
-            const loginEmail = a.studentEmail || a.parentEmail;
-            const loginPassword = a.studentPassword || 'student123';
+            const loginEmail = studentEmail || parentEmail;
+            const loginPassword = studentPassword || 'student123';
             const studentProfile = {
                 id: newId,
                 email: loginEmail,
                 password: loginPassword,
-                name: a.firstName + ' ' + a.lastName,
+                name: appName,
                 role: 'student',
-                class: a.classApplying,
-                gender: a.gender,
-                phone: a.parentPhone,
+                class: classApplying,
+                gender: gender,
+                phone: parentPhone,
                 address: a.address
             };
 
@@ -1209,6 +1301,7 @@
                     if (result && result.data && result.data.length) {
                         apps = result.data.map(a => ({
                             id: a.id,
+                            refNumber: a.ref_number || a.id,
                             firstName: a.first_name,
                             lastName: a.last_name,
                             status: a.status,

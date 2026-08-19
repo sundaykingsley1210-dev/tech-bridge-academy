@@ -454,6 +454,7 @@
 
             const application = {
                 id: 'TBA-' + Date.now().toString(36).toUpperCase(),
+                supabaseId: crypto.randomUUID(),
                 firstName: document.getElementById('firstName').value,
                 lastName: document.getElementById('lastName').value,
                 dob: document.getElementById('dob').value,
@@ -479,7 +480,8 @@
             _initSupabase();
             if (_supabaseClient) {
                 _supabaseClient.from('applications').upsert({
-                    id: application.id,
+                    id: application.supabaseId,
+                    ref_number: application.id,
                     first_name: application.firstName,
                     last_name: application.lastName,
                     dob: application.dob,
