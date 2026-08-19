@@ -504,15 +504,21 @@
                             <h4 style="margin-bottom:10px"><i class="fa-solid fa-paper-plane"></i> Send Message</h4>
                             <form onsubmit="sendAdminMessage(event)" style="display:flex;flex-direction:column;gap:10px">
                                 <div style="display:flex;gap:10px;flex-wrap:wrap">
-                                    <select id="adminMsgTarget" required style="padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem;min-width:200px">
+                                    <select id="adminMsgTarget" required onchange="showSelectedRecipient()" style="padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem;min-width:200px">
                                         <option value="">Select recipient...</option>
                                         <optgroup label="Students"></optgroup>
                                         <optgroup label="Teachers"></optgroup>
                                     </select>
                                 </div>
+                                <div id="recipientInfo" style="display:none;padding:8px 12px;background:#e8f4fd;border-radius:8px;font-size:.85rem;color:var(--primary)"></div>
                                 <textarea id="adminMsgText" rows="3" placeholder="Type your message..." required style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem;resize:vertical"></textarea>
                                 <button type="submit" class="btn-create" style="align-self:flex-start;padding:10px 20px"><i class="fa-solid fa-paper-plane"></i> Send</button>
                             </form>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+                            <button class="filter-btn active" onclick="filterMsgTab('all',this)" style="padding:8px 16px;border:2px solid #e9ecef;border-radius:8px;background:#fff;font-weight:600;cursor:pointer;font-size:.85rem">All</button>
+                            <button class="filter-btn" onclick="filterMsgTab('student',this)" style="padding:8px 16px;border:2px solid #e9eef6;border-radius:8px;background:#fff;font-weight:600;cursor:pointer;font-size:.85rem;color:#22c55e">Students</button>
+                            <button class="filter-btn" onclick="filterMsgTab('teacher',this)" style="padding:8px 16px;border:2px solid #e9ecef;border-radius:8px;background:#fff;font-weight:600;cursor:pointer;font-size:.85rem;color:#8b5cf6">Teachers</button>
                         </div>
                         <div id="adminMessagesList"></div>
                     </div>
@@ -1873,12 +1879,39 @@
             renderAdminResults();
         }
 
+        var adminMsgTab = 'all';
+
+        function filterMsgTab(tab, btn) {
+            adminMsgTab = tab;
+            document.querySelectorAll('#adminMessagesSection .filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderAdminMessages();
+        }
+
+        async function showSelectedRecipient() {
+            var select = document.getElementById('adminMsgTarget');
+            var infoDiv = document.getElementById('recipientInfo');
+            var val = select.value;
+            if (!val) { infoDiv.style.display = 'none'; return; }
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var r = await _supabaseClient.from('users').select('name,email,role,class,phone,gender').eq('id', val).maybeSingle();
+                    if (r && r.data) {
+                        var d = r.data;
+                        infoDiv.innerHTML = '<strong>' + d.name + '</strong> (' + d.role + ') | ' + d.email + (d.class ? ' | Class: ' + d.class : '') + (d.phone ? ' | ' + d.phone : '') + (d.gender ? ' | ' + d.gender : '');
+                        infoDiv.style.display = 'block';
+                    }
+                }
+            } catch(e) {}
+        }
+
         async function renderAdminMessages() {
             // Populate recipient dropdown
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    var usersResult = await _supabaseClient.from('users').select('id,name,role').in('role', ['student','teacher']);
+                    var usersResult = await _supabaseClient.from('users').select('id,name,role,class').in('role', ['student','teacher']).order('class');
                     if (usersResult && usersResult.data) {
                         var select = document.getElementById('adminMsgTarget');
                         var studentOpt = select.querySelector('optgroup[label="Students"]');
@@ -1888,7 +1921,7 @@
                         usersResult.data.forEach(function(u) {
                             var opt = document.createElement('option');
                             opt.value = u.id;
-                            opt.textContent = u.name + ' (' + u.role + ')';
+                            opt.textContent = u.name + (u.class ? ' (' + u.class + ')' : '');
                             if (u.role === 'student') studentOpt.appendChild(opt);
                             else teacherOpt.appendChild(opt);
                         });
@@ -1903,52 +1936,67 @@
                 if (_supabaseClient) {
                     var result = await _supabaseClient.from('messages').select('*').order('created_at', {ascending: false});
                     if (result && result.data && result.data.length) {
-                        // Fetch sender details for each unique from_id
                         var senderIds = [...new Set(result.data.map(m => m.from_id).filter(Boolean))];
+                        var allIds = [...senderIds];
+                        result.data.filter(m => m.to_id).forEach(m => { if (!allIds.includes(m.to_id)) allIds.push(m.to_id); });
                         var senders = {};
-                        for (var sid of senderIds) {
+                        for (var sid of allIds) {
                             var senderResult = await _supabaseClient.from('users').select('id,name,email,role,class,phone,gender,address').eq('id', sid).maybeSingle();
                             if (senderResult && senderResult.data) senders[sid] = senderResult.data;
                         }
                         messages = result.data.map(m => ({
                             ...m,
-                            senderInfo: senders[m.from_id] || null
+                            senderInfo: senders[m.from_id] || null,
+                            recipientInfo: senders[m.to_id] || null
                         }));
                     }
                 }
             } catch(e) { console.log('Load admin messages from Supabase:', e); }
+
+            // Filter by tab
+            if (adminMsgTab !== 'all') {
+                messages = messages.filter(m => {
+                    if (adminMsgTab === 'student') return m.from_role === 'student' || (m.from_role === 'admin' && m.recipientInfo && m.recipientInfo.role === 'student');
+                    if (adminMsgTab === 'teacher') return m.from_role === 'teacher' || (m.from_role === 'admin' && m.recipientInfo && m.recipientInfo.role === 'teacher');
+                    return true;
+                });
+            }
 
             const c = document.getElementById('adminMessagesList');
             if (!messages.length) {
                 c.innerHTML = '<div class="no-data"><i class="fa-solid fa-envelope-open"></i><p>No messages yet</p></div>';
                 return;
             }
-            c.innerHTML = messages.map(m => {
+
+            // Group student messages by class
+            var studentMsgs = messages.filter(m => m.from_role === 'student' || (m.from_role === 'admin' && m.recipientInfo && m.recipientInfo.role === 'student'));
+            var teacherMsgs = messages.filter(m => m.from_role === 'teacher' || (m.from_role === 'admin' && m.recipientInfo && m.recipientInfo.role === 'teacher'));
+            var otherMsgs = messages.filter(m => m.from_role !== 'student' && m.from_role !== 'teacher' && (!m.recipientInfo || (m.recipientInfo.role !== 'student' && m.recipientInfo.role !== 'teacher')));
+
+            function renderMsgCard(m) {
                 const isFromAdmin = m.from_role === 'admin';
                 const roleIcon = m.from_role === 'teacher' ? 'fa-chalkboard-user' : m.from_role === 'admin' ? 'fa-user-shield' : 'fa-user-graduate';
                 const roleColor = m.from_role === 'teacher' ? '#8b5cf6' : m.from_role === 'admin' ? '#3b82f6' : '#22c55e';
-                const s = m.senderInfo;
-                const infoHtml = s && !isFromAdmin ? `
+                const s = isFromAdmin ? m.recipientInfo : m.senderInfo;
+                const infoHtml = s ? `
                     <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--gray)">
                         <span><i class="fa-solid fa-envelope" style="margin-right:4px"></i>${s.email || 'N/A'}</span>
                         ${s.class ? '<span><i class="fa-solid fa-layer-group" style="margin-right:4px"></i>' + s.class + '</span>' : ''}
                         ${s.phone ? '<span><i class="fa-solid fa-phone" style="margin-right:4px"></i>' + s.phone + '</span>' : ''}
                         ${s.gender ? '<span><i class="fa-solid fa-venus-mars" style="margin-right:4px"></i>' + s.gender + '</span>' : ''}
-                        ${s.address ? '<span><i class="fa-solid fa-location-dot" style="margin-right:4px"></i>' + s.address + '</span>' : ''}
                     </div>` : '';
+                const directionLabel = isFromAdmin ? '<span style="color:#3b82f6;font-size:.75rem"><i class="fa-solid fa-arrow-up"></i> Sent to ' + (s ? s.name : 'user') + '</span>' : '';
                 return `
-                <div class="app-item" style="border-left-color:${roleColor}">
+                <div class="app-item" style="border-left-color:${roleColor};margin-bottom:10px">
                     <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
                         <div>
-                            <h4><i class="fa-solid ${roleIcon}"></i> ${m.from_name || 'Unknown'}</h4>
+                            <h4><i class="fa-solid ${roleIcon}"></i> ${m.from_name || 'Unknown'} ${directionLabel}</h4>
                             <div class="meta">
                                 <span><i class="fa-solid fa-tag"></i> ${(m.from_role||'').toUpperCase()}</span>
                                 <span><i class="fa-solid fa-clock"></i> ${new Date(m.created_at).toLocaleString()}</span>
                             </div>
                         </div>
-                        <div style="display:flex;align-items:center;gap:8px">
-                            <button class="btn-delete" onclick="deleteMessage('${m.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                        </div>
+                        <button class="btn-delete" onclick="deleteMessage('${m.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
                     </div>
                     ${infoHtml}
                     <div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:8px;border-left:3px solid ${roleColor}">
@@ -1956,7 +2004,48 @@
                     </div>
                     ${!isFromAdmin ? '<div style="margin-top:10px;display:flex;gap:8px;align-items:end"><textarea id="adminReply_'+m.id+'" rows="2" placeholder="Type your reply..." style="flex:1;padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.85rem;resize:vertical"></textarea><button class="btn-action btn-accept" onclick="replyToStudent(\'' + m.id + '\')"><i class="fa-solid fa-reply"></i> Reply</button></div>' : ''}
                 </div>`;
-            }).join('');
+            }
+
+            var html = '';
+
+            // Student messages grouped by class
+            if (adminMsgTab === 'all' || adminMsgTab === 'student') {
+                var classGroups = {};
+                studentMsgs.forEach(m => {
+                    var cls = 'Unknown Class';
+                    var s = m.senderInfo || m.recipientInfo;
+                    if (s && s.class) cls = s.class;
+                    if (!classGroups[cls]) classGroups[cls] = [];
+                    classGroups[cls].push(m);
+                });
+                var sortedClasses = Object.keys(classGroups).sort();
+                sortedClasses.forEach(cls => {
+                    html += '<div style="margin-bottom:25px">';
+                    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e9ecef">';
+                    html += '<i class="fa-solid fa-layer-group" style="color:#22c55e;font-size:1rem"></i>';
+                    html += '<h3 style="color:var(--dark);margin:0;font-size:1rem">' + cls + '</h3>';
+                    html += '<span style="padding:3px 10px;border-radius:15px;font-size:.75rem;font-weight:700;background:#22c55e;color:#fff">' + classGroups[cls].length + ' msg(s)</span>';
+                    html += '</div>';
+                    html += classGroups[cls].map(renderMsgCard).join('');
+                    html += '</div>';
+                });
+            }
+
+            // Teacher messages
+            if (adminMsgTab === 'all' || adminMsgTab === 'teacher') {
+                if (teacherMsgs.length) {
+                    html += '<div style="margin-bottom:25px">';
+                    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e9ecef">';
+                    html += '<i class="fa-solid fa-chalkboard-user" style="color:#8b5cf6;font-size:1rem"></i>';
+                    html += '<h3 style="color:var(--dark);margin:0;font-size:1rem">Teachers</h3>';
+                    html += '<span style="padding:3px 10px;border-radius:15px;font-size:.75rem;font-weight:700;background:#8b5cf6;color:#fff">' + teacherMsgs.length + ' msg(s)</span>';
+                    html += '</div>';
+                    html += teacherMsgs.map(renderMsgCard).join('');
+                    html += '</div>';
+                }
+            }
+
+            c.innerHTML = html || '<div class="no-data"><i class="fa-solid fa-envelope-open"></i><p>No messages yet</p></div>';
         }
 
         async function sendAdminMessage(e) {
