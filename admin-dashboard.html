@@ -823,21 +823,45 @@
             apps[idx].admittedAt = new Date().toISOString();
             localStorage.setItem('tba_applications', JSON.stringify(apps));
 
+            // Update status in Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    _supabaseClient.from('applications').update({status: 'Admitted', admitted_at: new Date().toISOString()}).eq('id', id).then(function(){}).catch(function(e){console.log('Admit update error:',e);});
+                }
+            } catch(e) { console.log('Admit Supabase error:', e); }
+
             // Create student account
-            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
-            const newId = 'STU' + String(users.filter(u => u.role === 'student').length + 1).padStart(3, '0');
+            const newId = 'STU' + String(Date.now()).slice(-6);
             const loginEmail = a.studentEmail || a.parentEmail;
             const loginPassword = a.studentPassword || 'student123';
-            users.push({
+            const studentProfile = {
                 id: newId,
                 email: loginEmail,
                 password: loginPassword,
                 name: a.firstName + ' ' + a.lastName,
                 role: 'student',
                 class: a.classApplying,
-                gender: a.gender
-            });
+                gender: a.gender,
+                phone: a.parentPhone,
+                address: a.address
+            };
+
+            // Save to localStorage
+            let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+            users.push(studentProfile);
             localStorage.setItem('tba_users', JSON.stringify(users));
+
+            // Save to Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    _supabaseClient.from('users').upsert(studentProfile).then(function(r) {
+                        if (r.error) console.log('Student account save:', r.error.message);
+                        else console.log('Student account created in Supabase');
+                    }).catch(function(e){console.log('Student account error:',e);});
+                }
+            } catch(e) { console.log('Student Supabase error:', e); }
 
             sendEmail(a.parentEmail, '[TBA] Admission Confirmed — ' + a.firstName + ' ' + a.lastName,
                 'Dear ' + a.parentName + ',\n\nCongratulations! ' + a.firstName + ' ' + a.lastName + ' has been ADMITTED into TECH-BRIDGE Academy.\n\nStudent ID: ' + newId + '\nClass: ' + a.classApplying + '\nLogin Email: ' + loginEmail + '\nPassword: ' + loginPassword + '\n\nPlease keep your login details safe.\n\nWelcome to TECH-BRIDGE Academy!');

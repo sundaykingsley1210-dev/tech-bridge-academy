@@ -783,9 +783,43 @@
             }).join('');
         }
 
-        function renderStudents() {
-            const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
-            const studs = users.filter(u => u.role==='student');
+        async function renderStudents() {
+            // Load from Supabase first
+            let studs = [];
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('users').select('*').eq('role', 'student');
+                    if (result && result.data && result.data.length) {
+                        studs = result.data.map(u => ({
+                            id: u.id,
+                            name: u.name,
+                            email: u.email,
+                            role: u.role,
+                            class: u.class,
+                            gender: u.gender,
+                            phone: u.phone,
+                            address: u.address,
+                            password: u.password
+                        }));
+                        // Sync to localStorage for offline use
+                        let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
+                        studs.forEach(s => {
+                            const idx = users.findIndex(u => u.id === s.id);
+                            if (idx !== -1) users[idx] = s;
+                            else users.push(s);
+                        });
+                        localStorage.setItem('tba_users', JSON.stringify(users));
+                    }
+                }
+            } catch(e) { console.log('Load students from Supabase:', e); }
+
+            // Fallback to localStorage
+            if (!studs.length) {
+                const users = JSON.parse(localStorage.getItem('tba_users')||'[]');
+                studs = users.filter(u => u.role==='student');
+            }
+
             const filter = document.getElementById('teacherClassFilter').value;
             const c = document.getElementById('studentsByClass');
             document.getElementById('totalStudents').textContent = studs.length;
