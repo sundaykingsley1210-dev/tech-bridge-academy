@@ -668,6 +668,16 @@
             localStorage.removeItem('tba_applications');
         }
 
+        function calcAge(dob) {
+            if (!dob) return '';
+            var birth = new Date(dob);
+            var today = new Date();
+            var age = today.getFullYear() - birth.getFullYear();
+            var m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            return age >= 0 ? age + ' yrs' : '';
+        }
+
         async function renderApps() {
             // Load from Supabase first
             let apps = [];
@@ -756,6 +766,7 @@
                                 <span><i class="fa-solid fa-hashtag"></i> ${a.refNumber || a.id}</span>
                                 <span><i class="fa-solid fa-layer-group"></i> ${a.classApplying}</span>
                                 <span><i class="fa-solid fa-venus-mars"></i> ${a.gender}</span>
+                                <span><i class="fa-solid fa-cake-candles"></i> ${calcAge(a.dob)}</span>
                                 <span><i class="fa-solid fa-calendar"></i> ${a.dateSubmitted ? new Date(a.dateSubmitted).toLocaleDateString() : 'N/A'}</span>
                             </div>
                         </div>
@@ -798,7 +809,7 @@
                     <div class="detail-item"><label>Reference</label><p>${ref}</p></div>
                     <div class="detail-item"><label>Status</label><p>${a.status}</p></div>
                     <div class="detail-item"><label>Student Name</label><p>${firstName} ${lastName}</p></div>
-                    <div class="detail-item"><label>Date of Birth</label><p>${a.dob}</p></div>
+                    <div class="detail-item"><label>Date of Birth</label><p>${a.dob} (${calcAge(a.dob)})</p></div>
                     <div class="detail-item"><label>Gender</label><p>${a.gender}</p></div>
                     <div class="detail-item"><label>Class Applying</label><p>${classApplying}</p></div>
                     <div class="detail-item"><label>Previous School</label><p>${prevSchool||'N/A'}</p></div>
@@ -1126,6 +1137,7 @@
                             <div class="meta">
                                 <span><i class="fa-solid fa-layer-group"></i> ${a.classApplying}</span>
                                 <span><i class="fa-solid fa-venus-mars"></i> ${a.gender}</span>
+                                <span><i class="fa-solid fa-cake-candles"></i> ${calcAge(a.dob)}</span>
                                 <span><i class="fa-solid fa-calendar"></i> ${new Date(a.dateSubmitted).toLocaleDateString()}</span>
                                 <span><i class="fa-solid fa-clock"></i> Approved ${a.approvedAt ? new Date(a.approvedAt).toLocaleDateString() : ''}</span>
                             </div>
@@ -1183,6 +1195,7 @@
                             <div class="meta">
                                 <span><i class="fa-solid fa-layer-group"></i> ${a.classApplying}</span>
                                 <span><i class="fa-solid fa-venus-mars"></i> ${a.gender}</span>
+                                <span><i class="fa-solid fa-cake-candles"></i> ${calcAge(a.dob)}</span>
                                 <span><i class="fa-solid fa-clock"></i> Admitted ${a.admittedAt ? new Date(a.admittedAt).toLocaleDateString() : ''}</span>
                             </div>
                         </div>
@@ -2373,6 +2386,7 @@
                             role: 'student',
                             class: a.class_applying || '',
                             gender: a.gender || '',
+                            dob: a.dob || '',
                             phone: a.parent_phone || '',
                             address: a.address || '',
                             created_at: a.admitted_at || a.date_submitted
@@ -2425,6 +2439,7 @@
                     html += '</div>';
                     html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #f1f3f5">';
                     html += '<span style="font-size:.8rem;color:var(--gray)"><i class="fa-solid fa-envelope" style="margin-right:4px"></i>'+(s.email||'No email')+'</span>';
+                    if (s.dob) html += '<span style="font-size:.8rem;color:var(--gray)"><i class="fa-solid fa-cake-candles" style="margin-right:4px"></i>'+calcAge(s.dob)+'</span>';
                     html += '<span style="font-size:.75rem;color:var(--gray)"><i class="fa-solid fa-calendar" style="margin-right:3px"></i>'+(s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A')+'</span>';
                     if (avg !== null) html += '<span style="font-size:.85rem;font-weight:700;color:'+avgColor+'">'+avg+'% avg</span>';
                     html += '</div>';
