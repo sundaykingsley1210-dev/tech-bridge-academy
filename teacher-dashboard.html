@@ -196,6 +196,7 @@
                 <li><a onclick="showSection(this, 'assignmentsSection')"><i class="fa-solid fa-book"></i> Assignments</a></li>
                 <li><a onclick="showSection(this, 'studentsSection')"><i class="fa-solid fa-users"></i> Students</a></li>
                 <li><a onclick="showSection(this, 'notificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
+                <li><a onclick="showSection(this, 'teacherMessageSection')"><i class="fa-solid fa-envelope"></i> Message Admin</a></li>
                 <li><a onclick="showSection(this, 'examsSection')"><i class="fa-solid fa-pen-to-square"></i> Exams</a></li>
                 <li><a onclick="showSection(this, 'timetableSection')"><i class="fa-solid fa-calendar-days"></i> Timetable</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
@@ -462,6 +463,25 @@
                 </div>
             </div>
 
+            <!-- Message Admin Section -->
+            <div id="teacherMessageSection" style="display:none">
+                <div class="card" style="margin-top:25px">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-envelope"></i> Message Admin</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="teacherMessages" style="margin-bottom:15px"></div>
+                        <form onsubmit="sendTeacherMessage(event)" style="display:flex;gap:10px;align-items:end">
+                            <div style="flex:1">
+                                <label style="font-weight:600;font-size:.85rem;display:block;margin-bottom:5px">Type your message *</label>
+                                <textarea id="teacherMsgText" rows="3" placeholder="Type your message to admin here..." required style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem;resize:vertical"></textarea>
+                            </div>
+                            <button type="submit" class="btn-create" style="height:45px;padding:0 20px"><i class="fa-solid fa-paper-plane"></i> Send</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <!-- Change Password Section -->
             <div id="teacherChangePasswordSection" style="display:none">
                 <div class="card" style="max-width:500px">
@@ -529,6 +549,54 @@
 
         function selectAllClasses() { document.querySelectorAll('.class-cb').forEach(cb => cb.checked = true); }
         function deselectAllClasses() { document.querySelectorAll('.class-cb').forEach(cb => cb.checked = false); }
+
+        async function sendTeacherMessage(e) {
+            e.preventDefault();
+            const text = document.getElementById('teacherMsgText').value.trim();
+            if (!text) return;
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    await _supabaseClient.from('messages').insert({
+                        from_id: currentUser.id,
+                        from_name: currentUser.name,
+                        from_role: 'teacher',
+                        message: text,
+                        subject: 'Message from ' + currentUser.name
+                    });
+                }
+            } catch(e) { console.log('Message save error:', e); }
+            document.getElementById('teacherMsgText').value = '';
+            renderTeacherMessages();
+            alert('Message sent to admin!');
+        }
+
+        async function renderTeacherMessages() {
+            const c = document.getElementById('teacherMessages');
+            if (!c) return;
+            let messages = [];
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('messages').select('*').or('from_id.eq.'+currentUser.id+',to_id.eq.'+currentUser.id).order('created_at', {ascending: false});
+                    if (result && result.data && result.data.length) {
+                        messages = result.data;
+                    }
+                }
+            } catch(e) { console.log('Load messages error:', e); }
+            if (!messages.length) {
+                c.innerHTML = '<p style="color:var(--gray);font-size:.85rem;text-align:center;padding:10px">No messages yet</p>';
+                return;
+            }
+            c.innerHTML = messages.map(m => {
+                const isFromMe = m.from_id === currentUser.id;
+                const bgColor = isFromMe ? '#f0f7ff' : '#f0fdf4';
+                const borderColor = isFromMe ? '#3b82f6' : '#22c55e';
+                const label = isFromMe ? '<strong style="color:#3b82f6"><i class="fa-solid fa-paper-plane"></i> Sent to Admin</strong>' : '<strong style="color:#22c55e"><i class="fa-solid fa-reply"></i> Admin Reply</strong>';
+                const replyHtml = !isFromMe ? '<div style="margin-top:8px;padding:8px;background:#f0fdf4;border-radius:6px;border-left:3px solid #22c55e"><strong style="color:#22c55e;font-size:.8rem"><i class="fa-solid fa-reply"></i> Admin Reply:</strong><p style="margin:4px 0 0;font-size:.85rem">'+m.message+'</p></div>' : '';
+                return '<div style="padding:12px;background:'+bgColor+';border-radius:8px;border-left:4px solid '+borderColor+';margin-bottom:10px">'+label+'<p style="margin:6px 0 0;font-size:.9rem">'+(isFromMe ? m.message : '')+'</p><p style="margin:4px 0 0;font-size:.75rem;color:var(--gray)">'+new Date(m.created_at).toLocaleString()+'</p>'+(!isFromMe ? replyHtml : '')+'</div>';
+            }).join('');
+        }
 
         function renderAll() { renderAssignments(); renderStudents(); renderSentNotifs(); renderNotifBadge(); renderTimetableList(); renderResultList(); updateStats(); renderTeacherIdCard(); }
 
@@ -971,7 +1039,7 @@
         function showSection(el, sectionId) {
             document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
             el.classList.add('active');
-            const sections = ['overviewSection','assignmentsSection','studentsSection','notificationsSection','examsSection','timetableSection','resultsSection','teacherChangePasswordSection'];
+            const sections = ['overviewSection','assignmentsSection','studentsSection','notificationsSection','teacherMessageSection','examsSection','timetableSection','resultsSection','teacherChangePasswordSection'];
             sections.forEach(id => {
                 const sec = document.getElementById(id);
                 if (sec) sec.style.display = id === sectionId ? 'block' : 'none';
@@ -979,6 +1047,7 @@
             if (sectionId === 'assignmentsSection') renderAssignments();
             if (sectionId === 'studentsSection') renderStudents();
             if (sectionId === 'notificationsSection') { renderSentNotifs(); renderClassCheckboxes(); }
+            if (sectionId === 'teacherMessageSection') renderTeacherMessages();
             if (sectionId === 'examsSection') { renderExamQuestions(); renderExamSubmissions(); }
             if (sectionId === 'timetableSection') renderTimetableList();
             if (sectionId === 'resultsSection') renderResultList();

@@ -497,9 +497,23 @@
             <div id="adminMessagesSection" style="display:none">
                 <div class="card" style="margin-top:25px">
                     <div class="card-header">
-                        <h3><i class="fa-solid fa-envelope"></i> Student Messages</h3>
+                        <h3><i class="fa-solid fa-envelope"></i> Messages</h3>
                     </div>
                     <div class="card-body">
+                        <div style="margin-bottom:20px;padding:15px;background:#f8f9fa;border-radius:10px">
+                            <h4 style="margin-bottom:10px"><i class="fa-solid fa-paper-plane"></i> Send Message</h4>
+                            <form onsubmit="sendAdminMessage(event)" style="display:flex;flex-direction:column;gap:10px">
+                                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                                    <select id="adminMsgTarget" required style="padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem;min-width:200px">
+                                        <option value="">Select recipient...</option>
+                                        <optgroup label="Students"></optgroup>
+                                        <optgroup label="Teachers"></optgroup>
+                                    </select>
+                                </div>
+                                <textarea id="adminMsgText" rows="3" placeholder="Type your message..." required style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem;resize:vertical"></textarea>
+                                <button type="submit" class="btn-create" style="align-self:flex-start;padding:10px 20px"><i class="fa-solid fa-paper-plane"></i> Send</button>
+                            </form>
+                        </div>
                         <div id="adminMessagesList"></div>
                     </div>
                 </div>
@@ -1840,97 +1854,127 @@
         }
 
         async function renderAdminMessages() {
-            // Load from Supabase first
+            // Populate recipient dropdown
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    var rows = await DB.getAllMessages();
-                    if (rows && rows.length) {
-                        var supaMsgs = rows.map(function(m) {
-                            return {
-                                id: m.id,
-                                studentId: m.from_id,
-                                studentName: m.from_name || 'Student',
-                                studentClass: '',
-                                text: m.message,
-                                sentAt: m.created_at,
-                                from: m.from_role || 'student',
-                                reply: m.read ? (m.subject || '') : null,
-                                repliedAt: m.read ? m.created_at : null,
-                                supabaseFromId: m.from_id,
-                                supabaseToId: m.to_id
-                            };
+                    var usersResult = await _supabaseClient.from('users').select('id,name,role').in('role', ['student','teacher']);
+                    if (usersResult && usersResult.data) {
+                        var select = document.getElementById('adminMsgTarget');
+                        var studentOpt = select.querySelector('optgroup[label="Students"]');
+                        var teacherOpt = select.querySelector('optgroup[label="Teachers"]');
+                        studentOpt.innerHTML = '';
+                        teacherOpt.innerHTML = '';
+                        usersResult.data.forEach(function(u) {
+                            var opt = document.createElement('option');
+                            opt.value = u.id;
+                            opt.textContent = u.name + ' (' + u.role + ')';
+                            if (u.role === 'student') studentOpt.appendChild(opt);
+                            else teacherOpt.appendChild(opt);
                         });
-                        localStorage.setItem('tba_messages', JSON.stringify(supaMsgs));
+                    }
+                }
+            } catch(e) { console.log('Load users for messaging:', e); }
+
+            // Load messages from Supabase
+            var messages = [];
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('messages').select('*').order('created_at', {ascending: false});
+                    if (result && result.data && result.data.length) {
+                        messages = result.data;
                     }
                 }
             } catch(e) { console.log('Load admin messages from Supabase:', e); }
 
-            const messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
             const c = document.getElementById('adminMessagesList');
             if (!messages.length) {
-                c.innerHTML = '<div class="no-data"><i class="fa-solid fa-envelope-open"></i><p>No student messages yet</p></div>';
+                c.innerHTML = '<div class="no-data"><i class="fa-solid fa-envelope-open"></i><p>No messages yet</p></div>';
                 return;
             }
-            c.innerHTML = messages.slice().reverse().map(m => {
-                const replyHtml = m.reply
-                    ? '<div style="margin-top:10px;padding:10px;background:#d4edda;border-radius:8px;border-left:3px solid #155724"><strong style="font-size:.8rem;color:#155724"><i class="fa-solid fa-reply"></i> Your Reply:</strong><p style="margin-top:5px;font-size:.9rem;color:#555">' + m.reply + '</p><span style="font-size:.75rem;color:var(--gray)">' + new Date(m.repliedAt).toLocaleString() + '</span></div>'
-                    : '';
+            c.innerHTML = messages.map(m => {
+                const isFromAdmin = m.from_role === 'admin';
+                const roleIcon = m.from_role === 'teacher' ? 'fa-chalkboard-user' : m.from_role === 'admin' ? 'fa-user-shield' : 'fa-user-graduate';
+                const roleColor = m.from_role === 'teacher' ? '#8b5cf6' : m.from_role === 'admin' ? '#3b82f6' : '#22c55e';
+                const direction = isFromAdmin ? 'Sent to: ' + (m.to_id ? m.to_id.substring(0,8)+'...' : 'admin') : 'From: ' + m.from_name;
                 return `
-                <div class="app-item" style="border-left-color:#667eea">
+                <div class="app-item" style="border-left-color:${roleColor}">
                     <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
                         <div>
-                            <h4><i class="fa-solid fa-user-graduate"></i> ${m.studentName}</h4>
+                            <h4><i class="fa-solid ${roleIcon}"></i> ${m.from_name || 'Unknown'}</h4>
                             <div class="meta">
-                                <span><i class="fa-solid fa-id-card"></i> ${m.studentId}</span>
-                                <span><i class="fa-solid fa-layer-group"></i> ${m.studentClass}</span>
-                                <span><i class="fa-solid fa-clock"></i> ${new Date(m.sentAt).toLocaleString()}</span>
+                                <span><i class="fa-solid fa-tag"></i> ${(m.from_role||'').toUpperCase()}</span>
+                                <span><i class="fa-solid fa-clock"></i> ${new Date(m.created_at).toLocaleString()}</span>
                             </div>
                         </div>
                         <div style="display:flex;align-items:center;gap:8px">
-                            ${!m.reply ? '<span style="padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:600;color:#856404;background:#fff3cd">New Message</span>' : '<span style="padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:600;color:#155724;background:#d4edda">Replied</span>'}
                             <button class="btn-delete" onclick="deleteMessage('${m.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
                         </div>
-                    <div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:8px;border-left:3px solid #667eea">
-                        <p style="font-size:.9rem;color:var(--dark);margin:0">${m.text}</p>
                     </div>
-                    ${replyHtml}
-                    ${!m.reply ? '<div style="margin-top:10px;display:flex;gap:8px;align-items:end"><textarea id="adminReply_'+m.id+'" rows="2" placeholder="Type your reply..." style="flex:1;padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.85rem;resize:vertical"></textarea><button class="btn-action btn-accept" onclick="replyToStudent(\'' + m.id + '\')"><i class="fa-solid fa-reply"></i> Reply</button></div>' : ''}
+                    <div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:8px;border-left:3px solid ${roleColor}">
+                        <p style="font-size:.9rem;color:var(--dark);margin:0">${m.message}</p>
+                    </div>
+                    ${!isFromAdmin ? '<div style="margin-top:10px;display:flex;gap:8px;align-items:end"><textarea id="adminReply_'+m.id+'" rows="2" placeholder="Type your reply..." style="flex:1;padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.85rem;resize:vertical"></textarea><button class="btn-action btn-accept" onclick="replyToStudent(\'' + m.id + '\')"><i class="fa-solid fa-reply"></i> Reply</button></div>' : ''}
                 </div>`;
             }).join('');
+        }
+
+        async function sendAdminMessage(e) {
+            e.preventDefault();
+            var targetId = document.getElementById('adminMsgTarget').value;
+            var text = document.getElementById('adminMsgText').value.trim();
+            if (!targetId || !text) return alert('Please select a recipient and type a message');
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
+                    await _supabaseClient.from('messages').insert({
+                        from_id: currentUser.id,
+                        from_name: currentUser.name,
+                        from_role: 'admin',
+                        to_id: targetId,
+                        message: text,
+                        subject: 'Message from Admin'
+                    });
+                }
+            } catch(e) { console.log('Send message error:', e); }
+            document.getElementById('adminMsgText').value = '';
+            document.getElementById('adminMsgTarget').value = '';
+            renderAdminMessages();
+            alert('Message sent!');
         }
 
         async function replyToStudent(msgId) {
             const replyText = document.getElementById('adminReply_' + msgId).value.trim();
             if (!replyText) return alert('Please type a reply');
 
-            // Save reply to Supabase as a new message from admin
+            // Get original message from Supabase to find sender
+            var targetId = null;
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    var allMsgs = JSON.parse(localStorage.getItem('tba_messages') || '[]');
-                    var msg = allMsgs.find(function(m) { return m.id === msgId; });
-                    var targetId = (msg && msg.studentId) ? msg.studentId : null;
+                    var msgResult = await _supabaseClient.from('messages').select('*').eq('id', msgId).maybeSingle();
+                    if (msgResult && msgResult.data) {
+                        targetId = msgResult.data.from_id;
+                    }
+                }
+            } catch(e) { console.log('Get message error:', e); }
+
+            // Save reply to Supabase
+            try {
+                _initSupabase();
+                if (_supabaseClient) {
                     await _supabaseClient.from('messages').insert({
                         from_id: currentUser.id,
                         from_name: currentUser.name,
                         from_role: 'admin',
                         to_id: targetId,
                         message: replyText,
-                        subject: 'Reply to: ' + (msg ? msg.text.substring(0, 50) : ''),
-                        read: false
+                        subject: 'Reply from Admin'
                     });
                 }
             } catch(e) { console.log('Reply save error:', e); }
 
-            // Also update localStorage
-            let messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
-            const idx = messages.findIndex(m => m.id === msgId);
-            if (idx !== -1) {
-                messages[idx].reply = replyText;
-                messages[idx].repliedAt = new Date().toISOString();
-                localStorage.setItem('tba_messages', JSON.stringify(messages));
-            }
             renderAdminMessages();
             alert('Reply sent!');
         }

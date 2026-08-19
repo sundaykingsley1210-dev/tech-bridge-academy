@@ -994,43 +994,28 @@
         }
 
         async function renderStudentMessages() {
-            // Load from Supabase first
+            const c = document.getElementById('studentMessages');
+            if (!c) return;
+            let messages = [];
             try {
                 _initSupabase();
                 if (_supabaseClient) {
-                    var rows = await DB.getMessages(currentUser.id);
-                    if (rows && rows.length) {
-                        var supaMsgs = rows.map(function(m) {
-                            return {
-                                id: m.id,
-                                studentId: m.from_id,
-                                studentName: m.from_name || 'Student',
-                                studentClass: '',
-                                text: m.message,
-                                sentAt: m.created_at,
-                                from: m.from_role || 'student',
-                                reply: null,
-                                repliedAt: null
-                            };
-                        });
-                        localStorage.setItem('tba_messages', JSON.stringify(supaMsgs));
+                    var result = await _supabaseClient.from('messages').select('*').or('from_id.eq.'+currentUser.id+',to_id.eq.'+currentUser.id).order('created_at', {ascending: false});
+                    if (result && result.data && result.data.length) {
+                        messages = result.data;
                     }
                 }
-            } catch(e) { console.log('Load messages from Supabase:', e); }
-
-            const messages = JSON.parse(localStorage.getItem('tba_messages') || '[]');
-            const myMsgs = messages.filter(m => m.studentId === currentUser.id);
-            const c = document.getElementById('studentMessages');
-            if (!c) return;
-            if (!myMsgs.length) {
+            } catch(e) { console.log('Load messages error:', e); }
+            if (!messages.length) {
                 c.innerHTML = '<p style="color:var(--gray);font-size:.85rem;text-align:center;padding:10px">No messages yet</p>';
                 return;
             }
-            c.innerHTML = myMsgs.slice().reverse().map(m => {
-                const replyHtml = m.reply
-                    ? '<div style="margin-top:10px;padding:10px;background:#f0f7ff;border-radius:8px;border-left:3px solid var(--primary)"><strong style="font-size:.8rem;color:var(--primary)"><i class="fa-solid fa-reply"></i> Admin Reply:</strong><p style="margin-top:5px;font-size:.9rem;color:#555">' + m.reply + '</p><span style="font-size:.75rem;color:var(--gray)">' + new Date(m.repliedAt).toLocaleString() + '</span></div>'
-                    : '<div style="margin-top:8px;font-size:.8rem;color:#856404"><i class="fa-solid fa-clock"></i> Awaiting admin reply...</div>';
-                return '<div style="padding:12px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border-left:3px solid #667eea"><div style="display:flex;justify-content:space-between;align-items:start"><p style="font-size:.9rem;color:var(--dark);margin:0">' + m.text + '</p></div><span style="font-size:.75rem;color:var(--gray)">' + new Date(m.sentAt).toLocaleString() + '</span>' + replyHtml + '</div>';
+            c.innerHTML = messages.map(m => {
+                const isFromMe = m.from_id === currentUser.id;
+                const bgColor = isFromMe ? '#f0f7ff' : '#f0fdf4';
+                const borderColor = isFromMe ? '#3b82f6' : '#22c55e';
+                const label = isFromMe ? '<strong style="color:#3b82f6"><i class="fa-solid fa-paper-plane"></i> Sent to Admin</strong>' : '<strong style="color:#22c55e"><i class="fa-solid fa-reply"></i> Admin Reply</strong>';
+                return '<div style="padding:12px;background:'+bgColor+';border-radius:8px;border-left:4px solid '+borderColor+';margin-bottom:10px">'+label+'<p style="margin:6px 0 0;font-size:.9rem">'+m.message+'</p><p style="margin:4px 0 0;font-size:.75rem;color:var(--gray)">'+new Date(m.created_at).toLocaleString()+'</p></div>';
             }).join('');
         }
 
