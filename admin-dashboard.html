@@ -702,6 +702,7 @@
                             address: a.address,
                             studentEmail: a.student_email,
                             studentPassword: a.student_password,
+                            photo: a.photo || '',
                             dateSubmitted: a.date_submitted,
                             status: a.status
                         }));
@@ -760,8 +761,10 @@
                 return `
                 <div class="app-item">
                     <div class="app-header">
-                        <div>
-                            <h4>${a.firstName} ${a.lastName}</h4>
+                        <div style="display:flex;align-items:center;gap:12px">
+                            ${a.photo ? '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0"><img src="'+a.photo+'" style="width:100%;height:100%;object-fit:cover" alt="'+a.firstName+'"></div>' : '<div class="user-avatar" style="width:40px;height:40px;font-size:.8rem;background:var(--gradient)">'+(a.firstName||'')[0]+(a.lastName||'')[0]+'</div>'}
+                            <div>
+                                <h4>${a.firstName} ${a.lastName}</h4>
                             <div class="meta">
                                 <span><i class="fa-solid fa-hashtag"></i> ${a.refNumber || a.id}</span>
                                 <span><i class="fa-solid fa-layer-group"></i> ${a.classApplying}</span>
@@ -805,6 +808,7 @@
             const parentEmail = a.parent_email || a.parentEmail;
             const dateSubmitted = a.date_submitted || a.dateSubmitted;
             document.getElementById('viewModalBody').innerHTML = `
+                ${(a.photo || a.photo_url) ? '<div style="text-align:center;margin-bottom:20px"><div style="width:90px;height:90px;border-radius:50%;overflow:hidden;margin:0 auto;border:3px solid var(--primary)"><img src="'+(a.photo || a.photo_url)+'" style="width:100%;height:100%;object-fit:cover" alt="Student Photo"></div></div>' : ''}
                 <div class="detail-grid">
                     <div class="detail-item"><label>Reference</label><p>${ref}</p></div>
                     <div class="detail-item"><label>Status</label><p>${a.status}</p></div>
@@ -1099,7 +1103,8 @@
                             dob: a.dob, gender: a.gender, classApplying: a.class_applying, prevSchool: a.prev_school,
                             parentName: a.parent_name, relationship: a.relationship, parentPhone: a.parent_phone,
                             parentEmail: a.parent_email, address: a.address, studentEmail: a.student_email,
-                            studentPassword: a.student_password, dateSubmitted: a.date_submitted, status: a.status,
+                            studentPassword: a.student_password, photo: a.photo || '',
+                            dateSubmitted: a.date_submitted, status: a.status,
                             approvedAt: a.approved_at
                         }));
                     }
@@ -1132,8 +1137,10 @@
             container.innerHTML = filtered.slice().reverse().map(a => `
                 <div class="app-item" style="border-left-color:#38ef7d">
                     <div class="app-header">
-                        <div>
-                            <h4>${a.firstName} ${a.lastName}</h4>
+                        <div style="display:flex;align-items:center;gap:12px">
+                            ${a.photo ? '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0"><img src="'+a.photo+'" style="width:100%;height:100%;object-fit:cover" alt="'+a.firstName+'"></div>' : '<div class="user-avatar" style="width:40px;height:40px;font-size:.8rem;background:linear-gradient(135deg,#38ef7d,#27ae60)">'+(a.firstName||'')[0]+(a.lastName||'')[0]+'</div>'}
+                            <div>
+                                <h4>${a.firstName} ${a.lastName}</h4>
                             <div class="meta">
                                 <span><i class="fa-solid fa-layer-group"></i> ${a.classApplying}</span>
                                 <span><i class="fa-solid fa-venus-mars"></i> ${a.gender}</span>
@@ -1171,6 +1178,7 @@
                             id: a.id, refNumber: a.ref_number || a.id, firstName: a.first_name, lastName: a.last_name,
                             dob: a.dob, gender: a.gender, classApplying: a.class_applying,
                             parentName: a.parent_name, parentPhone: a.parent_phone,
+                            photo: a.photo || '',
                             dateSubmitted: a.date_submitted, status: a.status, admittedAt: a.admitted_at
                         }));
                     }
@@ -1190,8 +1198,10 @@
             container.innerHTML = admitted.slice().reverse().map(a => `
                 <div class="app-item" style="border-left-color:#27ae60">
                     <div class="app-header">
-                        <div>
-                            <h4>${a.firstName} ${a.lastName}</h4>
+                        <div style="display:flex;align-items:center;gap:12px">
+                            ${a.photo ? '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0"><img src="'+a.photo+'" style="width:100%;height:100%;object-fit:cover" alt="'+a.firstName+'"></div>' : '<div class="user-avatar" style="width:40px;height:40px;font-size:.8rem;background:linear-gradient(135deg,#27ae60,#38ef7d)">'+(a.firstName||'')[0]+(a.lastName||'')[0]+'</div>'}
+                            <div>
+                                <h4>${a.firstName} ${a.lastName}</h4>
                             <div class="meta">
                                 <span><i class="fa-solid fa-layer-group"></i> ${a.classApplying}</span>
                                 <span><i class="fa-solid fa-venus-mars"></i> ${a.gender}</span>
@@ -2389,6 +2399,7 @@
                             dob: a.dob || '',
                             phone: a.parent_phone || '',
                             address: a.address || '',
+                            photo: a.photo || '',
                             created_at: a.admitted_at || a.date_submitted
                         }));
                     }
@@ -2432,7 +2443,8 @@
                     html += '<div onclick="openAdminStudentProfile(\''+s.id+'\')" style="cursor:pointer;padding:18px;background:#fff;border-radius:12px;border:2px solid #e9ecef;transition:all .2s;position:relative" onmouseover="this.style.borderColor=\'var(--primary)\';this.style.boxShadow=\'0 4px 15px rgba(0,0,0,.1)\'" onmouseout="this.style.borderColor=\'#e9ecef\';this.style.boxShadow=\'none\'">';
                     html += '<button class="btn-delete btn-delete-student-card" onclick="event.stopPropagation();deleteStudentAccount(\''+s.id+'\',\''+s.name.replace(/'/g,"\\'")+'\')" title="Remove Student"><i class="fa-solid fa-trash"></i></button>';
                     html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
-                    html += '<div class="user-avatar" style="width:45px;height:45px;font-size:.85rem;background:linear-gradient(135deg,var(--primary),var(--accent))">'+initials+'</div>';
+                    if (s.photo) html += '<div style="width:45px;height:45px;border-radius:50%;overflow:hidden;flex-shrink:0"><img src="'+s.photo+'" style="width:100%;height:100%;object-fit:cover" alt="'+s.name+'"></div>';
+                    else html += '<div class="user-avatar" style="width:45px;height:45px;font-size:.85rem;background:linear-gradient(135deg,var(--primary),var(--accent))">'+initials+'</div>';
                     html += '<div style="flex:1;min-width:0"><h4 style="margin:0;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.name+'</h4>';
                     html += '<p style="margin:2px 0 0;font-size:.8rem;color:var(--gray)">'+s.id+'</p></div>';
                     html += '<i class="fa-solid fa-chevron-right" style="color:var(--gray);font-size:.8rem"></i>';
