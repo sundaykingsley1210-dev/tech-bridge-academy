@@ -963,10 +963,14 @@
             try {
                 _initSupabase();
                 if (_supabaseClient) {
+                    // Get admin ID
+                    var adminResult = await _supabaseClient.from('users').select('id').eq('role', 'admin').limit(1).maybeSingle();
+                    var adminId = adminResult && adminResult.data ? adminResult.data.id : null;
                     await _supabaseClient.from('messages').insert({
                         from_id: currentUser.id,
                         from_name: currentUser.name,
                         from_role: 'student',
+                        to_id: adminId,
                         message: text,
                         subject: 'Message from ' + currentUser.name
                     });
