@@ -511,24 +511,6 @@
                     else console.log('Application saved to Supabase');
                 }).catch(function(err) { console.log('Application save:', err.message); });
 
-                // Create student account directly in DB (bypasses Supabase Auth)
-                var userId = crypto.randomUUID();
-                var profile = {
-                    id: userId,
-                    email: application.studentEmail,
-                    password: application.studentPassword,
-                    name: application.firstName + ' ' + application.lastName,
-                    role: 'student',
-                    class: application.classApplying,
-                    gender: application.gender,
-                    phone: application.parentPhone,
-                    address: application.address
-                };
-                _supabaseClient.from('users').upsert(profile).then(function(result) {
-                    if (result.error) console.log('Student signup:', result.error.message);
-                    else console.log('Student account created');
-                }).catch(function(err) { console.log('Student signup:', err.message); });
-
                 // Notify school via Supabase
                 _supabaseClient.from('notifications').insert({
                     title: 'New Student Admission',

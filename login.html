@@ -697,7 +697,22 @@
                 }
             } catch (err) {
                 console.error(err);
-                errorEl.textContent = err.message || 'Invalid email or password.';
+                var errMsg = err.message || 'Invalid email or password.';
+                if (currentRole === 'student') {
+                    _initSupabase();
+                    if (_supabaseClient) {
+                        try {
+                            var appCheck = await _supabaseClient.from('applications').select('status').eq('student_email', email).maybeSingle();
+                            if (appCheck && appCheck.data) {
+                                var st = appCheck.data.status;
+                                if (st === 'Pending') errMsg = 'Your application is still pending admin approval. Please wait for approval before logging in.';
+                                else if (st === 'Approved') errMsg = 'Your application has been approved. Please wait for the admin to complete admission.';
+                                else if (st === 'Rejected') errMsg = 'Your application was not approved. Please contact the school for more information.';
+                            }
+                        } catch(e) {}
+                    }
+                }
+                errorEl.textContent = errMsg;
                 errorEl.style.display = 'block';
             }
         }
