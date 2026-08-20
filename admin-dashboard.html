@@ -453,8 +453,9 @@
 
             <!-- Admin Students Section -->
             <div id="adminStudentsSection" style="display:none">
-                <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px">
+                <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;flex-wrap:wrap">
                     <h3 style="margin:0"><i class="fa-solid fa-users"></i> Students</h3>
+                    <button class="btn-action btn-accept" onclick="document.getElementById('studentRegFormCard').style.display=document.getElementById('studentRegFormCard').style.display==='none'?'block':'none'"><i class="fa-solid fa-user-plus"></i> Register New Student</button>
                     <select id="adminClassFilter" onchange="renderAdminStudents()" style="padding:10px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem;font-weight:600;background:#fff;cursor:pointer;min-width:160px">
                         <option value="all">All Classes</option>
                         <option>Nursery 1</option><option>Nursery 2</option>
@@ -462,6 +463,22 @@
                         <option>JSS 1</option><option>JSS 2</option><option>JSS 3</option>
                         <option>SSS 1</option><option>SSS 2</option><option>SSS 3</option>
                     </select>
+                </div>
+                <div id="studentRegFormCard" style="display:none;background:#fefce8;border:2px solid #ca8a04;border-radius:14px;padding:25px;margin-bottom:20px">
+                    <h4 style="margin-bottom:15px;color:var(--dark)"><i class="fa-solid fa-user-plus" style="color:#ca8a04"></i> Register New Student</h4>
+                    <form onsubmit="handleStudentRegistration(event)" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">First Name *</label><input type="text" id="srFirstName" required placeholder="e.g. John" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                        <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Last Name *</label><input type="text" id="srLastName" required placeholder="e.g. Doe" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                        <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Date of Birth *</label><input type="date" id="srDob" required style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                        <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Gender *</label><select id="srGender" required style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"><option value="">Select</option><option>Male</option><option>Female</option></select></div>
+                        <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Class *</label><select id="srClass" required style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"><option value="">Select Class</option><option>Nursery 1</option><option>Nursery 2</option><option>Primary 1</option><option>Primary 2</option><option>Primary 3</option><option>Primary 4</option><option>Primary 5</option><option>Primary 6</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></div>
+                        <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Student Email *</label><input type="email" id="srEmail" required placeholder="e.g. john@student.com" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                        <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Password *</label><input type="password" id="srPassword" required minlength="6" placeholder="Min 6 characters" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                        <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Parent Name *</label><input type="text" id="srParentName" required placeholder="e.g. Mrs. Doe" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                        <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Parent Phone *</label><input type="tel" id="srParentPhone" required placeholder="e.g. 08012345678" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                        <div style="grid-column:span 2"><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Address *</label><input type="text" id="srAddress" required placeholder="Home address" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                        <div style="grid-column:span 2;display:flex;gap:10px"><button type="submit" class="btn-action btn-accept"><i class="fa-solid fa-check"></i> Create Student</button><button type="button" class="btn-action btn-reject" onclick="document.getElementById('studentRegFormCard').style.display='none'"><i class="fa-solid fa-times"></i> Cancel</button></div>
+                    </form>
                 </div>
                 <div id="adminStudentsByClass"></div>
             </div>
@@ -3064,6 +3081,71 @@
             } catch (err) {
                 console.error('Admin registration error:', err);
                 alert('Failed to create admin account. Please try again.');
+            }
+        }
+
+        async function handleStudentRegistration(e) {
+            e.preventDefault();
+            const firstName = document.getElementById('srFirstName').value.trim();
+            const lastName = document.getElementById('srLastName').value.trim();
+            const dob = document.getElementById('srDob').value;
+            const gender = document.getElementById('srGender').value;
+            const cls = document.getElementById('srClass').value;
+            const email = document.getElementById('srEmail').value.trim();
+            const password = document.getElementById('srPassword').value;
+            const parentName = document.getElementById('srParentName').value.trim();
+            const parentPhone = document.getElementById('srParentPhone').value.trim();
+            const address = document.getElementById('srAddress').value.trim();
+
+            if (!firstName || !lastName || !dob || !gender || !cls || !email || !password || !parentName || !parentPhone || !address) {
+                alert('Please fill in all required fields.'); return;
+            }
+
+            try {
+                _initSupabase();
+                if (!_supabaseClient) { alert('Connection error. Please try again.'); return; }
+
+                // Add to applications table (admitted directly)
+                const refNum = 'TBA-' + Date.now().toString(36).toUpperCase().slice(-6);
+                const appResult = await _supabaseClient.from('applications').insert({
+                    ref_number: refNum,
+                    first_name: firstName,
+                    last_name: lastName,
+                    dob: dob,
+                    gender: gender,
+                    class_applying: cls,
+                    parent_name: parentName,
+                    parent_phone: parentPhone,
+                    address: address,
+                    student_email: email,
+                    student_password: password,
+                    status: 'Admitted',
+                    date_submitted: new Date().toISOString(),
+                    admitted_at: new Date().toISOString()
+                }).select();
+
+                // Add to users table
+                const userId = appResult && appResult.data && appResult.data[0] ? appResult.data[0].id : crypto.randomUUID();
+                await _supabaseClient.from('users').insert({
+                    id: userId,
+                    name: firstName + ' ' + lastName,
+                    email: email,
+                    password: password,
+                    role: 'student',
+                    class: cls,
+                    gender: gender,
+                    dob: dob,
+                    phone: parentPhone
+                });
+
+                alert('Student account created: ' + firstName + ' ' + lastName + '\nClass: ' + cls + '\nReference: ' + refNum);
+                document.getElementById('studentRegFormCard').style.display = 'none';
+                document.getElementById('studentRegFormCard').querySelector('form').reset();
+                renderAdminStudents();
+                updateStats();
+            } catch (err) {
+                console.error('Student registration error:', err);
+                alert('Failed to create student account. Please try again.');
             }
         }
 
