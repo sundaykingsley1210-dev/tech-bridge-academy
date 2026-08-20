@@ -1021,7 +1021,7 @@
             }
 
             // Create student account
-            const newId = 'STU' + String(Date.now()).slice(-6);
+            const newId = crypto.randomUUID();
             const loginEmail = studentEmail || parentEmail;
             const loginPassword = studentPassword || 'student123';
             const studentProfile = {
