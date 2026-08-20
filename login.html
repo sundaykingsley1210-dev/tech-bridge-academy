@@ -402,8 +402,6 @@
 
                 <div class="login-footer">
                     <a href="admission.html">New Student? Apply for Admission</a>
-                    <p style="margin-top:8px"><a href="#" onclick="showTeacherReg()" style="color:var(--primary);font-weight:600;font-size:.9rem">New Teacher? Register Here</a></p>
-                    <p id="adminRegLink" style="margin-top:8px;display:none"><a href="#" onclick="showAdminReg()" style="color:var(--primary);font-weight:600;font-size:.9rem">Setup Admin Account</a></p>
                     <p>Having trouble? Contact <a href="https://wa.me/2348039392007" style="color: var(--accent);">Support</a></p>
                 </div>
             </div>
@@ -413,51 +411,6 @@
     <script>
         let currentRole = 'student';
 
-        // Teacher Registration Modal
-        document.body.insertAdjacentHTML('beforeend', `
-        <div id="teacherRegModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;justify-content:center;align-items:center">
-            <div style="background:#fff;border-radius:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;margin:20px;animation:fadeIn .3s ease">
-                <div style="padding:25px 30px;border-bottom:1px solid #e9ecef;display:flex;justify-content:space-between;align-items:center">
-                    <h3 style="font-size:1.3rem;color:var(--dark)">Teacher Registration</h3>
-                    <button onclick="closeTeacherReg()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)">&times;</button>
-                </div>
-                <div style="padding:30px">
-                    <form id="teacherRegForm" onsubmit="handleTeacherReg(event)">
-                        <div style="margin-bottom:18px">
-                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Full Name *</label>
-                            <input type="text" id="trName" placeholder="Enter your full name" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                        </div>
-                        <div style="margin-bottom:18px">
-                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Email Address *</label>
-                            <input type="email" id="trEmail" placeholder="Enter your email" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                        </div>
-                        <div style="margin-bottom:18px">
-                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Subject *</label>
-                            <input type="text" id="trSubject" placeholder="e.g. Mathematics" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                        </div>
-                        <div style="margin-bottom:18px">
-                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Phone Number</label>
-                            <input type="tel" id="trPhone" placeholder="e.g. 08012345678" style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                        </div>
-                        <div style="margin-bottom:18px">
-                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Password *</label>
-                            <div style="position:relative">
-                                <input type="password" id="trPassword" placeholder="Create a password (min 6 chars)" minlength="6" required style="width:100%;padding:12px 50px 12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                                <i id="trEyeIcon" class="fa-solid fa-eye" onclick="togglePassword('trPassword','trEyeIcon')" style="position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#1e40af;cursor:pointer;font-size:1.1rem"></i>
-                            </div>
-                        </div>
-                        <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-user-plus"></i> Register</button>
-                    </form>
-                </div>
-            </div>
-        </div>`);
-
-        function showTeacherReg() {
-            document.getElementById('teacherRegModal').style.display = 'flex';
-        }
-        function closeTeacherReg() {
-            document.getElementById('teacherRegModal').style.display = 'none';
-        }
 
         // Password visibility toggle
         function togglePassword(inputId, iconId) {
@@ -663,97 +616,6 @@
                 alert('Something went wrong. Please try again.');
             }
         }
-        async function handleTeacherReg(e) {
-            e.preventDefault();
-            const name = document.getElementById('trName').value.trim();
-            const email = document.getElementById('trEmail').value.trim();
-            const subject = document.getElementById('trSubject').value.trim();
-            const phone = document.getElementById('trPhone').value.trim();
-            const password = document.getElementById('trPassword').value;
-
-            try {
-                const data = await signUp(email, password, { name: name, role: 'teacher', subject: subject, phone: phone });
-                localStorage.setItem('tba_currentUser', JSON.stringify(data.user));
-                sendCongratsEmail(email, name, 'teacher');
-                sendNotifToAdmin('New Teacher Registered', name + ' (' + email + ') has created a teacher account.');
-                alert('Registration successful! Redirecting to your dashboard...');
-                closeTeacherReg();
-                window.location.href = 'teacher-dashboard.html';
-            } catch (err) {
-                console.error(err);
-                alert(err.message || 'Registration failed. Please try again.');
-            }
-        }
-
-        // Admin Registration Modal
-        document.body.insertAdjacentHTML('beforeend', `
-        <div id="adminRegModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;justify-content:center;align-items:center">
-            <div style="background:#fff;border-radius:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;margin:20px;animation:fadeIn .3s ease">
-                <div style="padding:25px 30px;border-bottom:1px solid #e9ecef;display:flex;justify-content:space-between;align-items:center">
-                    <h3 style="font-size:1.3rem;color:var(--dark)">Admin Registration</h3>
-                    <button onclick="closeAdminReg()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)">&times;</button>
-                </div>
-                <div style="padding:30px">
-                    <form id="adminRegForm" onsubmit="handleAdminReg(event)">
-                        <div style="margin-bottom:18px">
-                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Full Name *</label>
-                            <input type="text" id="arName" placeholder="Enter your full name" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                        </div>
-                        <div style="margin-bottom:18px">
-                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Email Address *</label>
-                            <input type="email" id="arEmail" placeholder="Enter admin email" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                        </div>
-                        <div style="margin-bottom:18px">
-                            <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Password *</label>
-                            <div style="position:relative">
-                                <input type="password" id="arPassword" placeholder="Create a password (min 6 chars)" minlength="6" required style="width:100%;padding:12px 50px 12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                                <i id="arEyeIcon" class="fa-solid fa-eye" onclick="togglePassword('arPassword','arEyeIcon')" style="position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#1e40af;cursor:pointer;font-size:1.1rem"></i>
-                            </div>
-                        </div>
-                        <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-shield-halved"></i> Create Admin Account</button>
-                    </form>
-                </div>
-            </div>
-        </div>`);
-
-        function showAdminReg() {
-            document.getElementById('adminRegModal').style.display = 'flex';
-        }
-        function closeAdminReg() {
-            document.getElementById('adminRegModal').style.display = 'none';
-        }
-        async function handleAdminReg(e) {
-            e.preventDefault();
-            const name = document.getElementById('arName').value.trim();
-            const email = document.getElementById('arEmail').value.trim();
-            const password = document.getElementById('arPassword').value;
-
-            if (!name || !email || !password) {
-                alert('Please fill in all fields.');
-                return;
-            }
-
-            _initSupabase();
-            if (!_supabaseClient) {
-                alert('Connecting to server... Please wait a moment and try again.');
-                return;
-            }
-
-            try {
-                const data = await signUp(email, password, { name: name, role: 'admin' });
-                localStorage.setItem('tba_currentUser', JSON.stringify(data.user));
-                sendCongratsEmail(email, name, 'admin');
-                alert('Admin account created! Redirecting to dashboard...');
-                closeAdminReg();
-                window.location.href = 'admin-dashboard.html';
-            } catch (err) {
-                console.error(err);
-                alert(err.message || 'Registration failed. Please try again.');
-            }
-        }
-
-        // Show admin registration link
-        document.getElementById('adminRegLink').style.display = 'block';
 
         function switchRole(role) {
             currentRole = role;

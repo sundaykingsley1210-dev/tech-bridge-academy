@@ -482,12 +482,26 @@
                 <div class="card" style="margin-top:25px">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-chalkboard-user"></i> Teachers</h3>
-                        <div class="search-bar">
-                            <input type="text" class="search-input" id="teacherSearchInput" placeholder="Search by name, subject, or email..." oninput="handleTeacherSearch()">
-                            <span class="search-count" id="teacherSearchCount"></span>
+                        <div style="display:flex;align-items:center;gap:12px">
+                            <button class="btn-action btn-accept" onclick="document.getElementById('teacherRegFormCard').style.display=document.getElementById('teacherRegFormCard').style.display==='none'?'block':'none'"><i class="fa-solid fa-user-plus"></i> Register New Teacher</button>
+                            <div class="search-bar">
+                                <input type="text" class="search-input" id="teacherSearchInput" placeholder="Search by name, subject, or email..." oninput="handleTeacherSearch()">
+                                <span class="search-count" id="teacherSearchCount"></span>
+                            </div>
                         </div>
                     </div>
                     <div class="card-body">
+                        <div id="teacherRegFormCard" style="display:none;background:#f0fdf4;border:2px solid #38a169;border-radius:14px;padding:25px;margin-bottom:20px">
+                            <h4 style="margin-bottom:15px;color:var(--dark)"><i class="fa-solid fa-user-plus" style="color:#38a169"></i> Register New Teacher</h4>
+                            <form onsubmit="handleTeacherRegistration(event)" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                                <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Full Name *</label><input type="text" id="trName" required placeholder="e.g. Mrs. Ada Eze" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                                <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Email *</label><input type="email" id="trEmail" required placeholder="e.g. ada@teacher.com" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                                <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Subject *</label><input type="text" id="trSubject" required placeholder="e.g. Mathematics" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                                <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Phone</label><input type="tel" id="trPhone" placeholder="e.g. 08012345678" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                                <div style="grid-column:span 2"><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Password *</label><input type="password" id="trPassword" required minlength="6" placeholder="Min 6 characters" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                                <div style="grid-column:span 2;display:flex;gap:10px"><button type="submit" class="btn-action btn-accept"><i class="fa-solid fa-check"></i> Create Account</button><button type="button" class="btn-action btn-reject" onclick="document.getElementById('teacherRegFormCard').style.display='none'"><i class="fa-solid fa-times"></i> Cancel</button></div>
+                            </form>
+                        </div>
                         <div class="app-list" id="adminTeachersList"></div>
                     </div>
                 </div>
@@ -574,8 +588,18 @@
                 <div class="card" style="margin-top:25px">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-user-shield"></i> All Administrators</h3>
+                        <div id="addAdminBtnWrap"></div>
                     </div>
                     <div class="card-body">
+                        <div id="adminRegFormCard" style="display:none;background:#eff6ff;border:2px solid #3b82f6;border-radius:14px;padding:25px;margin-bottom:20px">
+                            <h4 style="margin-bottom:15px;color:var(--dark)"><i class="fa-solid fa-shield-halved" style="color:#3b82f6"></i> Add New Admin</h4>
+                            <form onsubmit="handleAdminRegistration(event)" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                                <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Full Name *</label><input type="text" id="arName" required placeholder="e.g. Dr. Chidi Obi" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                                <div><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Email *</label><input type="email" id="arEmail" required placeholder="e.g. chidi@admin.com" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                                <div style="grid-column:span 2"><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Password *</label><input type="password" id="arPassword" required minlength="6" placeholder="Min 6 characters" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div>
+                                <div style="grid-column:span 2;display:flex;gap:10px"><button type="submit" class="btn-action btn-accept"><i class="fa-solid fa-check"></i> Create Admin</button><button type="button" class="btn-action btn-reject" onclick="document.getElementById('adminRegFormCard').style.display='none'"><i class="fa-solid fa-times"></i> Cancel</button></div>
+                            </form>
+                        </div>
                         <div class="app-list" id="allAdminsList"></div>
                     </div>
                 </div>
@@ -2871,6 +2895,13 @@
 
             const isMaster = masterAdminId === currentUser.id;
 
+            const addBtnWrap = document.getElementById('addAdminBtnWrap');
+            if (isMaster) {
+                addBtnWrap.innerHTML = '<button class="btn-action btn-accept" onclick="document.getElementById(\'adminRegFormCard\').style.display=document.getElementById(\'adminRegFormCard\').style.display===\'none\'?\'block\':\'none\'"><i class="fa-solid fa-user-plus"></i> Add New Admin</button>';
+            } else {
+                addBtnWrap.innerHTML = '';
+            }
+
             const container = document.getElementById('allAdminsList');
             if (!admins.length) {
                 container.innerHTML = '<div class="no-data"><i class="fa-solid fa-user-shield"></i><p>No admin accounts found</p></div>';
@@ -2969,6 +3000,71 @@
 
             renderAllAdmins();
             alert(adminName + ' has been removed.');
+        }
+
+        async function handleTeacherRegistration(e) {
+            e.preventDefault();
+            const name = document.getElementById('trName').value.trim();
+            const email = document.getElementById('trEmail').value.trim();
+            const subject = document.getElementById('trSubject').value.trim();
+            const phone = document.getElementById('trPhone').value.trim();
+            const password = document.getElementById('trPassword').value;
+
+            if (!name || !email || !subject || !password) { alert('Please fill in all required fields.'); return; }
+
+            try {
+                _initSupabase();
+                if (!_supabaseClient) { alert('Connection error. Please try again.'); return; }
+
+                const { data, error } = await _supabaseClient.auth.signUp({ email, password });
+                if (error) { alert('Auth error: ' + error.message); return; }
+
+                const userId = data.user ? data.user.id : crypto.randomUUID();
+                await _supabaseClient.from('users').insert({
+                    id: userId, name, email, password, role: 'teacher', subject, phone
+                });
+
+                alert('Teacher account created: ' + name);
+                document.getElementById('teacherRegFormCard').style.display = 'none';
+                document.getElementById('teacherRegFormCard').querySelector('form').reset();
+                renderAdminTeachers();
+            } catch (err) {
+                console.error('Teacher registration error:', err);
+                alert('Failed to create teacher account. Please try again.');
+            }
+        }
+
+        async function handleAdminRegistration(e) {
+            e.preventDefault();
+            const masterAdminId = localStorage.getItem('tba_master_admin');
+            if (masterAdminId !== currentUser.id) { alert('Only the master admin can create admin accounts.'); return; }
+
+            const name = document.getElementById('arName').value.trim();
+            const email = document.getElementById('arEmail').value.trim();
+            const password = document.getElementById('arPassword').value;
+
+            if (!name || !email || !password) { alert('Please fill in all fields.'); return; }
+
+            try {
+                _initSupabase();
+                if (!_supabaseClient) { alert('Connection error. Please try again.'); return; }
+
+                const { data, error } = await _supabaseClient.auth.signUp({ email, password });
+                if (error) { alert('Auth error: ' + error.message); return; }
+
+                const userId = data.user ? data.user.id : crypto.randomUUID();
+                await _supabaseClient.from('users').insert({
+                    id: userId, name, email, password, role: 'admin'
+                });
+
+                alert('Admin account created: ' + name);
+                document.getElementById('adminRegFormCard').style.display = 'none';
+                document.getElementById('adminRegFormCard').querySelector('form').reset();
+                renderAllAdmins();
+            } catch (err) {
+                console.error('Admin registration error:', err);
+                alert('Failed to create admin account. Please try again.');
+            }
         }
 
         function logout() { localStorage.removeItem('tba_currentUser'); window.location.href = 'login.html'; }
