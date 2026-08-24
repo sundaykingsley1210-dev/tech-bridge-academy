@@ -1,8 +1,8 @@
 {
-  "name": "TECH-BRIDGE ACADEMY",
-  "short_name": "TBA School",
-  "description": "Official app for TECH-BRIDGE ACADEMY - Quality Education, Innovation & Excellence",
-  "start_url": "/",
+  "name": "Tech-Bridge Academy Demo",
+  "short_name": "TBA Demo",
+  "description": "Official app for Tech-Bridge Academy Demo - Quality Education, Innovation & Excellence",
+  "start_url": "/login.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#1e40af",
@@ -15,15 +15,38 @@
       "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "screenshots": [],
-  "prefer_related_applications": false
+  "screenshots": [
+    {
+      "src": "hero-bg.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Tech-Bridge Academy Demo Dashboard"
+    }
+  ],
+  "prefer_related_applications": false,
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "name",
+      "text": "description",
+      "url": "link"
+    }
+  }
 }

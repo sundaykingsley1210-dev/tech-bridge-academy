@@ -1,0 +1,12 @@
+name = "tech-bridge-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+account_id = "82bb7744e04b28ad118b34938b495c1c"
+
+[vars]
+JWT_SECRET = "tba-secret-change-me-in-production"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tech-bridge-db"
+database_id = "7ab76d9e-9a86-4ea9-853d-6083cd366f59"

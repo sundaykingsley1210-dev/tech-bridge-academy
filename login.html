@@ -3,113 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - TECH-BRIDGE ACADEMY</title>
+    <title>Login - Tech-Bridge Academy Demo DEMO</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="api.js"></script>
     <script>
-    var _supabaseClient = null;
-    function _initSupabase() {
-        try {
-            if (_supabaseClient) return;
-            if (window.supabase && window.supabase.createClient) {
-                _supabaseClient = window.supabase.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_3DWixMg6ElVnJD08vOQJAA_-2Y0Pate');
-            } else if (window.createClient) {
-                _supabaseClient = window.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_3DWixMg6ElVnJD08vOQJAA_-2Y0Pate');
-            }
-        } catch(e) { console.error('Supabase init error:', e); }
-    }
-    _initSupabase();
-    setTimeout(_initSupabase, 500);
-    setTimeout(_initSupabase, 1500);
-
-    function _s() { _initSupabase(); return _supabaseClient; }
-
-    // Sign up — Direct DB insert (bypasses Supabase Auth)
-    function signUp(email, password, metadata) {
-        return new Promise(function(resolve, reject) {
-            var c = _s();
-            if (!c) {
-                // Retry after a short delay
-                setTimeout(function() {
-                    var c2 = _s();
-                    if (!c2) return reject(new Error('Cannot connect to server. Please refresh and try again.'));
-                    var userId = crypto.randomUUID();
-                    var profile = {
-                        id: userId,
-                        email: email,
-                        password: password,
-                        name: (metadata && metadata.name) || email.split('@')[0],
-                        role: (metadata && metadata.role) || 'student',
-                        class: (metadata && metadata.class) || null,
-                        subject: (metadata && metadata.subject) || null,
-                        phone: (metadata && metadata.phone) || null
-                    };
-                    c2.from('users').upsert(profile).then(function(res) {
-                        if (res.error) return reject(new Error(res.error.message));
-                        resolve({ user: profile });
-                    }).catch(function(err) { reject(err); });
-                }, 2000);
-                return;
-            }
-            var userId = crypto.randomUUID();
-            var profile = {
-                id: userId,
-                email: email,
-                password: password,
-                name: (metadata && metadata.name) || email.split('@')[0],
-                role: (metadata && metadata.role) || 'student',
-                class: (metadata && metadata.class) || null,
-                subject: (metadata && metadata.subject) || null,
-                phone: (metadata && metadata.phone) || null
-            };
-            c.from('users').upsert(profile).then(function(res) {
-                if (res.error) return reject(new Error(res.error.message));
-                resolve({ user: profile });
-            }).catch(function(err) { reject(err); });
-        });
-    }
-
-    // Sign in — Direct DB query (bypasses Supabase Auth)
-    function signIn(email, password) {
-        return new Promise(function(resolve, reject) {
-            var c = _s();
-            if (!c) return reject(new Error('Cannot connect to server.'));
-            c.from('users').select('*').eq('email', email).eq('password', password).maybeSingle().then(function(res) {
-                if (res.error) return reject(new Error('Invalid email or password.'));
-                if (!res.data) return reject(new Error('Invalid email or password.'));
-                resolve({ user: res.data });
-            }).catch(function(err) { reject(new Error('Invalid email or password.')); });
-        });
-    }
-
-    var supabase = null;
-    var DB = {
-        createUser: function(u) { var c=_s(); if(!c) return Promise.resolve(); return c.from('users').upsert(u); },
-        getUserProfile: function(id) { var c=_s(); if(!c) return Promise.reject(new Error('No connection')); return c.from('users').select('*').eq('id',id).single().then(function(r){ if(r.error) throw r.error; return r.data; }); },
-        updateUserProfile: function(id, u) { var c=_s(); if(!c) return Promise.resolve(); return c.from('users').update(u).eq('id',id).select(); },
-        getAllStudents: function() { var c=_s(); if(!c) return Promise.resolve([]); return c.from('users').select('*').eq('role','student').then(function(r){ return r.data||[]; }); },
-        getStudentsByClass: function(cls) { var c=_s(); if(!c) return Promise.resolve([]); return c.from('users').select('*').eq('role','student').eq('class',cls).then(function(r){ return r.data||[]; }); },
-        getAllTeachers: function() { var c=_s(); if(!c) return Promise.resolve([]); return c.from('users').select('*').eq('role','teacher').then(function(r){ return r.data||[]; }); }
-    };
-
-    function sendNotifToAdmin(title, message) {
-        var c = _s();
-        if (!c) return;
-        c.from('notifications').insert({ title: title, message: message, target_role: 'admin', from_name: 'System', from_role: 'system' }).then(function() {}).catch(function() {});
-    }
-
     function sendCongratsEmail(toEmail, name, role) {
         fetch('https://api.web3forms.com/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 access_key: '320741cd-4b44-449d-8231-b0150da8d26d',
-                subject: 'Welcome to TECH-BRIDGE ACADEMY!',
-                from_name: 'TECH-BRIDGE ACADEMY',
+                subject: 'Welcome to Tech-Bridge Academy Demo DEMO!',
+                from_name: 'Tech-Bridge Academy Demo DEMO',
                 email: toEmail,
-                message: 'Dear ' + name + ',\n\nCongratulations! Your ' + role + ' account has been successfully created at TECH-BRIDGE ACADEMY.\n\nEmail: ' + toEmail + '\nRole: ' + role.charAt(0).toUpperCase() + role.slice(1) + '\n\nYou can now login to your portal at ' + window.location.origin + '/login.html using your email and password.\n\nWe wish you success!\n\nBest regards,\nTECH-BRIDGE ACADEMY'
+                message: 'Dear ' + name + ',\n\nCongratulations! Your ' + role + ' account has been successfully created at Tech-Bridge Academy Demo DEMO.\n\nEmail: ' + toEmail + '\nRole: ' + role.charAt(0).toUpperCase() + role.slice(1) + '\n\nYou can now login to your portal at ' + window.location.origin + '/login.html using your email and password.\n\nWe wish you success!\n\nBest regards,\nTech-Bridge Academy Demo DEMO'
             })
         }).then(function() { console.log('Welcome email sent'); }).catch(function(err) { console.log('Email failed:', err); });
     }
@@ -327,7 +236,7 @@
     <section class="login-page">
         <div class="login-container">
             <div class="login-header">
-                <img src="logo.svg" alt="TECH-BRIDGE ACADEMY">
+                <img src="logo.svg" alt="Tech-Bridge Academy Demo DEMO">
                 <h1>Welcome Back</h1>
                 <p>Sign in to your portal</p>
             </div>
@@ -503,17 +412,13 @@
             const email = document.getElementById('checkEmail').value.trim();
             const resultDiv = document.getElementById('resetStatusResult');
 
-            _initSupabase();
-            if (!_supabaseClient) { alert('Cannot connect to server.'); return; }
-
             try {
-                var result = await _supabaseClient.from('password_resets').select('*').eq('email', email).eq('role', role).order('requested_at', {ascending: false}).limit(1).maybeSingle();
-                if (result.error) throw result.error;
-                if (!result.data) {
+                var results = await API.passwordResets.list({ email, role });
+                if (!results || results.length === 0) {
                     resultDiv.innerHTML = '<div style="padding:12px;background:#f8d7da;border-radius:10px;border-left:4px solid #e53e3e"><strong style="color:#721c24"><i class="fa-solid fa-exclamation-circle"></i> No Request Found</strong><p style="margin:5px 0 0;font-size:.85rem;color:#721c24">No reset request found for this email. Please submit a new request.</p></div>';
                     return;
                 }
-                var req = result.data;
+                var req = results[0];
                 if (req.status === 'pending') {
                     resultDiv.innerHTML = '<div style="padding:12px;background:#fff3cd;border-radius:10px;border-left:4px solid #d69e2e"><strong style="color:#856404"><i class="fa-solid fa-clock"></i> Request Pending</strong><p style="margin:5px 0 0;font-size:.85rem;color:#856404">Your request is waiting for admin approval. Please check back later.</p></div>';
                 } else if (req.status === 'rejected') {
@@ -539,27 +444,12 @@
             if (newPass !== confirmPass) { alert('Passwords do not match!'); return; }
             if (newPass.length < 4) { alert('Password must be at least 4 characters!'); return; }
 
-            _initSupabase();
-            if (!_supabaseClient) { alert('Cannot connect to server.'); return; }
-
             try {
-                var userResult = await _supabaseClient.from('users').select('*').eq('email', email).eq('role', role).maybeSingle();
-                if (userResult.error) throw userResult.error;
-                if (!userResult.data) { alert('User not found.'); return; }
+                var users = await API.users.list({ email, role });
+                if (!users || users.length === 0) { alert('User not found.'); return; }
 
-                var updateResult = await _supabaseClient.from('users').update({password: newPass}).eq('id', userResult.data.id);
-                if (updateResult.error) throw updateResult.error;
-
-                // Also update localStorage
-                let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
-                const userIdx = users.findIndex(u => u.email === email && u.role === role);
-                if (userIdx !== -1) {
-                    users[userIdx].password = newPass;
-                    localStorage.setItem('tba_users', JSON.stringify(users));
-                }
-
-                // Delete the reset request
-                await _supabaseClient.from('password_resets').delete().eq('email', email).eq('role', role);
+                await API.users.update(users[0].id, { password: newPass });
+                await API.passwordResets.delete({ email });
 
                 document.getElementById('resetStatusResult').innerHTML = '<div style="padding:12px;background:#d4edda;border-radius:10px;border-left:4px solid #155724"><strong style="color:#155724"><i class="fa-solid fa-check-circle"></i> Password Updated!</strong><p style="margin:5px 0 0;font-size:.85rem;color:#155724">Your password has been changed successfully. You can now log in with your new password.</p></div>';
             } catch(err) {
@@ -570,42 +460,22 @@
             e.preventDefault();
             const role = document.getElementById('resetRole').value;
             const email = document.getElementById('resetEmail').value.trim();
-            const errorEl = document.getElementById('loginError');
-
-            _initSupabase();
-            if (!_supabaseClient) { alert('Cannot connect to server. Check your internet.'); return; }
 
             try {
-                var userResult = await _supabaseClient.from('users').select('*').eq('email', email).eq('role', role).maybeSingle();
-                var user = userResult.data;
-                var userErr = userResult.error;
-
-                if (userErr) throw userErr;
-                if (!user) {
+                var users = await API.users.list({ email, role });
+                if (!users || users.length === 0) {
                     alert('No ' + role + ' account found with this email.');
                     return;
                 }
 
-                var exResult = await _supabaseClient.from('password_resets').select('*').eq('email', email).eq('role', role).eq('status', 'pending').maybeSingle();
-                var existing = exResult.data;
-                var exErr = exResult.error;
-
-                if (exErr) throw exErr;
-                if (existing) {
+                var existing = await API.passwordResets.list({ email, role, status: 'pending' });
+                if (existing && existing.length > 0) {
                     alert('You already have a pending reset request. Please wait for admin approval.');
                     closeResetModal();
                     return;
                 }
 
-                var insResult = await _supabaseClient.from('password_resets').insert({
-                    id: 'RST' + Date.now().toString(36).toUpperCase(),
-                    role: role,
-                    name: user.name,
-                    email: email,
-                    status: 'pending',
-                    requested_at: new Date().toISOString()
-                });
-                if (insResult.error) throw insResult.error;
+                await API.passwordResets.create({ role, name: users[0].name, email, status: 'pending' });
 
                 alert('Password reset request sent to admin. You will receive your new password once the admin approves your request.');
                 closeResetModal();
@@ -654,15 +524,8 @@
                 return;
             }
 
-            _initSupabase();
-            if (!_supabaseClient) {
-                errorEl.textContent = 'Connecting to server... Please wait and try again.';
-                errorEl.style.display = 'block';
-                return;
-            }
-
             try {
-                const data = await signIn(email, password);
+                const data = await API.signIn(email, password);
                 const profile = data.user;
 
                 if (currentRole === 'student') {
@@ -699,24 +562,65 @@
                 console.error(err);
                 var errMsg = err.message || 'Invalid email or password.';
                 if (currentRole === 'student') {
-                    _initSupabase();
-                    if (_supabaseClient) {
-                        try {
-                            var appCheck = await _supabaseClient.from('applications').select('status').eq('student_email', email).maybeSingle();
-                            if (appCheck && appCheck.data) {
-                                var st = appCheck.data.status;
-                                if (st === 'Pending') errMsg = 'Your application is still pending admin approval. Please wait for approval before logging in.';
-                                else if (st === 'Approved') errMsg = 'Your application has been approved. Please wait for the admin to complete admission.';
-                                else if (st === 'Rejected') errMsg = 'Your application was not approved. Please contact the school for more information.';
-                            }
-                        } catch(e) {}
-                    }
+                    try {
+                        var apps = await API.applications.list({ student_email: email });
+                        if (apps && apps.length > 0) {
+                            var st = apps[0].status;
+                            if (st === 'Pending') errMsg = 'Your application is still pending admin approval. Please wait for approval before logging in.';
+                            else if (st === 'Approved') errMsg = 'Your application has been approved. Please wait for the admin to complete admission.';
+                            else if (st === 'Rejected') errMsg = 'Your application was not approved. Please contact the school for more information.';
+                        }
+                    } catch(e) {}
                 }
                 errorEl.textContent = errMsg;
                 errorEl.style.display = 'block';
             }
         }
 
+    </script>
+
+    <!-- PWA Install Banner -->
+    <div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1e40af,#7c3aed);color:#fff;padding:15px;z-index:9999;box-shadow:0 -4px 20px rgba(0,0,0,.3)">
+        <div style="max-width:450px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px">
+                <img src="icon-192.png" alt="TBA Demo" style="width:40px;height:40px;border-radius:10px">
+                <div>
+                    <strong style="font-size:.9rem">Install App</strong>
+                    <p style="margin:0;font-size:.8rem;opacity:.9">Quick access from home screen</p>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px">
+                <button onclick="dismissInstall()" style="background:rgba(255,255,255,.2);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.85rem;cursor:pointer">Later</button>
+                <button onclick="installApp()" style="background:#fff;color:#1e40af;border:none;padding:8px 20px;border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer">Install</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (!localStorage.getItem('tba_install_dismissed')) {
+                document.getElementById('installBanner').style.display = 'block';
+            }
+        });
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('installBanner').style.display = 'none';
+            deferredPrompt = null;
+        });
+        function installApp() {
+            if (!deferredPrompt) { alert('Use your browser menu to install'); return; }
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((c) => {
+                if (c.outcome === 'accepted') document.getElementById('installBanner').style.display = 'none';
+                deferredPrompt = null;
+            });
+        }
+        function dismissInstall() {
+            document.getElementById('installBanner').style.display = 'none';
+            localStorage.setItem('tba_install_dismissed', 'true');
+        }
     </script>
 </body>
 </html>

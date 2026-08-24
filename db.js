@@ -1,4 +1,4 @@
-// TECH-BRIDGE ACADEMY - Supabase Database Helpers
+// Tech-Bridge Academy Demo DEMO - Supabase Database Helpers
 // All database operations go through this file
 
 const DB = {
