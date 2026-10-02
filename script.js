@@ -21,7 +21,6 @@ if (menuToggle && navLinks) {
 let deferredInstallPrompt = null;
 const installButtons = [document.getElementById("installAppBtn"), document.getElementById("topInstallAppBtn")].filter(Boolean);
 let installHelpModal = null;
-let qrModal = null;
 
 if (installButtons.length && (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone)) {
     installButtons.forEach((button) => {
@@ -136,41 +135,6 @@ function closeQrModal() {
     qrModal.hidden = true;
 }
 
-function openQrModal() {
-    const appUrl = getAppUrl();
-    if (!qrModal) {
-        qrModal = document.createElement("div");
-        qrModal.id = "qrModal";
-        qrModal.className = "qr-modal";
-        qrModal.hidden = true;
-        document.body.appendChild(qrModal);
-
-        qrModal.addEventListener("click", (event) => {
-            if (event.target === qrModal || event.target.hasAttribute("data-qr-close")) {
-                closeQrModal();
-            }
-        });
-    }
-
-    qrModal.innerHTML =
-        '<div class="qr-modal-box" role="dialog" aria-modal="true" aria-labelledby="qrTitle">' +
-            '<button type="button" class="install-modal-close" data-qr-close aria-label="Close QR code">&times;</button>' +
-            '<span class="badge">Phone install</span>' +
-            '<h3 id="qrTitle">Scan to open on your phone</h3>' +
-            '<p class="qr-caption">Use this QR code to open TECH-BRIDGE ACADEMY on another device, then install it from the browser menu.</p>' +
-            '<div class="qr-preview"><img src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(appUrl) + '" alt="QR code for TECH-BRIDGE ACADEMY"></div>' +
-            '<div class="qr-actions"><button type="button" class="btn btn-primary" data-qr-close>Done</button><button type="button" class="btn btn-secondary" id="downloadShortcutFromQr">Download Shortcut</button></div>' +
-            '<div class="qr-url">' + appUrl + '</div>' +
-        '</div>';
-
-    const downloadShortcutFromQr = document.getElementById("downloadShortcutFromQr");
-    if (downloadShortcutFromQr) {
-        downloadShortcutFromQr.addEventListener("click", downloadShortcut);
-    }
-
-    qrModal.hidden = false;
-}
-
 function openInstallHelpModal() {
     const guide = getInstallGuide();
 
@@ -246,7 +210,7 @@ if (topDownloadShortcutButton) {
     topDownloadShortcutButton.addEventListener("click", downloadShortcut);
 }
 
-const downloadShortcutInlineButton = document.getElementById("downloadShortcutInlineBtn");
+const topDownloadButton = document.getElementById("topDownloadBtn");
 if (downloadShortcutInlineButton) {
     downloadShortcutInlineButton.addEventListener("click", downloadShortcut);
 }
