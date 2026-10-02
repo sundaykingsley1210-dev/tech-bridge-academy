@@ -119,24 +119,18 @@ function initInlineInstallPanel() {
 }
 
 function downloadShortcut() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistration().then(registration => {
-            if (registration) {
-                registration.unregister().then(() => {
-                    window.location.href = "?downloaded=1";
-                });
+    // Trigger native PWA install prompt instead of downloading a file
+    if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+            } else {
+                console.log('User dismissed the install prompt');
             }
+            deferredInstallPrompt = null;
         });
     }
-    const shortcut = "[InternetShortcut]\r\nURL=" + getAppUrl() + "\r\n";
-    const blob = new Blob([shortcut], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "TECH-BRIDGE-ACADEMY.url";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
 function closeQrModal() {
