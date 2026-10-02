@@ -119,6 +119,15 @@ function initInlineInstallPanel() {
 }
 
 function downloadShortcut() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(registration => {
+            if (registration) {
+                registration.unregister().then(() => {
+                    window.location.href = "?downloaded=1";
+                });
+            }
+        });
+    }
     const shortcut = "[InternetShortcut]\r\nURL=" + getAppUrl() + "\r\n";
     const blob = new Blob([shortcut], { type: "text/plain;charset=utf-8" });
     const link = document.createElement("a");

@@ -116,13 +116,43 @@ a {
 .btn-nav {
     background: var(--gradient-accent);
     color: white !important;
-    padding: 10px 25px;
-    border-radius: 30px;
+    padding: 12px 28px;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin: 0 8px;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-nav:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+}
+
+.btn-nav:active {
+    transform: translateY(0);
+}
+
+.btn-nav.apply-now {
+    background: linear-gradient(135deg, #ff6b35, #ee0979);
+}
+
+.btn-nav.login {
+    background: var(--gradient);
+    padding: 12px 28px;
+    border-radius: 25px;
     font-weight: 600;
 }
 
-.btn-nav::after {
-    display: none !important;
+.btn-nav.download {
+    background: var(--primary);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 25px;
+    font-weight: 600;
+    margin-left: 15px;
 }
 
 .install-strip {
