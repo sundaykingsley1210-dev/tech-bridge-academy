@@ -125,6 +125,54 @@ a {
     display: none !important;
 }
 
+.install-strip {
+    background: linear-gradient(135deg, #0f172a, #1e40af 55%, #7c3aed);
+    color: #fff;
+    padding: 18px 0;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+}
+
+.install-strip-inner {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.install-strip h2 {
+    margin: 8px 0 6px;
+    font-size: 1.35rem;
+}
+
+.install-strip p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.install-strip-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+    .install-strip-inner {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .install-strip-actions {
+        justify-content: center;
+    }
+}
+
 .menu-toggle {
     display: none;
     flex-direction: column;
@@ -239,6 +287,7 @@ a {
     display: flex;
     gap: 15px;
     margin-bottom: 40px;
+    flex-wrap: wrap;
 }
 
 .btn {
@@ -279,6 +328,193 @@ a {
     background: white;
     color: var(--primary);
     border-color: white;
+}
+
+.install-hint {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.install-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 24px;
+    align-items: center;
+    margin-top: 18px;
+    padding: 20px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+}
+
+.install-panel-copy h3 {
+    margin: 10px 0 8px;
+    font-size: 1.35rem;
+    color: #fff;
+}
+
+.install-panel-copy p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.88);
+    line-height: 1.6;
+}
+
+.install-panel-actions {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.inline-qr-preview {
+    width: 260px;
+    height: 260px;
+    margin: 0;
+}
+
+.install-modal[hidden] {
+    display: none;
+}
+
+.install-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.install-modal-box {
+    position: relative;
+    width: min(100%, 520px);
+    background: white;
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
+}
+
+.install-modal-box h3 {
+    margin: 10px 0 10px;
+    font-size: 1.4rem;
+    color: var(--primary-dark);
+}
+
+.install-modal-box p {
+    color: var(--gray);
+    line-height: 1.6;
+}
+
+.install-steps {
+    margin: 18px 0 0;
+    padding-left: 20px;
+    color: var(--primary-dark);
+    line-height: 1.7;
+}
+
+.install-modal-actions {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.install-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    border: none;
+    background: transparent;
+    color: var(--gray);
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.install-modal-box .shortcut-link {
+    display: inline-block;
+    margin-top: 10px;
+    color: var(--primary);
+    word-break: break-all;
+}
+
+.qr-modal[hidden] {
+    display: none;
+}
+
+.qr-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.qr-modal-box {
+    position: relative;
+    width: min(100%, 460px);
+    background: white;
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
+    text-align: center;
+}
+
+.qr-preview {
+    width: 260px;
+    height: 260px;
+    margin: 18px auto 14px;
+    padding: 12px;
+    border-radius: 20px;
+    background: #f8fafc;
+    box-shadow: inset 0 0 0 1px rgba(30, 64, 175, 0.08);
+}
+
+.qr-preview img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.qr-caption {
+    margin: 0;
+    color: var(--gray);
+    font-size: 0.95rem;
+}
+
+.qr-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.qr-url {
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: var(--gray);
+    word-break: break-all;
+}
+
+@media (max-width: 768px) {
+    .install-panel {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+    }
+
+    .install-panel-actions {
+        justify-content: center;
+    }
 }
 
 .btn-full {

@@ -227,6 +227,12 @@ CREATE POLICY "Users can update own profile" ON users FOR UPDATE USING (auth.uid
 CREATE POLICY "Admin can update all users" ON users FOR UPDATE USING (
     EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
 );
+CREATE POLICY "Admin can insert users" ON users FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+);
+CREATE POLICY "Authenticated users can insert own profile" ON users FOR INSERT WITH CHECK (
+    auth.uid() = id
+);
 
 -- Results policies
 CREATE POLICY "Students can view own results" ON results FOR SELECT USING (auth.uid() = student_id);

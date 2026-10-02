@@ -16,6 +16,241 @@ if (menuToggle && navLinks) {
     });
 }
 
+
+
+let deferredInstallPrompt = null;
+const installButtons = [document.getElementById("installAppBtn"), document.getElementById("topInstallAppBtn")].filter(Boolean);
+let installHelpModal = null;
+let qrModal = null;
+
+if (installButtons.length && (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone)) {
+    installButtons.forEach((button) => {
+        button.textContent = "Installed";
+        button.disabled = true;
+    });
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+
+    installButtons.forEach((button) => { button.textContent = "Install App"; });
+});
+
+window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+
+    installButtons.forEach((button) => {
+        button.textContent = "Installed";
+        button.disabled = true;
+    });
+});
+
+function getInstallGuide() {
+    const ua = navigator.userAgent.toLowerCase();
+    const isIOS = /iphone|ipad|ipod/.test(ua);
+    const isAndroid = /android/.test(ua);
+    const isFirefox = /firefox/.test(ua);
+    const isEdge = /edg\//.test(ua);
+    const isChrome = /chrome|crios/.test(ua) && !isEdge && !isFirefox;
+
+    if (isIOS) {
+        return {
+            title: "Install on iPhone or iPad",
+            steps: ["Tap the Share button in Safari", "Choose Add to Home Screen", "Tap Add"]
+        };
+    }
+
+    if (isAndroid) {
+        return {
+            title: "Install on Android",
+            steps: ["Open the browser menu", "Choose Install app or Add to Home screen", "Confirm the install"]
+        };
+    }
+
+    if (isEdge) {
+        return {
+            title: "Install on Edge",
+            steps: ["Open the menu (3 dots)", "Choose Apps > Install this site as an app", "Confirm the install"]
+        };
+    }
+
+    if (isChrome) {
+        return {
+            title: "Install on Chrome",
+            steps: ["Open the menu (3 dots) or the install icon", "Choose Install TECH-BRIDGE ACADEMY", "Confirm the install"]
+        };
+    }
+
+    if (isFirefox) {
+        return {
+            title: "Use in Firefox",
+            steps: ["Open the menu", "Look for Install/Save options or create a bookmark", "Open the site from the bookmark or shortcut"]
+        };
+    }
+
+    return {
+        title: "Install or save the site",
+        steps: ["Open the browser menu", "Look for Install app, Add to Home screen, or Create shortcut", "If unavailable, bookmark the site"]
+    };
+}
+
+function closeInstallHelpModal() {
+    if (!installHelpModal) return;
+    installHelpModal.hidden = true;
+}
+
+function getAppUrl() {
+    return window.location.href.split("#")[0];
+}
+
+function initInlineInstallPanel() {
+    const appUrl = getAppUrl();
+    const qrImage = document.getElementById("installQrImage");
+    const panelUrl = document.getElementById("installPanelUrl");
+
+    if (qrImage) {
+        qrImage.src = "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=" + encodeURIComponent(appUrl);
+        qrImage.alt = "QR code for TECH-BRIDGE ACADEMY";
+    }
+
+    if (panelUrl) {
+        panelUrl.textContent = appUrl;
+    }
+}
+
+function downloadShortcut() {
+    const shortcut = "[InternetShortcut]\r\nURL=" + getAppUrl() + "\r\n";
+    const blob = new Blob([shortcut], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "TECH-BRIDGE-ACADEMY.url";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
+
+function closeQrModal() {
+    if (!qrModal) return;
+    qrModal.hidden = true;
+}
+
+function openQrModal() {
+    const appUrl = getAppUrl();
+    if (!qrModal) {
+        qrModal = document.createElement("div");
+        qrModal.id = "qrModal";
+        qrModal.className = "qr-modal";
+        qrModal.hidden = true;
+        document.body.appendChild(qrModal);
+
+        qrModal.addEventListener("click", (event) => {
+            if (event.target === qrModal || event.target.hasAttribute("data-qr-close")) {
+                closeQrModal();
+            }
+        });
+    }
+
+    qrModal.innerHTML =
+        '<div class="qr-modal-box" role="dialog" aria-modal="true" aria-labelledby="qrTitle">' +
+            '<button type="button" class="install-modal-close" data-qr-close aria-label="Close QR code">&times;</button>' +
+            '<span class="badge">Phone install</span>' +
+            '<h3 id="qrTitle">Scan to open on your phone</h3>' +
+            '<p class="qr-caption">Use this QR code to open TECH-BRIDGE ACADEMY on another device, then install it from the browser menu.</p>' +
+            '<div class="qr-preview"><img src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(appUrl) + '" alt="QR code for TECH-BRIDGE ACADEMY"></div>' +
+            '<div class="qr-actions"><button type="button" class="btn btn-primary" data-qr-close>Done</button><button type="button" class="btn btn-secondary" id="downloadShortcutFromQr">Download Shortcut</button></div>' +
+            '<div class="qr-url">' + appUrl + '</div>' +
+        '</div>';
+
+    const downloadShortcutFromQr = document.getElementById("downloadShortcutFromQr");
+    if (downloadShortcutFromQr) {
+        downloadShortcutFromQr.addEventListener("click", downloadShortcut);
+    }
+
+    qrModal.hidden = false;
+}
+
+function openInstallHelpModal() {
+    const guide = getInstallGuide();
+
+    if (!installHelpModal) {
+        installHelpModal = document.createElement("div");
+        installHelpModal.id = "installHelpModal";
+        installHelpModal.className = "install-modal";
+        installHelpModal.hidden = true;
+        document.body.appendChild(installHelpModal);
+
+        installHelpModal.addEventListener("click", (event) => {
+            if (event.target === installHelpModal || event.target.hasAttribute("data-install-close")) {
+                closeInstallHelpModal();
+            }
+        });
+    }
+
+    installHelpModal.innerHTML =
+        '<div class="install-modal-box" role="dialog" aria-modal="true" aria-labelledby="installHelpTitle">' +
+            '<button type="button" class="install-modal-close" data-install-close aria-label="Close install help">&times;</button>' +
+            '<span class="badge">App install</span>' +
+            '<h3 id="installHelpTitle">' + guide.title + '</h3>' +
+            '<p>Native install is only available in browsers that support PWA installation. Use the steps below for this browser.</p>' +
+            '<ol class="install-steps">' + guide.steps.map((step) => '<li>' + step + '</li>').join("") + '</ol>' +
+            '<div class="install-modal-actions"><button type="button" class="btn btn-primary" data-install-close>Done</button></div>' +
+        '</div>';
+
+    installHelpModal.hidden = false;
+}
+
+installButtons.forEach((installButton) => installButton.addEventListener("click", async (event) => {
+        event.preventDefault();
+
+        if (!deferredInstallPrompt) {
+            openInstallHelpModal();
+            return;
+        }
+
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+    }));
+
+initInlineInstallPanel();
+
+const showQrButton = document.getElementById("showQrBtn");
+if (showQrButton) {
+    showQrButton.addEventListener("click", () => {
+        const panel = document.getElementById("installPanel");
+        if (panel) {
+            panel.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    });
+}
+
+const topShowQrButton = document.getElementById("topShowQrBtn");
+if (topShowQrButton) {
+    topShowQrButton.addEventListener("click", () => {
+        const panel = document.getElementById("installPanel");
+        if (panel) {
+            panel.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    });
+}
+
+const downloadShortcutButton = document.getElementById("downloadShortcutBtn");
+if (downloadShortcutButton) {
+    downloadShortcutButton.addEventListener("click", downloadShortcut);
+}
+
+const topDownloadShortcutButton = document.getElementById("topDownloadShortcutBtn");
+if (topDownloadShortcutButton) {
+    topDownloadShortcutButton.addEventListener("click", downloadShortcut);
+}
+
+const downloadShortcutInlineButton = document.getElementById("downloadShortcutInlineBtn");
+if (downloadShortcutInlineButton) {
+    downloadShortcutInlineButton.addEventListener("click", downloadShortcut);
+}
+
 // ==================== SUBJECTS DATA ====================
 const juniorSubjects = [
     "English Language",
@@ -114,34 +349,45 @@ function updatePasswordStrength() {
 let registeredStudents = [];
 let currentAvatarData = null;
 
-// Create update overlay first
-createRegOverlay();
+// Create update overlay only on the registration page.
+if (document.getElementById("registrationForm")) {
+    createRegOverlay();
+}
 
 // Avatar preview (main form)
-document.getElementById("regAvatar").addEventListener("change", function () {
-    let file = this.files[0];
-    let preview = document.getElementById("regAvatarPreview");
-    if (file) {
-        let reader = new FileReader();
-        reader.onload = function (e) {
-            currentAvatarData = e.target.result;
-            preview.innerHTML = '<img src="' + e.target.result + '" alt="Avatar">';
-        };
-        reader.readAsDataURL(file);
-    } else {
-        currentAvatarData = null;
-        preview.innerHTML = "<span>No photo selected</span>";
-    }
-});
+const regAvatarInput = document.getElementById("regAvatar");
+if (regAvatarInput) {
+    regAvatarInput.addEventListener("change", function () {
+        let file = this.files[0];
+        let preview = document.getElementById("regAvatarPreview");
+        if (file) {
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                currentAvatarData = e.target.result;
+                preview.innerHTML = '<img src="' + e.target.result + '" alt="Avatar">';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            currentAvatarData = null;
+            preview.innerHTML = "<span>No photo selected</span>";
+        }
+    });
+}
 
 // Color picker live update (main form)
-document.getElementById("regIdColor").addEventListener("input", function () {
-    document.getElementById("regColorLabel").textContent = this.value;
-    document.getElementById("regAvatarPreview").style.borderColor = this.value;
-});
+const regIdColorInput = document.getElementById("regIdColor");
+if (regIdColorInput) {
+    regIdColorInput.addEventListener("input", function () {
+        document.getElementById("regColorLabel").textContent = this.value;
+        document.getElementById("regAvatarPreview").style.borderColor = this.value;
+    });
+}
 
 // Password strength live check
-document.getElementById("regPassword").addEventListener("input", updatePasswordStrength);
+const regPasswordInput = document.getElementById("regPassword");
+if (regPasswordInput) {
+    regPasswordInput.addEventListener("input", updatePasswordStrength);
+}
 
 // Render subjects based on class selection
 function renderSubjects() {
@@ -202,7 +448,10 @@ function handleSubjectChange() {
     }
 }
 
-document.getElementById("regStudentClass").addEventListener("change", renderSubjects);
+const regStudentClassInput = document.getElementById("regStudentClass");
+if (regStudentClassInput) {
+    regStudentClassInput.addEventListener("change", renderSubjects);
+}
 
 function getSelectedSubjects() {
     let checked = document.querySelectorAll('#regSubjectsList input[type="checkbox"]:checked');
@@ -612,33 +861,45 @@ function createRegOverlay() {
     document.body.appendChild(overlay);
 
     // Update form class change
-    document.getElementById("regUpdateStudentClass").addEventListener("change", function () {
-        let checked = document.querySelectorAll('#regUpdateSubjectsList input[type="checkbox"]:checked');
-        let prev = [];
-        checked.forEach(function (cb) { prev.push(cb.value); });
-        renderUpdateSubjects(this.value, prev);
-    });
+    const regUpdateStudentClassInput = document.getElementById("regUpdateStudentClass");
+    if (regUpdateStudentClassInput) {
+        regUpdateStudentClassInput.addEventListener("change", function () {
+            let checked = document.querySelectorAll('#regUpdateSubjectsList input[type="checkbox"]:checked');
+            let prev = [];
+            checked.forEach(function (cb) { prev.push(cb.value); });
+            renderUpdateSubjects(this.value, prev);
+        });
+    }
 
-    document.getElementById("regUpdateAvatar").addEventListener("change", function () {
-        let file = this.files[0];
-        let prev = document.getElementById("regUpdateAvatarPreview");
-        if (file) {
-            let reader = new FileReader();
-            reader.onload = function (e) {
-                prev.innerHTML = '<img src="' + e.target.result + '" alt="Photo">';
-                prev.setAttribute("data-new-avatar", e.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+    const regUpdateAvatarInput = document.getElementById("regUpdateAvatar");
+    if (regUpdateAvatarInput) {
+        regUpdateAvatarInput.addEventListener("change", function () {
+            let file = this.files[0];
+            let prev = document.getElementById("regUpdateAvatarPreview");
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function (e) {
+                    prev.innerHTML = '<img src="' + e.target.result + '" alt="Photo">';
+                    prev.setAttribute("data-new-avatar", e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
 
-    document.getElementById("regUpdateColor").addEventListener("input", function () {
-        document.getElementById("regUpdateColorLabel").textContent = this.value;
-    });
+    const regUpdateColorInput = document.getElementById("regUpdateColor");
+    if (regUpdateColorInput) {
+        regUpdateColorInput.addEventListener("input", function () {
+            document.getElementById("regUpdateColorLabel").textContent = this.value;
+        });
+    }
 
     overlay.addEventListener("click", function (e) {
         if (e.target === overlay) closeRegUpdateForm();
     });
 }
 
-document.getElementById("registrationForm").addEventListener("submit", handleRegSubmit);
+const registrationForm = document.getElementById("registrationForm");
+if (registrationForm) {
+    registrationForm.addEventListener("submit", handleRegSubmit);
+}

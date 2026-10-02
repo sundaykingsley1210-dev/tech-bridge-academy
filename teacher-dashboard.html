@@ -3,11 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard - Tech-Bridge Academy Demo DEMO</title>
+    <title>Teacher Dashboard - TECH-BRIDGE ACADEMY</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
-    <script src="api.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    var _supabaseClient = null;
+    function _initSupabase() {
+        try {
+            if (_supabaseClient) return;
+            if (window.supabase && window.supabase.createClient) {
+                _supabaseClient = window.supabase.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_jDqBNBJKoF6RmPgaXNTW-g_G92B6L92');
+            } else if (window.createClient) {
+                _supabaseClient = window.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_jDqBNBJKoF6RmPgaXNTW-g_G92B6L92');
+            }
+        } catch(e) { console.error('Supabase init error:', e); }
+    }
+    _initSupabase();
+    setTimeout(_initSupabase, 500);
+    setTimeout(_initSupabase, 1500);
+    setTimeout(_initSupabase, 3000);
+    var supabase = null;
+    function _s() { _initSupabase(); return _supabaseClient; }
+
+    var DB = {
+        async createUser(u) { var c=_s(); if(!c) return null; var r=await c.from('users').upsert(u); if(r.error) throw r.error; return r.data; },
+        async getUserProfile(id) { var c=_s(); if(!c) throw new Error('No connection'); var r=await c.from('users').select('*').eq('id',id).single(); if(r.error) throw r.error; return r.data; },
+        async updateUserProfile(id, u) { var c=_s(); if(!c) return null; var r=await c.from('users').update(u).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getAllStudents() { var c=_s(); if(!c) return []; var r=await c.from('users').select('*').eq('role','student'); if(r.error) throw r.error; return r.data; },
+        async getStudentsByClass(cls) { var c=_s(); if(!c) return []; var r=await c.from('users').select('*').eq('role','student').eq('class',cls); if(r.error) throw r.error; return r.data; },
+        async getAllTeachers() { var c=_s(); if(!c) return []; var r=await c.from('users').select('*').eq('role','teacher'); if(r.error) throw r.error; return r.data; },
+        async getIdCard(uid) { var c=_s(); if(!c) return null; var r=await c.from('id_cards').select('*').eq('user_id',uid).maybeSingle(); if(r.error) throw r.error; return r.data; },
+        async saveIdCard(d) { var c=_s(); if(!c) return null; var ex=await this.getIdCard(d.user_id); var r=ex? await c.from('id_cards').update(d).eq('user_id',d.user_id).select() : await c.from('id_cards').insert(d).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getStudentResults(sid) { var c=_s(); if(!c) return []; var r=await c.from('results').select('*').eq('student_id',sid); if(r.error) throw r.error; return r.data; },
+        async getClassResults(cls) { var c=_s(); if(!c) return []; var r=await c.from('results').select('*').eq('class',cls); if(r.error) throw r.error; return r.data; },
+        async addResult(res) { var c=_s(); if(!c) return null; var r=await c.from('results').insert(res).select(); if(r.error) throw r.error; return r.data[0]; },
+        async updateResult(id, u) { var c=_s(); if(!c) return null; var r=await c.from('results').update(u).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getAssignments() { var c=_s(); if(!c) return []; var r=await c.from('assignments').select('*'); if(r.error) throw r.error; return r.data; },
+        async getTeacherAssignments(tid) { var c=_s(); if(!c) return []; var r=await c.from('assignments').select('*').eq('teacher_id',tid); if(r.error) throw r.error; return r.data; },
+        async createAssignment(a) { var c=_s(); if(!c) return null; var r=await c.from('assignments').insert(a).select(); if(r.error) throw r.error; return r.data[0]; },
+        async deleteAssignment(id) { var c=_s(); if(!c) return; var r=await c.from('assignments').delete().eq('id',id); if(r.error) throw r.error; },
+        async getStudentSubmissions(sid) { var c=_s(); if(!c) return []; var r=await c.from('submissions').select('*').eq('student_id',sid); if(r.error) throw r.error; return r.data; },
+        async getAssignmentSubmissions(aid) { var c=_s(); if(!c) return []; var r=await c.from('submissions').select('*').eq('assignment_id',aid); if(r.error) throw r.error; return r.data; },
+        async submitAssignment(s) { var c=_s(); if(!c) return null; var r=await c.from('submissions').insert(s).select(); if(r.error) throw r.error; return r.data[0]; },
+        async gradeSubmission(id, sc) { var c=_s(); if(!c) return null; var r=await c.from('submissions').update({score:sc,status:'graded'}).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getExamQuestions(sub, cls, term) { var c=_s(); if(!c) return null; var r=await c.from('exam_questions').select('*').eq('subject',sub).eq('class',cls).eq('term',term).maybeSingle(); if(r.error) throw r.error; return r.data; },
+        async saveExamQuestions(e) { var c=_s(); if(!c) return null; var r=await c.from('exam_questions').upsert(e,{onConflict:'id'}); if(r.error) throw r.error; return e; },
+        async getStudentExamSubmissions(sid) { var c=_s(); if(!c) return []; var r=await c.from('exam_submissions').select('*').eq('student_id',sid); if(r.error) throw r.error; return r.data; },
+        async submitExam(e) { var c=_s(); if(!c) return null; var r=await c.from('exam_submissions').insert(e).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getTimetable(cls) { var c=_s(); if(!c) return []; var r=await c.from('timetable').select('*').eq('class',cls); if(r.error) throw r.error; return r.data; },
+        async saveTimetable(t) { var c=_s(); if(!c) return null; var r=await c.from('timetable').upsert(t,{onConflict:'id'}); if(r.error) throw r.error; return r.data; },
+        async getNotifications(cls, role) { var c=_s(); if(!c) return []; var q=c.from('notifications').select('*'); if(cls) q=q.or('target_class.is.null,target_class.eq.'+cls); if(role) q=q.eq('target_role',role); q=q.order('created_at',{ascending:false}); var r=await q; if(r.error) throw r.error; return r.data; },
+        async sendNotification(n) { var c=_s(); if(!c) return null; var r=await c.from('notifications').insert(n).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getMessages(uid) { var c=_s(); if(!c) return []; var r=await c.from('messages').select('*').or('from_id.eq.'+uid+',to_id.eq.'+uid).order('created_at',{ascending:false}); if(r.error) throw r.error; return r.data; },
+        async sendMessage(m) { var c=_s(); if(!c) return null; var r=await c.from('messages').insert(m).select(); if(r.error) throw r.error; return r.data[0]; },
+        async markMessageRead(id) { var c=_s(); if(!c) return null; var r=await c.from('messages').update({read:true}).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getStudentPayments(sid) { var c=_s(); if(!c) return []; var r=await c.from('payments').select('*').eq('student_id',sid); if(r.error) throw r.error; return r.data; },
+        async getAllPayments() { var c=_s(); if(!c) return []; var r=await c.from('payments').select('*').order('submitted_at',{ascending:false}); if(r.error) throw r.error; return r.data; },
+        async submitPayment(p) { var c=_s(); if(!c) return null; var r=await c.from('payments').insert(p).select(); if(r.error) throw r.error; return r.data[0]; },
+        async updatePaymentStatus(id, s) { var c=_s(); if(!c) return null; var r=await c.from('payments').update({status:s}).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getBankDetails() { var c=_s(); if(!c) return []; var r=await c.from('bank_details').select('*').order('created_at',{ascending:false}); if(r.error) throw r.error; return r.data; },
+        async saveBankDetails(d) { var c=_s(); if(!c) return null; var r=await c.from('bank_details').insert(d).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getFees() { var c=_s(); if(!c) return []; var r=await c.from('fees').select('*'); if(r.error) throw r.error; return r.data; },
+        async updateFee(cls, amt) { var c=_s(); if(!c) return null; var r=await c.from('fees').update({amount:amt}).eq('class',cls).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getExamSchedule() { var c=_s(); if(!c) return []; var r=await c.from('exam_schedule').select('*'); if(r.error) throw r.error; return r.data; },
+        async saveExamSchedule(s) { var c=_s(); if(!c) return null; var r=await c.from('exam_schedule').upsert(s,{onConflict:'id'}); if(r.error) throw r.error; return r.data; },
+        async getExamQuestionsByClass(cls) { var c=_s(); if(!c) return []; var r=await c.from('exam_questions').select('*').eq('class',cls); if(r.error) throw r.error; return r.data; },
+        async getApplications() { var c=_s(); if(!c) return []; var r=await c.from('applications').select('*').order('date_submitted',{ascending:false}); if(r.error) throw r.error; return r.data; },
+        async submitApplication(a) { var c=_s(); if(!c) return null; var r=await c.from('applications').insert(a).select(); if(r.error) throw r.error; return r.data[0]; },
+        async updateApplicationStatus(id, s) { var c=_s(); if(!c) return null; var r=await c.from('applications').update({status:s}).eq('id',id).select(); if(r.error) throw r.error; return r.data[0]; },
+        async getTeacherResults(tid) { var c=_s(); if(!c) return []; var r=await c.from('teacher_results').select('*').eq('teacher_id',tid); if(r.error) throw r.error; return r.data; },
+        async saveTeacherResults(res) { var c=_s(); if(!c) return null; var r=await c.from('teacher_results').upsert(res,{onConflict:'id'}); if(r.error) throw r.error; return r.data; }
+    };
+    </script>
     <style>
         .dashboard{display:flex;min-height:100vh;background:#f1f3f5}
         .sidebar{width:260px;background:linear-gradient(180deg,#0f172a 0%,#1e293b 100%);color:#fff;padding:30px 20px;position:fixed;height:100vh;overflow-y:auto;z-index:100}
@@ -127,7 +196,7 @@
                 <li><a onclick="showSection(this, 'assignmentsSection')"><i class="fa-solid fa-book"></i> Assignments</a></li>
                 <li><a onclick="showSection(this, 'studentsSection')"><i class="fa-solid fa-users"></i> Students</a></li>
                 <li><a onclick="showSection(this, 'notificationsSection')"><i class="fa-solid fa-bell"></i> Notifications</a></li>
-                <li><a onclick="showSection(this, 'teacherMessageSection')"><i class="fa-solid fa-envelope"></i> Message Admin <span class="notif-badge" id="teacherMsgBadge" style="display:none;background:#ef4444;color:#fff;border-radius:50%;padding:2px 7px;font-size:.7rem;margin-left:5px">0</span></a></li>
+                <li><a onclick="showSection(this, 'teacherMessageSection')"><i class="fa-solid fa-envelope"></i> Message Admin <span class="notif-badge" id="teacherMsgBadge" style="display:none;background:#ef4444;color:#fff;border-radius:50%;padding:4px 10px;font-size:.85rem;font-weight:700;margin-left:5px;min-width:22px;text-align:center">0</span></a></li>
                 <li><a onclick="showSection(this, 'examsSection')"><i class="fa-solid fa-pen-to-square"></i> Exams</a></li>
                 <li><a onclick="showSection(this, 'timetableSection')"><i class="fa-solid fa-calendar-days"></i> Timetable</a></li>
                 <li><a onclick="showSection(this, 'resultsSection')"><i class="fa-solid fa-chart-bar"></i> Results</a></li>
@@ -486,16 +555,20 @@
             const text = document.getElementById('teacherMsgText').value.trim();
             if (!text) return;
             try {
-                var adminResult = await API.users.list({ role: 'admin', limit: 1 });
-                var adminId = adminResult && adminResult.length ? adminResult[0].id : null;
-                await API.messages.create({
-                    from_id: currentUser.id,
-                    from_name: currentUser.name,
-                    from_role: 'teacher',
-                    to_id: adminId,
-                    message: text,
-                    subject: 'Message from ' + currentUser.name
-                });
+                _initSupabase();
+                if (_supabaseClient) {
+                    // Get admin ID
+                    var adminResult = await _supabaseClient.from('users').select('id').eq('role', 'admin').limit(1).maybeSingle();
+                    var adminId = adminResult && adminResult.data ? adminResult.data.id : null;
+                    await _supabaseClient.from('messages').insert({
+                        from_id: currentUser.id,
+                        from_name: currentUser.name,
+                        from_role: 'teacher',
+                        to_id: adminId,
+                        message: text,
+                        subject: 'Message from ' + currentUser.name
+                    });
+                }
             } catch(e) { console.log('Message save error:', e); }
             document.getElementById('teacherMsgText').value = '';
             renderTeacherMessages();
@@ -508,12 +581,16 @@
             let messages = [];
             let myIds = [];
             try {
-                var userResult = await API.users.list({ email: currentUser.email, role: 'teacher' });
-                myIds = userResult && userResult.length ? userResult.map(u => u.id) : [];
-                myIds.push(currentUser.id);
-                var result = await API.messages.list({ user_id: currentUser.id });
-                if (result && result.length) {
-                    messages = result;
+                _initSupabase();
+                if (_supabaseClient) {
+                    var userResult = await _supabaseClient.from('users').select('id').eq('email', currentUser.email).eq('role', 'teacher');
+                    myIds = userResult && userResult.data ? userResult.data.map(u => u.id) : [];
+                    myIds.push(currentUser.id);
+                    var idFilter = myIds.map(id => 'from_id.eq.'+id+',to_id.eq.'+id).join(',');
+                    var result = await _supabaseClient.from('messages').select('*').or(idFilter).order('created_at', {ascending: false});
+                    if (result && result.data && result.data.length) {
+                        messages = result.data;
+                    }
                 }
             } catch(e) { console.log('Load messages error:', e); }
             if (!messages.length) {
@@ -533,18 +610,21 @@
 
         async function checkTeacherMsgBadge() {
             try {
-                var result = await API.messages.list({ from_role: 'admin' });
-                if (result && result.length) {
-                    var userResult = await API.users.list({ email: currentUser.email, role: 'teacher' });
-                    var myIds = userResult && userResult.length ? userResult.map(u => u.id) : [];
-                    myIds.push(currentUser.id);
-                    var myMsgs = result.filter(m => myIds.includes(m.to_id));
-                    var badge = document.getElementById('teacherMsgBadge');
-                    if (myMsgs.length > 0) {
-                        badge.textContent = myMsgs.length;
-                        badge.style.display = 'inline';
-                    } else {
-                        badge.style.display = 'none';
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('messages').select('id,from_role,to_id,from_id').eq('from_role', 'admin');
+                    if (result && result.data) {
+                        var userResult = await _supabaseClient.from('users').select('id').eq('email', currentUser.email).eq('role', 'teacher');
+                        var myIds = userResult && userResult.data ? userResult.data.map(u => u.id) : [];
+                        myIds.push(currentUser.id);
+                        var myMsgs = result.data.filter(m => myIds.includes(m.to_id));
+                        var badge = document.getElementById('teacherMsgBadge');
+                        if (myMsgs.length > 0) {
+                            badge.textContent = myMsgs.length;
+                            badge.style.display = 'inline';
+                        } else {
+                            badge.style.display = 'none';
+                        }
                     }
                 }
             } catch(e) {}
@@ -555,7 +635,7 @@
             const c = document.getElementById('teacherIdCardPreview');
             if (!c) return;
             let cardData = {};
-            try { cardData = JSON.parse(localStorage.getItem('tba_teacher_id_card_' + currentUser.id) || '{}'); } catch(e) { cardData = {}; }
+            try { cardData = await DB.getIdCard(currentUser.id) || {}; } catch(e) { cardData = JSON.parse(localStorage.getItem('tba_teacher_id_card_' + currentUser.id) || '{}'); }
             const name = cardData.name || currentUser.name;
             const subject = document.getElementById('teacherSubjectInput')?.value || cardData.subject || 'Teacher';
             const email = cardData.email || currentUser.email || '';
@@ -626,10 +706,11 @@
                 phone: document.getElementById('editTeacherPhone').value.trim()
             };
             localStorage.setItem('tba_teacher_id_card_' + currentUser.id, JSON.stringify(cardData));
+            try { DB.saveIdCard({ user_id: currentUser.id, ...cardData }); } catch(e) {}
             if (cardData.name) {
                 currentUser.name = cardData.name;
                 localStorage.setItem('tba_currentUser', JSON.stringify(currentUser));
-                try { API.users.update(currentUser.id, { name: cardData.name }); } catch(e) {}
+                try { DB.updateUserProfile(currentUser.id, { name: cardData.name }); } catch(e) {}
             }
             document.querySelector('div[style*=fixed]').remove();
             renderTeacherIdCard();
@@ -756,7 +837,7 @@
             document.querySelectorAll('.question-entry').forEach((e,i) => { e.querySelector('.q-num').textContent = 'Q'+(i+1); });
         }
 
-        document.getElementById('assignmentForm').addEventListener('submit', async function(e) {
+        document.getElementById('assignmentForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const questions = [];
             document.querySelectorAll('.q-text').forEach(t => { if(t.value.trim()) questions.push(t.value.trim()); });
@@ -779,7 +860,7 @@
             let all = JSON.parse(localStorage.getItem('tba_assignments')||'[]');
             all.push(assignment);
             localStorage.setItem('tba_assignments', JSON.stringify(all));
-            try { await API.assignments.create(assignment); } catch(e) {}
+            try { DB.createAssignment(assignment); } catch(e) {}
             this.reset();
             questionCount = 1;
             document.getElementById('questionsBuilder').innerHTML = '<div class="question-entry" data-q="0"><div class="q-header"><span class="q-num">Q1</span></div><div class="form-group"><textarea class="q-text" rows="2" placeholder="Type question here..." required></textarea></div></div>';
@@ -801,24 +882,27 @@
         }
 
         async function renderStudents() {
-            // Load admitted students from applications table (matches admin dashboard)
+            // Load admitted students from Supabase applications table (matches admin dashboard)
             let studs = [];
             try {
-                var apps = await API.applications.list({ status: 'Admitted', order: 'admitted_at desc' });
-                if (apps && apps.length) {
-                    studs = apps.map((a, i) => ({
-                        id: a.id,
-                        name: (a.first_name || '') + ' ' + (a.last_name || ''),
-                        email: a.student_email || a.parent_email || '',
-                        role: 'student',
-                        class: a.class_applying || '',
-                        gender: a.gender || '',
-                        phone: a.parent_phone || '',
-                        address: a.address || '',
-                        created_at: a.admitted_at || a.date_submitted
-                    }));
+                _initSupabase();
+                if (_supabaseClient) {
+                    var result = await _supabaseClient.from('applications').select('*').eq('status', 'Admitted').order('admitted_at', {ascending: false});
+                    if (result && result.data && result.data.length) {
+                        studs = result.data.map((a, i) => ({
+                            id: a.id,
+                            name: (a.first_name || '') + ' ' + (a.last_name || ''),
+                            email: a.student_email || a.parent_email || '',
+                            role: 'student',
+                            class: a.class_applying || '',
+                            gender: a.gender || '',
+                            phone: a.parent_phone || '',
+                            address: a.address || '',
+                            created_at: a.admitted_at || a.date_submitted
+                        }));
+                    }
                 }
-            } catch(e) { console.log('Load students:', e); }
+            } catch(e) { console.log('Load students from Supabase:', e); }
 
             // Fallback to localStorage
             if (!studs.length) {
@@ -911,15 +995,19 @@
             const message = document.getElementById('notifMessage').value;
 
             selectedClasses.forEach(cls => {
+                // Save to Supabase
                 try {
-                    API.notifications.create({
-                        title: title,
-                        message: message,
-                        target_class: cls,
-                        target_role: 'student',
-                        from_name: currentUser.name,
-                        from_role: 'teacher'
-                    }).then(function(){}).catch(function(e){console.log('Notif save error:',e);});
+                    _initSupabase();
+                    if (_supabaseClient) {
+                        _supabaseClient.from('notifications').insert({
+                            title: title,
+                            message: message,
+                            target_class: cls,
+                            target_role: 'student',
+                            from_name: currentUser.name,
+                            from_role: 'teacher'
+                        }).then(function(){}).catch(function(e){console.log('Notif save error:',e);});
+                    }
                 } catch(err) { console.log('Notification failed:', err); }
             });
             document.getElementById('notifForm').reset();
@@ -928,15 +1016,19 @@
         }
 
         async function renderSentNotifs() {
+            // Load from Supabase
             try {
-                var rows = await API.notifications.list({ from_name: currentUser.name, order: 'created_at desc' });
-                if (rows && rows.length) {
-                    var notifs = rows.map(function(n) {
-                        return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, date: n.created_at };
-                    });
-                    var sentEl = document.getElementById('sentNotifs');
-                    sentEl.innerHTML = notifs.map(n => '<div class="assignment-item"><h4>'+n.title+'</h4><div class="meta"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span><span><i class="fa-solid fa-clock"></i> '+new Date(n.date).toLocaleDateString()+'</span></div><p style="margin-top:5px">'+n.message+'</p></div>').join('');
-                    return;
+                _initSupabase();
+                if (_supabaseClient) {
+                    var rows = await _supabaseClient.from('notifications').select('*').eq('from_name', currentUser.name).order('created_at',{ascending:false});
+                    if (rows && rows.data && rows.data.length) {
+                        var notifs = rows.data.map(function(n) {
+                            return { title: n.title, targetClass: n.target_class || 'All Classes', message: n.message, date: n.created_at };
+                        });
+                        var sentEl = document.getElementById('sentNotifs');
+                        sentEl.innerHTML = notifs.map(n => '<div class="assignment-item"><h4>'+n.title+'</h4><div class="meta"><span><i class="fa-solid fa-layer-group"></i> '+n.targetClass+'</span><span><i class="fa-solid fa-clock"></i> '+new Date(n.date).toLocaleDateString()+'</span></div><p style="margin-top:5px">'+n.message+'</p></div>').join('');
+                        return;
+                    }
                 }
             } catch(e) {}
             const c = document.getElementById('sentNotifs');
@@ -945,11 +1037,14 @@
 
         async function renderNotifBadge() {
             try {
-                var rows = await API.notifications.list({ from_name: currentUser.name });
-                if (rows) {
-                    document.getElementById('notifBadge').textContent = rows.length;
-                    document.getElementById('notifBadge').style.display = rows.length > 0 ? 'flex' : 'none';
-                    return;
+                _initSupabase();
+                if (_supabaseClient) {
+                    var rows = await _supabaseClient.from('notifications').select('*').eq('from_name', currentUser.name);
+                    if (rows && rows.data) {
+                        document.getElementById('notifBadge').textContent = rows.data.length;
+                        document.getElementById('notifBadge').style.display = rows.data.length > 0 ? 'flex' : 'none';
+                        return;
+                    }
                 }
             } catch(e) {}
             document.getElementById('notifBadge').textContent = '0';
@@ -993,9 +1088,9 @@
             if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
             if (file.size > 2 * 1024 * 1024) { alert('Image must be less than 2MB'); return; }
             const reader = new FileReader();
-            reader.onload = async function(ev) {
+            reader.onload = function(ev) {
                 localStorage.setItem('tba_profile_pic_' + currentUser.id, ev.target.result);
-                try { await API.users.update(currentUser.id, { profile_pic: ev.target.result }); } catch(e) {}
+                try { DB.updateUserProfile(currentUser.id, { profile_pic: ev.target.result }); } catch(e) {}
                 loadProfilePic();
             };
             reader.readAsDataURL(file);
@@ -1005,7 +1100,7 @@
             let pic = localStorage.getItem('tba_profile_pic_' + currentUser.id);
             if (!pic) {
                 try {
-                    const profile = await API.users.get(currentUser.id);
+                    const profile = await DB.getUserProfile(currentUser.id);
                     if (profile && profile.profile_pic) {
                         pic = profile.profile_pic;
                         localStorage.setItem('tba_profile_pic_' + currentUser.id, pic);
@@ -1031,12 +1126,17 @@
             if (newPass.length < 4) { alert('Password must be at least 4 characters!'); return; }
             if (currentPass === newPass) { alert('New password must be different from current password!'); return; }
 
-            try {
-                var userResult = await API.users.get(currentUser.id);
-                if (!userResult) { alert('User not found.'); return; }
-                if (userResult.password !== currentPass) { alert('Current password is incorrect!'); return; }
+            _initSupabase();
+            if (!_supabaseClient) { alert('Cannot connect to server.'); return; }
 
-                await API.users.update(currentUser.id, {password: newPass});
+            try {
+                var userResult = await _supabaseClient.from('users').select('*').eq('id', currentUser.id).maybeSingle();
+                if (userResult.error) throw userResult.error;
+                if (!userResult.data) { alert('User not found.'); return; }
+                if (userResult.data.password !== currentPass) { alert('Current password is incorrect!'); return; }
+
+                var updateResult = await _supabaseClient.from('users').update({password: newPass}).eq('id', currentUser.id);
+                if (updateResult.error) throw updateResult.error;
 
                 let users = JSON.parse(localStorage.getItem('tba_users') || '[]');
                 const userIdx = users.findIndex(u => u.id === currentUser.id);
@@ -1073,7 +1173,7 @@
                     byClass[e.cls].push({ id: e.id, class: e.cls, day: e.day, periods: [{ time: e.period, subject: e.subject, teacher: e.teacher }] });
                 });
                 Object.values(byClass).flat().forEach(entry => {
-                    API.timetable.save(entry);
+                    DB.saveTimetable(entry);
                 });
             } catch(e) {}
         }
@@ -1569,23 +1669,26 @@
             exams.push(question);
             localStorage.setItem('tba_exam_questions', JSON.stringify(exams));
 
-            // Save to API
+            // Save to Supabase
             try {
-                var existing = await API.examQuestions.list({ subject: question.subject, class: question.class, term: question.term });
-                if (existing && existing.length) {
-                    var updatedQuestions = existing[0].questions || [];
-                    updatedQuestions.push(question);
-                    await API.examQuestions.save({ id: existing[0].id, questions: updatedQuestions });
-                } else {
-                    await API.examQuestions.save({
-                        subject: question.subject,
-                        class: question.class,
-                        term: question.term,
-                        questions: [question],
-                        teacher_id: currentUser.id
-                    });
+                _initSupabase();
+                if (_supabaseClient) {
+                    var existing = await _supabaseClient.from('exam_questions').select('id,questions').eq('subject',question.subject).eq('class',question.class).eq('term',question.term).maybeSingle();
+                    if (existing && existing.data) {
+                        var updatedQuestions = existing.data.questions || [];
+                        updatedQuestions.push(question);
+                        await _supabaseClient.from('exam_questions').update({questions: updatedQuestions}).eq('id', existing.data.id);
+                    } else {
+                        await _supabaseClient.from('exam_questions').insert({
+                            subject: question.subject,
+                            class: question.class,
+                            term: question.term,
+                            questions: [question],
+                            teacher_id: currentUser.id
+                        });
+                    }
                 }
-            } catch(err) { console.log('Exam save error:', err); }
+            } catch(err) { console.log('Supabase exam save error:', err); }
 
             document.getElementById('examForm').reset();
             alert('Question added successfully!');

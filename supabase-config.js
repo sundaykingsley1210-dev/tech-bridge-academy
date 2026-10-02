@@ -1,7 +1,7 @@
 // Supabase Configuration for Tech-Bridge Academy Demo DEMO
 
 const SUPABASE_URL = 'https://ljhritlqicnlppwcoijw.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_3DWixMg6ElVnJD08vOQJAA_-2Y0Pate';
+const SUPABASE_ANON_KEY = 'sb_publishable_jDqBNBJKoF6RmPgaXNTW-g_G92B6L92';
 
 // Initialize Supabase client
 let supabase = null;

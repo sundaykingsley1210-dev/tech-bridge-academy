@@ -3,10 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admission - Tech-Bridge Academy Demo DEMO</title>
+    <title>Admission - TECH-BRIDGE ACADEMY</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/1ee35b433b.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    var _supabaseClient = null;
+    function _initSupabase() {
+        try {
+            if (_supabaseClient) return;
+            if (window.supabase && window.supabase.createClient) {
+                _supabaseClient = window.supabase.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_jDqBNBJKoF6RmPgaXNTW-g_G92B6L92');
+            } else if (window.createClient) {
+                _supabaseClient = window.createClient('https://ljhritlqicnlppwcoijw.supabase.co', 'sb_publishable_jDqBNBJKoF6RmPgaXNTW-g_G92B6L92');
+            }
+        } catch(e) { console.error('Supabase init error:', e); }
+    }
+    _initSupabase();
+    setTimeout(_initSupabase, 500);
+    setTimeout(_initSupabase, 1500);
+    </script>
     <style>
         .admission-page {
             padding: 120px 0 80px;
@@ -205,7 +222,7 @@
 <body>
     <nav class="navbar">
         <div class="nav-container">
-            <a href="index.html" class="logo"><img src="logo.svg" alt="Tech-Bridge Academy Demo DEMO" height="50"></a>
+            <a href="index.html" class="logo"><img src="logo.svg" alt="TECH-BRIDGE ACADEMY" height="50"></a>
             <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
                 <span></span><span></span><span></span>
             </button>
@@ -226,7 +243,7 @@
                 <div class="admission-info">
                     <span class="badge" style="background: var(--gradient); color: white;">Admissions Open</span>
                     <h1>Start Your Child's Journey to Excellence</h1>
-                    <p>Join Tech-Bridge Academy Demo DEMO and give your child access to quality education, modern facilities, and a nurturing environment that builds future leaders.</p>
+                    <p>Join TECH-BRIDGE ACADEMY and give your child access to quality education, modern facilities, and a nurturing environment that builds future leaders.</p>
                     <ul class="admission-features">
                         <li><i class="fa-solid fa-check-circle"></i> Qualified & Dedicated Teachers</li>
                         <li><i class="fa-solid fa-check-circle"></i> STEM & ICT Focused Curriculum</li>
@@ -376,7 +393,7 @@
         <div class="success-box">
             <div class="success-icon">✅</div>
             <h3>Application Submitted!</h3>
-            <p>Thank you for applying to Tech-Bridge Academy Demo DEMO. Your account has been created.</p>
+            <p>Thank you for applying to TECH-BRIDGE ACADEMY. Your account has been created.</p>
             <p style="font-size: 0.85rem; color: var(--gray);">Reference: <strong id="refNumber"></strong></p>
             <p style="font-size: 0.95rem; color: var(--primary); font-weight: 600; margin: 15px 0;">You can now log in to your student portal!</p>
             <a href="login.html" class="btn btn-primary" style="margin-bottom:10px">Login Now</a>
@@ -386,7 +403,6 @@
         </div>
     </div>
 
-    <script src="api.js"></script>
     <script>
         const menuToggle = document.getElementById('menuToggle');
         const navLinks = document.getElementById('navLinks');
@@ -445,6 +461,7 @@
 
             const application = {
                 id: 'TBA-' + Date.now().toString(36).toUpperCase(),
+                supabaseId: crypto.randomUUID(),
                 firstName: document.getElementById('firstName').value,
                 lastName: document.getElementById('lastName').value,
                 dob: document.getElementById('dob').value,
@@ -467,37 +484,42 @@
             applications.push(application);
             localStorage.setItem('tba_applications', JSON.stringify(applications));
 
-            // Save application to API
-            API.applications.create({
-                ref_number: application.id,
-                first_name: application.firstName,
-                last_name: application.lastName,
-                dob: application.dob,
-                gender: application.gender,
-                class_applying: application.classApplying,
-                prev_school: application.prevSchool,
-                parent_name: application.parentName,
-                parent_occupation: application.parentOccupation,
-                relationship: application.relationship,
-                parent_phone: application.parentPhone,
-                parent_email: application.parentEmail,
-                address: application.address,
-                student_email: application.studentEmail,
-                student_password: application.studentPassword,
-                date_submitted: application.dateSubmitted,
-                status: application.status
-            }).then(function(result) {
-                console.log('Application saved to API');
-            }).catch(function(err) { console.log('Application save:', err.message); });
+            // Save application to Supabase
+            _initSupabase();
+            if (_supabaseClient) {
+                _supabaseClient.from('applications').upsert({
+                    id: application.supabaseId,
+                    ref_number: application.id,
+                    first_name: application.firstName,
+                    last_name: application.lastName,
+                    dob: application.dob,
+                    gender: application.gender,
+                    class_applying: application.classApplying,
+                    prev_school: application.prevSchool,
+                    parent_name: application.parentName,
+                    parent_occupation: application.parentOccupation,
+                    relationship: application.relationship,
+                    parent_phone: application.parentPhone,
+                    parent_email: application.parentEmail,
+                    address: application.address,
+                    student_email: application.studentEmail,
+                    student_password: application.studentPassword,
+                    date_submitted: application.dateSubmitted,
+                    status: application.status
+                }).then(function(result) {
+                    if (result.error) console.log('Application save:', result.error.message);
+                    else console.log('Application saved to Supabase');
+                }).catch(function(err) { console.log('Application save:', err.message); });
 
-            // Notify school via API
-            API.notifications.create({
-                title: 'New Student Admission',
-                message: application.firstName + ' ' + application.lastName + ' (' + application.studentEmail + ') applied for ' + application.classApplying,
-                target_role: 'admin',
-                from_name: 'System',
-                from_role: 'system'
-            }).then(function() {}).catch(function() {});
+                // Notify school via Supabase
+                _supabaseClient.from('notifications').insert({
+                    title: 'New Student Admission',
+                    message: application.firstName + ' ' + application.lastName + ' (' + application.studentEmail + ') applied for ' + application.classApplying,
+                    target_role: 'admin',
+                    from_name: 'System',
+                    from_role: 'system'
+                }).then(function() {}).catch(function() {});
+            }
 
             document.getElementById('refNumber').textContent = application.id;
             document.getElementById('successOverlay').classList.add('active');

@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tech-Bridge Academy Demo DEMO - Quality Education & Innovation</title>
-    <meta name="description" content="Tech-Bridge Academy Demo DEMO - Providing exceptional education that inspires excellence, nurtures character, and empowers every student to achieve lifelong success.">
+    <title>TECH-BRIDGE ACADEMY - Quality Education & Innovation</title>
+    <meta name="description" content="TECH-BRIDGE ACADEMY - Providing exceptional education that inspires excellence, nurtures character, and empowers every student to achieve lifelong success.">
     <meta name="theme-color" content="#1e40af">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="TBA Demo">
+    <meta name="apple-mobile-web-app-title" content="TBA School">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -21,7 +21,7 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="#" class="logo"><img src="logo.svg" alt="Tech-Bridge Academy Demo DEMO" height="50"></a>
+            <a href="#" class="logo"><img src="logo.svg" alt="TECH-BRIDGE ACADEMY" height="50"></a>
             <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
                 <span></span>
                 <span></span>
@@ -40,6 +40,21 @@
         </div>
     </nav>
 
+    <section class="install-strip" aria-label="App install shortcuts">
+        <div class="install-strip-inner">
+            <div>
+                <span class="badge">Install directly from this page</span>
+                <h2>Get TECH-BRIDGE ACADEMY on your device</h2>
+                <p>Install it as a web app, scan the QR code, or download a desktop shortcut.</p>
+            </div>
+            <div class="install-strip-actions">
+                <button type="button" class="btn btn-primary" id="topInstallAppBtn">Install App</button>
+                <button type="button" class="btn btn-secondary" id="topShowQrBtn">QR Code</button>
+                <button type="button" class="btn btn-secondary" id="topDownloadShortcutBtn">Download Shortcut</button>
+            </div>
+        </div>
+    </section>
+
     <!-- Hero Section -->
     <section class="hero" id="home">
         <div class="hero-bg-image">
@@ -49,7 +64,7 @@
         <div class="container">
             <div class="hero-content">
                 <div class="hero-text">
-                    <span class="badge">Welcome to Tech-Bridge Academy Demo DEMO</span>
+                    <span class="badge">Welcome to TECH-BRIDGE ACADEMY</span>
                     <h1>We Build <span class="gradient-text">Future Leaders</span> That Matter</h1>
                     <p>Tech Bridge Academy is dedicated to delivering quality education through innovation, technology, and academic excellence. We empower students with the knowledge, skills, and character needed to succeed in a rapidly evolving world and become confident leaders of tomorrow.</p>
                     <div class="hero-buttons">
@@ -58,6 +73,33 @@
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                             Watch School Demo
                         </a>
+                        <button type="button" class="btn btn-secondary" id="installAppBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v10"></path><path d="M7 10l5 5 5-5"></path><path d="M5 19h14"></path></svg>
+                            Install App
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="showQrBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M14 14h3v3h-3z"></path><path d="M17 17h4"></path><path d="M17 14h4"></path><path d="M14 17v4"></path></svg>
+                            QR Code
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="downloadShortcutBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M5 21h14"></path></svg>
+                            Download Shortcut
+                        </button>
+                    </div>
+                    <div class="install-hint">Chrome, Edge, Safari, Firefox, and other browsers all get a working install option.</div>
+                    <div class="install-panel" id="installPanel">
+                        <div class="install-panel-copy">
+                            <span class="badge">Phone install</span>
+                            <h3>Scan this QR code</h3>
+                            <p>Open the site on your phone, then install it from the browser menu.</p>
+                            <div class="install-panel-actions">
+                                <button type="button" class="btn btn-primary" id="downloadShortcutInlineBtn">Download Shortcut</button>
+                            </div>
+                            <div class="qr-url" id="installPanelUrl"></div>
+                        </div>
+                        <div class="qr-preview inline-qr-preview">
+                            <img id="installQrImage" alt="QR code for TECH-BRIDGE ACADEMY">
+                        </div>
                     </div>
                     <div class="hero-stats">
                         <div class="stat">
@@ -101,7 +143,7 @@
             <div class="section-header">
                 <span class="badge">School Videos</span>
                 <h2>Watch Our <span class="gradient-text">School Demo</span></h2>
-                <p>Take a virtual tour of Tech-Bridge Academy Demo DEMO and see our facilities, classrooms, and student life in action.</p>
+                <p>Take a virtual tour of TECH-BRIDGE Academy and see our facilities, classrooms, and student life in action.</p>
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:25px;margin-top:40px">
                 <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);transition:transform .3s" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
@@ -119,7 +161,7 @@
                     </div>
                     <div style="padding:18px">
                         <h4 style="margin:0 0 5px"><i class="fa-solid fa-user-graduate" style="color:var(--accent);margin-right:6px"></i>Student Life</h4>
-                        <p style="margin:0;font-size:.85rem;color:var(--gray)">Experience a day in the life of our students at Tech-Bridge Academy Demo DEMO.</p>
+                        <p style="margin:0;font-size:.85rem;color:var(--gray)">Experience a day in the life of our students at TECH-BRIDGE Academy.</p>
                     </div>
                 </div>
                 <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);transition:transform .3s" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
@@ -140,7 +182,7 @@
         <div class="container">
             <div class="section-header">
                 <span class="badge" style="background:rgba(255,255,255,0.2);color:white;">School Gallery</span>
-                <h2>Life at <span class="gradient-text">Tech-Bridge Academy Demo DEMO</span></h2>
+                <h2>Life at <span class="gradient-text">TECH-BRIDGE ACADEMY</span></h2>
                 <p>A glimpse into our vibrant school community, learning environment, and the amazing moments our students create every day.</p>
             </div>
             <div class="gallery-grid">
@@ -195,21 +237,21 @@
         <div class="container">
             <div class="section-header">
                 <span class="badge">Features</span>
-                <h2>Why Choose <span class="gradient-text">Tech-Bridge Academy Demo DEMO</span></h2>
+                <h2>Why Choose <span class="gradient-text">TECH-BRIDGE ACADEMY</span></h2>
                 <p>To nurture confident, innovative, and morally upright learners through quality education, modern technology, and dedicated teaching, preparing them to excel in a rapidly changing world.</p>
             </div>
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon"><i class="fa-solid fa-comment"></i></div>
                     <h3>The Principal Welcome Comment</h3>
-                    <p>Welcome to <b>Tech-Bridge Academy Demo DEMO</b>, where excellence, innovation, and character shape tomorrow's leaders. We are committed to nurturing confident, creative, and responsible learners through quality education and modern teaching. Together, let us inspire greatness and build a future filled with knowledge, purpose, and success.
+                    <p>Welcome to <b>TECH-BRIDGE ACADEMY</b>, where excellence, innovation, and character shape tomorrow's leaders. We are committed to nurturing confident, creative, and responsible learners through quality education and modern teaching. Together, let us inspire greatness and build a future filled with knowledge, purpose, and success.
                 </p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon"><i class="fa-solid fa-newspaper"></i></div>
                     <h3>Latest News & Announcement</h3>
                     <h4>Latest News!</h4>
-                    <p><b>Tech-Bridge Academy Demo DEMO</b> is excited to announce the launch of its Digital Innovation & STEM Programme, empowering students with future-ready technology and leadership skills.  
+                    <p><b>TECH-BRIDGE ACADEMY</b> is excited to announce the launch of its Digital Innovation & STEM Programme, empowering students with future-ready technology and leadership skills.  
                         <h4>Announcement!</h4>
                         Admissions are now open for the new academic session. Secure your child's place today and join a community where excellence meets innovation!
 .</p>
@@ -218,13 +260,13 @@
                     <div class="feature-icon"><i class="fa-solid fa-briefcase"></i></div>
                     <h3> Opportunities Career</h3>
                     <p>
-            Join the passionate team at <b>Tech-Bridge Academy Demo DEMO</b> and inspire the next generation of leaders, innovators, and lifelong learners. We welcome dedicated educators, administrative professionals, and support staff who are committed to excellence, creativity, and continuous growth. If you're ready to make a lasting impact in education, we'd love to hear from you.
+            Join the passionate team at <b>TECH-BRIDGE ACADEMY</b> and inspire the next generation of leaders, innovators, and lifelong learners. We welcome dedicated educators, administrative professionals, and support staff who are committed to excellence, creativity, and continuous growth. If you're ready to make a lasting impact in education, we'd love to hear from you.
             </p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🔒</div>
                     <h3>Secure & Reliable</h3>
-                    <p>At <b>Tech-Bridge Academy Demo DEMO</b>, your child's safety and academic success are our highest priorities. We provide a secure learning environment with reliable systems that parents can trust every day.
+                    <p>At <b>TECH-BRIDGE ACADEMY</b>, your child's safety and academic success are our highest priorities. We provide a secure learning environment with reliable systems that parents can trust every day.
             </p>
                 </div>
                 <div class="feature-card">
@@ -261,7 +303,7 @@
                 <div class="about-text">
                     <span class="badge">About Us</span>
                     <h2>We're TECH-BRIDGE ACADEMIC <span class="gradient-text">Building Future Leaders</span></h2>
-                    <p>With a commitment to academic excellence and innovation, <b>Tech-Bridge Academy Demo DEMO</b> has nurtured young minds through quality education and strong moral values. Our dedicated educators provide a supportive learning environment that equips every student with the knowledge, skills, and confidence to excel in school and beyond.
+                    <p>With a commitment to academic excellence and innovation, <b>TECH-BRIDGE ACADEMY</b> has nurtured young minds through quality education and strong moral values. Our dedicated educators provide a supportive learning environment that equips every student with the knowledge, skills, and confidence to excel in school and beyond.
 </p>
                     <ul class="about-list">
                         <li>
@@ -293,7 +335,7 @@
             <div class="director-wrapper">
                 <div class="director-image-col">
                     <div class="director-image-wrapper">
-                        <img src="ceo.png" alt="Sunday Kingsley Onyekachi - School Director" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <img src="ceo.png" alt="Sunday Kingsley Onyekachi - School Director" onerror="this.style.display='none'; this.parentElement.querySelector('.director-avatar-fallback').style.display='flex';">
                         <div class="director-avatar-fallback" style="display:none;">SO</div>
                         <div class="director-shadow"></div>
                     </div>
@@ -305,7 +347,7 @@
                 <div class="director-info-col">
                     <span class="badge" style="background: var(--gradient); color: white;">Meet Our Director</span>
                     <h2>Sunday Kingsley <span class="gradient-text">Onyekachi</span></h2>
-                    <p class="director-title">Founder & School Director, Tech-Bridge Academy Demo DEMO</p>
+                    <p class="director-title">Founder & School Director, TECH-BRIDGE ACADEMY</p>
                     <div class="director-quote">
                         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21z"></path><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path></svg>
                     </div>
@@ -313,7 +355,7 @@
                         My name is <strong>Sunday Kingsley Onyekachi</strong>, and my passion for technology is what drove me to transform the educational system from local to digital. I believe every child deserves access to quality, future-ready education — and that starts with embracing innovation.
                     </p>
                     <p class="director-text">
-                        Through <strong>Tech-Bridge Academy Demo DEMO</strong>, I set out to build a school where technology meets teaching, where students are not just prepared for exams, but prepared for life. From STEM programmes to digital literacy, we are raising a generation of confident, skilled, and morally upright leaders.
+                        Through <strong>TECH-BRIDGE ACADEMY</strong>, I set out to build a school where technology meets teaching, where students are not just prepared for exams, but prepared for life. From STEM programmes to digital literacy, we are raising a generation of confident, skilled, and morally upright leaders.
                     </p>
                     <p class="director-text">
                         My vision is simple: <em>Bridge the gap between traditional learning and the digital future</em> — one student at a time.
@@ -321,7 +363,7 @@
                     <div class="director-signature">
                         <span class="director-sig-line"></span>
                         <span class="director-sig-name">Sunday Kingsley Onyekachi</span>
-                        <span class="director-sig-title">Founder & Director, Tech-Bridge Academy Demo DEMO</span>
+                        <span class="director-sig-title">Founder & Director, TECH-BRIDGE ACADEMY</span>
                     </div>
                 </div>
             </div>
@@ -334,7 +376,7 @@
             <div class="section-header">
                 <span class="badge">Services</span>
                 <h2>What We <span class="gradient-text">Offer</span></h2>
-                <p><b>Tech-Bridge Academy Demo DEMO</b> offers the following</p>
+                <p><b>TECH-BRIDGE ACADEMY</b> offers the following</p>
             </div>
             <div class="services-grid">
                 <div class="service-card">
@@ -375,7 +417,7 @@
             <div class="testimonials-slider">
                 <div class="testimonial-card">
                     <div class="stars">★★★★★</div>
-                    <p>"<b>Tech-Bridge Academy Demo DEMO</b> has transformed my child's learning experience through quality education, dedicated teachers, and a nurturing environment. The school's commitment to academic excellence and character development has exceeded our expectations".
+                    <p>"<b>TECH-BRIDGE ACADEMY</b> has transformed my child's learning experience through quality education, dedicated teachers, and a nurturing environment. The school's commitment to academic excellence and character development has exceeded our expectations".
 "</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">Mr.</div>
@@ -387,7 +429,7 @@
                 </div>
                 <div class="testimonial-card">
                     <div class="stars">★★★★★</div>
-                    <p>"**"Professional, caring, and committed to excellence. The dedicated teachers and supportive learning environment at <b>Tech-Bridge Academy Demo DEMO</b> have greatly enhanced our child's academic performance and confidence. We highly recommend this outstanding institution."**
+                    <p>"**"Professional, caring, and committed to excellence. The dedicated teachers and supportive learning environment at <b>TECH-BRIDGE ACADEMY</b> have greatly enhanced our child's academic performance and confidence. We highly recommend this outstanding institution."**
 !"</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">Mrs.</div>
@@ -399,7 +441,7 @@
                 </div>
                 <div class="testimonial-card">
                     <div class="stars">★★★★★</div>
-                    <p>"Choosing<b>Tech-Bridge Academy Demo DEMO</b>was one of the best decisions for our child. Their commitment to academic excellence, character development, and personalized learning truly sets them apart from other schools."</p>
+                    <p>"Choosing<b>TECH-BRIDGE ACADEMY</b>was one of the best decisions for our child. Their commitment to academic excellence, character development, and personalized learning truly sets them apart from other schools."</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">MR</div>
                         <div class="author-info">
@@ -418,7 +460,7 @@
             <div style="text-align:center;max-width:800px;margin:0 auto 50px">
                 <span class="badge">Get Started</span>
                 <h2 style="font-size:2.2rem;margin:15px 0">Start Your <span class="gradient-text">Tech Journey</span></h2>
-                <p style="color:var(--gray);font-size:1rem;line-height:1.8">Turn your curiosity into skills. Turn your skills into opportunities.<br>Whether you're a complete beginner or looking to advance your existing skills, Tech-Bridge Academy Demo DEMO provides practical, accessible learning to help you grow in the digital world.</p>
+                <p style="color:var(--gray);font-size:1rem;line-height:1.8">Turn your curiosity into skills. Turn your skills into opportunities.<br>Whether you're a complete beginner or looking to advance your existing skills, Tech-Bridge Academy provides practical, accessible learning to help you grow in the digital world.</p>
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:25px;margin-bottom:40px">
                 <div style="background:#fff;padding:35px 30px;border-radius:16px;box-shadow:0 2px 15px rgba(0,0,0,.05);text-align:center;transition:var(--transition)" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
@@ -541,20 +583,20 @@
         <div class="container">
             <div style="text-align:center;max-width:700px;margin:0 auto 50px">
                 <span class="badge">School Prospectus</span>
-                <h2 style="font-size:2rem;margin:15px 0">Tech-Bridge Academy Demo DEMO</h2>
+                <h2 style="font-size:2rem;margin:15px 0">TECH-BRIDGE ACADEMY</h2>
                 <p style="color:var(--gray);font-size:1.05rem;line-height:1.7;font-style:italic">Bridging Education with Technology for a Better Future</p>
             </div>
 
             <!-- Welcome -->
             <div style="max-width:900px;margin:0 auto 50px;background:#fff;padding:40px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.05)">
-                <h3 style="color:var(--dark);font-size:1.4rem;margin-bottom:15px"><i class="fa-solid fa-hand-wave" style="color:var(--primary)"></i> Welcome to Tech-Bridge Academy Demo DEMO</h3>
-                <p style="color:var(--gray);line-height:1.8;font-size:.95rem">Tech-Bridge Academy Demo DEMO is a modern, technology-driven school committed to providing students with quality education, practical skills, digital literacy, and strong character development.</p>
+                <h3 style="color:var(--dark);font-size:1.4rem;margin-bottom:15px"><i class="fa-solid fa-hand-wave" style="color:var(--primary)"></i> Welcome to Tech-Bridge Academy</h3>
+                <p style="color:var(--gray);line-height:1.8;font-size:.95rem">Tech-Bridge Academy is a modern, technology-driven school committed to providing students with quality education, practical skills, digital literacy, and strong character development.</p>
                 <p style="color:var(--gray);line-height:1.8;font-size:.95rem;margin-top:12px">Our goal is to bridge the gap between traditional education and the digital world by creating a learning environment where students are prepared not only for academic success but also for the opportunities and challenges of the future.</p>
             </div>
 
             <!-- Why Choose Us -->
             <div style="text-align:center;max-width:700px;margin:0 auto 40px">
-                <h2 style="font-size:1.8rem;color:var(--dark)">Why Choose <span class="gradient-text">Tech-Bridge Academy Demo DEMO?</span></h2>
+                <h2 style="font-size:1.8rem;color:var(--dark)">Why Choose <span class="gradient-text">Tech-Bridge Academy?</span></h2>
             </div>
 
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:25px;max-width:1100px;margin:0 auto">
@@ -727,7 +769,7 @@
             <!-- Educational Approach -->
             <div style="max-width:900px;margin:60px auto 0;background:linear-gradient(135deg,var(--primary),#7c3aed);padding:45px;border-radius:20px;color:#fff;text-align:center">
                 <h2 style="font-size:1.6rem;margin-bottom:20px">Our Educational Approach</h2>
-                <p style="font-size:1rem;line-height:1.8;opacity:.95;max-width:700px;margin:0 auto 25px">At Tech-Bridge Academy Demo DEMO, we believe that education should go beyond memorising information. We encourage students to learn, create, solve problems, collaborate, and innovate.</p>
+                <p style="font-size:1rem;line-height:1.8;opacity:.95;max-width:700px;margin:0 auto 25px">At Tech-Bridge Academy, we believe that education should go beyond memorising information. We encourage students to learn, create, solve problems, collaborate, and innovate.</p>
                 <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:15px;margin-top:20px">
                     <span style="background:rgba(255,255,255,.2);padding:10px 22px;border-radius:30px;font-weight:600;font-size:.9rem">Academic Excellence</span>
                     <span style="background:rgba(255,255,255,.2);padding:10px 22px;border-radius:30px;font-weight:600;font-size:.9rem">Technology</span>
@@ -759,7 +801,7 @@
             <!-- The Tech-Bridge Difference -->
             <div style="max-width:900px;margin:60px auto 0;text-align:center">
                 <h2 style="font-size:1.6rem;color:var(--dark);margin-bottom:20px">The Tech-Bridge <span class="gradient-text">Difference</span></h2>
-                <p style="color:var(--gray);line-height:1.8;font-size:.95rem;max-width:750px;margin:0 auto 20px">At Tech-Bridge Academy Demo DEMO, technology is not just an extra subject &mdash; it is an essential part of the learning experience. From the classroom to the learning tablet, from digital assessments to practical technology education, we are building a learning environment that connects students to the future.</p>
+                <p style="color:var(--gray);line-height:1.8;font-size:.95rem;max-width:750px;margin:0 auto 20px">At Tech-Bridge Academy, technology is not just an extra subject &mdash; it is an essential part of the learning experience. From the classroom to the learning tablet, from digital assessments to practical technology education, we are building a learning environment that connects students to the future.</p>
                 <p style="color:var(--dark);font-size:1.2rem;font-weight:700;margin-bottom:30px">Every Student. One Learning Tablet. Unlimited Possibilities.</p>
                 <a href="admission.html" class="btn btn-primary" style="padding:16px 45px;font-size:1.05rem;font-weight:700;border-radius:14px">Apply for Admission</a>
             </div>
@@ -771,7 +813,7 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-col">
-                    <a href="#" class="logo"><img src="logo.svg" alt="Tech-Bridge Academy Demo DEMO" height="50"></a>
+                    <a href="#" class="logo"><img src="logo.svg" alt="TECH-BRIDGE ACADEMY" height="50"></a>
                     <p>Providing exceptional education that inspires excellence, nurtures character, and empowers every student to achieve lifelong success.</p>
                     <div class="social-links">
                         <a href="https://wa.me/2348039392007?text=Hello%2C%20I'm%20interested%20in%20TECH-BRIDGE%20ACADEMY.%20Please%20send%20me%20more%20information." target="_blank" aria-label="WhatsApp" title="Chat on WhatsApp">
@@ -813,7 +855,7 @@
                     <h4>Meet the CEO</h4>
                     <div class="ceo-card">
                         <div class="ceo-image">
-                            <img src="ceo.png" alt="Pa-Kings - CEO" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <img src="ceo.png" alt="Pa-Kings - CEO" onerror="this.style.display='none'; this.parentElement.querySelector('.ceo-avatar').style.display='flex';">
                             <div class="ceo-avatar" style="display: none;">PK</div>
                         </div>
                         <div class="ceo-info">
@@ -825,85 +867,11 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 Tech-Bridge Academy Demo DEMO. All rights reserved. Built with passion by <strong>Pa-Kings</strong>.</p>
+                <p>&copy; 2026 TECH-BRIDGE ACADEMY. All rights reserved. Built with passion by <strong>Pa-Kings</strong>.</p>
             </div>
         </div>
     </footer>
 
     <script src="script.js"></script>
-
-    <!-- PWA Install Banner -->
-    <div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1e40af,#7c3aed);color:#fff;padding:20px;z-index:9999;box-shadow:0 -4px 20px rgba(0,0,0,.3)">
-        <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:12px">
-                <img src="icon-192.png" alt="TBA Demo" style="width:48px;height:48px;border-radius:12px">
-                <div>
-                    <strong style="font-size:1rem">Install Tech-Bridge Academy Demo</strong>
-                    <p style="margin:0;font-size:.85rem;opacity:.9">Add to your home screen for quick access</p>
-                </div>
-            </div>
-            <div style="display:flex;gap:10px">
-                <button onclick="dismissInstall()" style="background:rgba(255,255,255,.2);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer">Later</button>
-                <button onclick="installApp()" style="background:#fff;color:#1e40af;border:none;padding:10px 24px;border-radius:8px;font-weight:700;cursor:pointer">Install</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Floating Install Button -->
-    <button id="floatingInstallBtn" onclick="installApp()" style="display:none;position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg,#1e40af,#7c3aed);color:#fff;border:none;width:56px;height:56px;border-radius:50%;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 15px rgba(30,64,175,.4);z-index:9998;transition:transform .2s">
-        <i class="fa-solid fa-download"></i>
-    </button>
-
-    <script>
-        let deferredPrompt;
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const dismissed = localStorage.getItem('tba_install_dismissed');
-            if (!dismissed) {
-                document.getElementById('installBanner').style.display = 'block';
-            }
-            document.getElementById('floatingInstallBtn').style.display = 'flex';
-            document.getElementById('floatingInstallBtn').style.alignItems = 'center';
-            document.getElementById('floatingInstallBtn').style.justifyContent = 'center';
-        });
-
-        window.addEventListener('appinstalled', () => {
-            document.getElementById('installBanner').style.display = 'none';
-            document.getElementById('floatingInstallBtn').style.display = 'none';
-            deferredPrompt = null;
-            localStorage.removeItem('tba_install_dismissed');
-        });
-
-        function installApp() {
-            if (!deferredPrompt) {
-                alert('To install: Tap the share button and select "Add to Home Screen"');
-                return;
-            }
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choice) => {
-                if (choice.outcome === 'accepted') {
-                    document.getElementById('installBanner').style.display = 'none';
-                    document.getElementById('floatingInstallBtn').style.display = 'none';
-                }
-                deferredPrompt = null;
-            });
-        }
-
-        function dismissInstall() {
-            document.getElementById('installBanner').style.display = 'none';
-            localStorage.setItem('tba_install_dismissed', 'true');
-        }
-
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('SW registered:', reg.scope))
-                    .catch(err => console.log('SW failed:', err));
-            });
-        }
-    </script>
 </body>
 </html>
