@@ -56,18 +56,30 @@
     function signIn(email, password) {
         return new Promise(function(resolve, reject) {
             var c = _s();
-            if (!c) return reject(new Error('Cannot connect to server.'));
+            if (!c) return reject(new Error('Cannot connect to server. Please check your internet connection.'));
             c.auth.signInWithPassword({ email: email, password: password }).then(function(authRes) {
-                if (authRes.error) return reject(new Error(authRes.error.message));
-                var userId = authRes.data.user.id;
-                c.from('users').select('*').eq('id', userId).maybeSingle().then(function(profileRes) {
-                    if (profileRes.error) return reject(new Error('Could not load your profile. Contact admin.'));
-                    if (!profileRes.data) return reject(new Error('Profile not found. Please contact admin.'));
-                    resolve({ user: profileRes.data });
-                }).catch(function(err) { reject(new Error('Could not load your profile. Contact admin.')); });
+                if (authRes.error) {
+                    // Handle specific Supabase errors
+                    if (authRes.error.message && authRes.error.message.includes('Invalid login')) {
+                        reject(new Error('Invalid email or password.'));
+                    } else if (authRes.error.message && authRes.error.message.includes('API')) {
+                        reject(new Error('Invalid API configuration. Please contact admin.'));
+                    } else {
+                        reject(new Error(authRes.error.message || 'Authentication failed. Please try again.'));
+                    }
+                } else {
+                    var userId = authRes.data.user.id;
+                    c.from('users').select('*').eq('id', userId).maybeSingle().then(function(profileRes) {
+                        if (profileRes.error) return reject(new Error('Could not load your profile. Contact admin.'));
+                        if (!profileRes.data) return reject(new Error('Profile not found. Please contact admin.'));
+                        resolve({ user: profileRes.data });
+                    }).catch(function(err) { reject(new Error('Could not load your profile. Contact admin.')); });
+                }
             }).catch(function(err) {
                 if (err.message && err.message.includes('Invalid login')) {
                     reject(new Error('Invalid email or password.'));
+                } else if (err.message && err.message.includes('API')) {
+                    reject(new Error('Invalid API configuration. Please contact admin.'));
                 } else {
                     reject(err);
                 }

@@ -1,5 +1,6 @@
 const API_CONFIG = {
   baseUrl: localStorage.getItem('tba_api_url') || 'https://tech-bridge-api.sundaykingsley1210.workers.dev',
+  fallbackUrl: 'https://tech-bridge-api2.sundaykingsley1210.workers.dev',
 };
 
 const API = {
@@ -17,12 +18,22 @@ const API = {
   },
 
   async request(path, opts = {}) {
-    const url = API_CONFIG.baseUrl + path;
+    const primaryUrl = API_CONFIG.baseUrl + path;
+    const fallbackUrl = API_CONFIG.fallbackUrl + path;
     const headers = { 'Content-Type': 'application/json' };
     if (this.token) headers['Authorization'] = 'Bearer ' + this.token;
-    const res = await fetch(url, { ...opts, headers: { ...headers, ...opts.headers } });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Request failed');
+    
+    // Try primary URL first
+    let res = await fetch(primaryUrl, { ...opts, headers: { ...headers, ...opts.headers } });
+    let data = await res.json();
+    
+    // If failed, try fallback URL
+    if (!res.ok) {
+      res = await fetch(fallbackUrl, { ...opts, headers: { ...headers, ...opts.headers } });
+      data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Request failed. Using fallback API.');
+    }
+    
     return data;
   },
 

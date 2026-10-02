@@ -1,4 +1,4 @@
-// Supabase Configuration for Tech-Bridge Academy Demo DEMO
+// Supabase Configuration for Tech-Bridge Academy
 
 const SUPABASE_URL = 'https://ljhritlqicnlppwcoijw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_jDqBNBJKoF6RmPgaXNTW-g_G92B6L92';
