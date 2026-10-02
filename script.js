@@ -119,18 +119,27 @@ function initInlineInstallPanel() {
 }
 
 function downloadShortcut() {
-    // Trigger native PWA install prompt instead of downloading a file
+    // Trigger native PWA install prompt
     if (deferredInstallPrompt) {
         deferredInstallPrompt.prompt();
         deferredInstallPrompt.userChoice.then((choiceResult) => {
             if (choiceResult.outcome === 'accepted') {
                 console.log('User accepted the install prompt');
+                deferredInstallPrompt = null;
             } else {
                 console.log('User dismissed the install prompt');
+                deferredInstallPrompt = null;
             }
-            deferredInstallPrompt = null;
         });
+    } else {
+        // Show install instructions
+        alert('Click "Add to Home Screen" or "Install App" in your browser menu to install TECH-BRIDGE ACADEMY as an app.');
     }
+}
+
+function showInstallGuide() {
+    const guideUrl = 'https://tech-bridge-academy.com/install-guide';
+    window.open(guideUrl, '_blank');
 }
 
 function closeQrModal() {
