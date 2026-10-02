@@ -211,8 +211,8 @@ if (topDownloadShortcutButton) {
 }
 
 const topDownloadButton = document.getElementById("topDownloadBtn");
-if (downloadShortcutInlineButton) {
-    downloadShortcutInlineButton.addEventListener("click", downloadShortcut);
+if (topDownloadButton) {
+    topDownloadButton.addEventListener("click", downloadShortcut);
 }
 
 // ==================== SUBJECTS DATA ====================
