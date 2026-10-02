@@ -119,22 +119,46 @@ function initInlineInstallPanel() {
 }
 
 function downloadShortcut() {
-    // Trigger native PWA install prompt
+    // Try native PWA install prompt first
     if (deferredInstallPrompt) {
         deferredInstallPrompt.prompt();
         deferredInstallPrompt.userChoice.then((choiceResult) => {
             if (choiceResult.outcome === 'accepted') {
                 console.log('User accepted the install prompt');
                 deferredInstallPrompt = null;
+                // Show success message
+                alert('TECH-BRIDGE ACADEMY has been installed! Find it on your home screen or start menu.');
             } else {
                 console.log('User dismissed the install prompt');
-                deferredInstallPrompt = null;
+                // Fall back to downloading shortcut file
+                createDownloadShortcut();
             }
         });
     } else {
-        // Show install instructions
-        alert('Click "Add to Home Screen" or "Install App" in your browser menu to install TECH-BRIDGE ACADEMY as an app.');
+        // No PWA prompt available, fall back to download shortcut
+        createDownloadShortcut();
     }
+}
+
+function createDownloadShortcut() {
+    // Create a .url shortcut file that works on Windows and can be shared to phones
+    const appUrl = window.location.origin + window.location.pathname;
+    const shortcut = "[InternetShortcut]\r\nURL=" + appUrl + "\r\n";
+    const blob = new Blob([shortcut], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "TECH-BRIDGE-ACADEMY.url";
+    
+    // Add to document temporarily, click, then remove
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    
+    // Show instructions
+    alert('Shortcut downloaded! Open the file on your phone/computer to install TECH-BRIDGE ACADEMY as an app.\n\nOn phone: Open the file and select "Install" or "Add to Home Screen".\nOn computer: Open the .url file to launch the app.');
 }
 
 function showInstallGuide() {
