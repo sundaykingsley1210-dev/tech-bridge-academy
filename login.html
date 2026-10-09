@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - TECH-BRIDGE ACADEMY</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -31,7 +30,7 @@
         return new Promise(function(resolve, reject) {
             var c = _s();
             if (!c) return reject(new Error('Cannot connect to server. Please refresh and try again.'));
-
+            
             c.auth.signUp({ email: email, password: password }).then(function(authRes) {
                 if (authRes.error) return reject(new Error(authRes.error.message));
                 var userId = authRes.data.user.id;
@@ -61,7 +60,7 @@
             // Step 1: Try Supabase authentication
             c.auth.signInWithPassword({ email: email, password: password }).then(function(authRes) {
                 if (authRes.error) {
-                    // Handle Supabase auth errors
+                    // Handle Supabase auth errors with specific messages
                     if (authRes.error.message && authRes.error.message.includes('Invalid login')) {
                         reject(new Error('Invalid email or password.'));
                     } else if (authRes.error.message && authRes.error.message.includes('API')) {
@@ -121,609 +120,206 @@
             body: JSON.stringify({
                 access_key: '320741cd-4b44-449d-8231-b0150da8d26d',
                 subject: 'Welcome to TECH-BRIDGE ACADEMY!',
-                from_name: 'TECH-BRIDGE ACADEMY',
-                email: toEmail,
-                message: 'Dear ' + name + ',\n\nCongratulations! Your ' + role + ' account has been successfully created at TECH-BRIDGE ACADEMY.\n\nEmail: ' + toEmail + '\nRole: ' + role.charAt(0).toUpperCase() + role.slice(1) + '\n\nYou can now login to your portal at ' + window.location.origin + '/login.html using your email and password.\n\nWe wish you success!\n\nBest regards,\nTECH-BRIDGE ACADEMY'
+                message: 'Dear ' + name + ', welcome to TECH-BRIDGE ACADEMY! We are excited to have you on board.'
             })
-        }).then(function() { console.log('Welcome email sent'); }).catch(function(err) { console.log('Email failed:', err); });
+        });
     }
-    </script>
-    <style>
-        .login-page {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
+
+    // Initialize everything on load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Supabase
+        _initSupabase();
+        
+        // Handle login form
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                signIn(email, password).then(function(result) {
+                    // Login successful
+                    window.location.href = 'admin-dashboard.html';
+                }).catch(function(error) {
+                    // Show error message
+                    const errorDiv = document.getElementById('loginError');
+                    if (errorDiv) {
+                        errorDiv.textContent = error;
+                        errorDiv.style.display = 'block';
+                    } else {
+                        alert(error);
+                    }
+                });
+            });
         }
-        .login-page::before {
-            content: '';
-            position: absolute;
-            width: 500px;
-            height: 500px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 50%;
-            top: -100px;
-            right: -100px;
-        }
-        .login-page::after {
-            content: '';
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 50%;
-            bottom: -50px;
-            left: -50px;
-        }
-        .login-container {
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 25px 80px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 450px;
-            overflow: hidden;
-            position: relative;
-            z-index: 1;
-        }
-        .login-header {
-            background: var(--gradient);
-            padding: 40px 40px 30px;
-            text-align: center;
-            color: white;
-        }
-        .login-header img {
-            height: 50px;
-            margin-bottom: 15px;
-        }
-        .login-header h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        .login-header p {
-            opacity: 0.85;
-            font-size: 0.9rem;
-        }
-        .role-toggle {
-            display: flex;
-            margin: 25px 40px 0;
-            background: #f1f3f5;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        .role-btn {
-            flex: 1;
-            padding: 12px 8px;
-            border: none;
-            background: transparent;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: var(--transition);
-            color: var(--gray);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        .role-btn.active {
-            background: var(--gradient);
-            color: white;
-            border-radius: 12px;
-        }
-        .login-body {
-            padding: 30px 40px 40px;
-        }
-        .login-body .form-group {
-            margin-bottom: 20px;
-        }
-        .login-body .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--dark);
-        }
-        .login-body .form-group .input-wrapper {
-            position: relative;
-        }
-        .login-body .form-group .input-wrapper i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--gray);
-        }
-        .login-body .form-group input {
-            width: 100%;
-            padding: 14px 15px 14px 45px;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            font-family: inherit;
-            font-size: 0.95rem;
-            transition: var(--transition);
-        }
-        .login-body .form-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        .reset-link {
-            text-align: right;
-            margin-top: -10px;
-            margin-bottom: 20px;
-        }
-        .reset-link a {
-            color: var(--accent);
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
-        .reset-link a:hover { text-decoration: underline; }
-        .login-error {
-            background: #fff5f5;
-            color: #e53e3e;
-            padding: 12px 15px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            margin-bottom: 20px;
-            display: none;
-            border-left: 4px solid #e53e3e;
-        }
-        .login-btn {
-            width: 100%;
-            padding: 15px;
-            background: var(--gradient);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-        .login-footer {
-            text-align: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
-        }
-        .login-footer a {
-            color: var(--primary);
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .login-footer p {
-            color: var(--gray);
-            font-size: 0.85rem;
-            margin-top: 10px;
-        }
-        .back-home {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 10;
-            transition: var(--transition);
-        }
-        .back-home:hover {
-            opacity: 0.8;
-        }
-        @media (max-width: 480px) {
-            .login-header, .login-body, .role-toggle {
-                margin-left: 20px;
-                margin-right: 20px;
-            }
-            .role-toggle {
-                margin-left: 20px;
-                margin-right: 20px;
-            }
-        }
-    </style>
+    });
+</script>
 </head>
 <body>
-    <a href="index.html" class="back-home">
-        <i class="fa-solid fa-arrow-left"></i> Back to Home
-    </a>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo"><img src="logo.svg" alt="TECH-BRIDGE ACADEMY" height="60"></a>
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#gallery">Gallery</a></li>
+                <li><a href="#prospectus">Prospectus</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="admission.html" class="btn-nav" style="background: var(--gradient);">Apply Now</a></li>
+                <li><a href="login.html" class="btn-nav">Portal Login</a></li>
+                <li><a href="#" class="btn-nav" id="topDownloadBtn">Download</a></li>
+            </ul>
+        </div>
+    </nav>
 
-    <section class="login-page">
-        <div class="login-container">
-            <div class="login-header">
-                <img src="logo.svg" alt="TECH-BRIDGE ACADEMY">
-                <h1>Welcome Back</h1>
-                <p>Sign in to your portal</p>
-            </div>
-
-            <div class="role-toggle">
-                <button class="role-btn active" id="studentBtn" onclick="switchRole('student')">
-                    <i class="fa-solid fa-user-graduate"></i> Student
-                </button>
-                <button class="role-btn" id="teacherBtn" onclick="switchRole('teacher')">
-                    <i class="fa-solid fa-chalkboard-user"></i> Teacher
-                </button>
-                <button class="role-btn" id="adminBtn" onclick="switchRole('admin')">
-                    <i class="fa-solid fa-shield-halved"></i> Admin
-                </button>
-            </div>
-
-            <div class="login-body">
-                <div class="login-error" id="loginError"></div>
-                <form id="loginForm" onsubmit="handleLogin(event)">
-                    <div class="form-group" id="nameGroup">
-                        <label id="nameLabel">Full Name *</label>
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-id-card"></i>
-                            <input type="text" id="loginName" placeholder="Enter your full name">
+    <section class="hero" id="home">
+        <div class="hero-bg-image">
+            <img src="hero-bg.svg" alt="School Background">
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <span class="badge">Welcome to TECH-BRIDGE ACADEMY</span>
+                    <h1>We Build <span class="gradient-text">Future Leaders</span> That Matter</h1>
+                    <p>Tech Bridge Academy is dedicated to delivering quality education through innovation, technology, and academic excellence. We empower students with the knowledge, skills, and character needed to succeed in a rapidly evolving world and become confident leaders of tomorrow.</p>
+                    <div class="hero-buttons">
+                        <a href="admission.html" class="btn btn-primary">Apply for Admission</a>
+                        <a href="#videos" class="btn btn-secondary">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            Watch School Demo
+                        </a>
+                    </div>
+                    <div class="install-hint">Chrome, Edge, Safari, Firefox, and other browsers all get a working install option.</div>
+                    
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <span class="stat-number">50+</span>
+                            <span class="stat-label">Class Capacity</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">700+</span>
+                            <span class="stat-label">School Capacity</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">10+</span>
+                            <span class="stat-label">Awards Won</span>
                         </div>
                     </div>
-                    <div class="form-group" id="classGroup" style="display:block !important">
-                        <label>Your Class *</label>
-                        <div style="position:relative">
-                            <select id="loginClass" style="width:100%;padding:14px 15px 14px 45px;border:2px solid #e9ecef;border-radius:12px;font-family:inherit;font-size:0.95rem;appearance:auto;background:#fff;display:block !important;visibility:visible !important;opacity:1 !important;height:auto !important;overflow:visible !important">
-                                <option value="">Select Class</option>
-                                <option value="Nursery 1">Nursery 1</option>
-                                <option value="Nursery 2">Nursery 2</option>
-                                <option value="Primary 1">Primary 1</option>
-                                <option value="Primary 2">Primary 2</option>
-                                <option value="Primary 3">Primary 3</option>
-                                <option value="Primary 4">Primary 4</option>
-                                <option value="Primary 5">Primary 5</option>
-                                <option value="Primary 6">Primary 6</option>
-                                <option value="JSS 1">JSS 1</option>
-                                <option value="JSS 2">JSS 2</option>
-                                <option value="JSS 3">JSS 3</option>
-                                <option value="SSS 1">SSS 1</option>
-                                <option value="SSS 2">SSS 2</option>
-                                <option value="SSS 3">SSS 3</option>
-                            </select>
-                            <i class="fa-solid fa-layer-group" style="position:absolute;left:15px;top:50%;transform:translateY(-50%);color:#999;pointer-events:none"></i>
-                        </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="hero-card card-1">
+                        <div class="card-icon">🚀</div>
+                        <h3>Quality Education</h3>
+                        <p>Academic Excellence</p>
                     </div>
-                    <div class="form-group">
-                        <label id="emailLabel">Email Address *</label>
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-envelope"></i>
-                            <input type="email" id="loginEmail" placeholder="Enter your email" required>
-                        </div>
+                    <div class="hero-card card-2">
+                        <div class="card-icon">✨</div>
+                        <h3>Mind Transformation</h3>
+                        <p>Good moral &<br>Discipline</p>
                     </div>
-                    <div class="form-group">
-                        <label>Password *</label>
-                        <div style="position:relative">
-                            <input type="password" id="loginPassword" placeholder="Enter your password" required style="width:100%;padding:14px 50px 14px 45px;border:2px solid #e9ecef;border-radius:12px;font-family:inherit;font-size:0.95rem;transition:var(--transition)">
-                            <i class="fa-solid fa-lock" style="position:absolute;left:15px;top:50%;transform:translateY(-50%);color:#999"></i>
-                            <i id="loginEyeIcon" class="fa-solid fa-eye" onclick="togglePassword('loginPassword','loginEyeIcon')" style="position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#1e40af;cursor:pointer;font-size:1.1rem"></i>
-                        </div>
+                    <div class="hero-card card-3">
+                        <div class="card-icon">💡</div>
+                        <h3>Creative Solutions</h3>
+                        <p>Innovative & Technological <br> approach</p>
                     </div>
-                    <div class="reset-link">
-                        <a onclick="showResetModal()">Forgot Password?</a>
-                    </div>
-                    <button type="submit" class="login-btn">
-                        <i class="fa-solid fa-sign-in-alt"></i> Sign In
-                    </button>
-                </form>
-
-                <div class="login-footer">
-                    <p>Having trouble? Contact <a href="https://wa.me/2348039392007" style="color: var(--accent);">Support</a></p>
                 </div>
             </div>
         </div>
     </section>
 
-    <script>
-        let currentRole = 'student';
-
-
-        // Password visibility toggle
-        function togglePassword(inputId, iconId) {
-            const input = document.getElementById(inputId);
-            const icon = document.getElementById(iconId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        }
-
-        // Reset Password Modal
-        document.body.insertAdjacentHTML('beforeend', `
-        <div id="resetPasswordModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;justify-content:center;align-items:center">
-            <div style="background:#fff;border-radius:20px;width:100%;max-width:450px;max-height:90vh;overflow-y:auto;margin:20px;animation:fadeIn .3s ease">
-                <div style="padding:25px 30px;border-bottom:1px solid #e9ecef;display:flex;justify-content:space-between;align-items:center">
-                    <h3 style="font-size:1.3rem;color:var(--dark)">Reset Password</h3>
-                    <button onclick="closeResetModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--gray)">&times;</button>
-                </div>
-                <div style="padding:30px">
-                    <div id="resetRequestForm">
-                        <p style="color:var(--gray);font-size:.9rem;margin-bottom:20px;text-align:center">Enter your email and select your role. The admin will review your request before your password can be reset.</p>
-                        <form id="resetForm" onsubmit="handleResetRequest(event)">
-                            <div style="margin-bottom:18px">
-                                <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">I am a *</label>
-                                <select id="resetRole" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                                    <option value="student">Student</option>
-                                    <option value="teacher">Teacher</option>
-                                </select>
-                            </div>
-                            <div style="margin-bottom:18px">
-                                <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Your Email *</label>
-                                <input type="email" id="resetEmail" placeholder="Enter your email" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                            </div>
-                            <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-key"></i> Request Password Reset</button>
-                        </form>
-                        <div style="text-align:center;margin-top:15px">
-                            <a onclick="showCheckStatusForm()" style="color:var(--primary);font-size:.85rem;font-weight:600;cursor:pointer">Already have an approved request? Set new password</a>
+    <!-- Login Form Section -->
+    <section class="login-section" style="padding: 80px 0; background: #f8f9fa;">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-0 rounded-lg mt-5">
+                        <div class="card-header bg-primary text-white text-center py-4">
+                            <h3 class="mb-0">Login to TECH-BRIDGE ACADEMY</h3>
                         </div>
-                    </div>
-                    <div id="resetCheckStatus" style="display:none">
-                        <p style="color:var(--gray);font-size:.9rem;margin-bottom:20px;text-align:center">Check your reset request status and set a new password if approved by admin.</p>
-                        <form id="checkStatusForm" onsubmit="handleCheckStatus(event)">
-                            <div style="margin-bottom:18px">
-                                <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">I am a *</label>
-                                <select id="checkRole" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                                    <option value="student">Student</option>
-                                    <option value="teacher">Teacher</option>
-                                </select>
-                            </div>
-                            <div style="margin-bottom:18px">
-                                <label style="display:block;margin-bottom:6px;font-weight:600;font-size:.9rem;color:var(--dark)">Your Email *</label>
-                                <input type="email" id="checkEmail" placeholder="Enter your email" required style="width:100%;padding:12px 15px;border:2px solid #e9ecef;border-radius:10px;font-family:inherit;font-size:.9rem">
-                            </div>
-                            <button type="submit" style="width:100%;padding:14px;background:var(--gradient);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer"><i class="fa-solid fa-search"></i> Check Status</button>
-                        </form>
-                        <div id="resetStatusResult" style="margin-top:15px"></div>
-                        <div style="text-align:center;margin-top:15px">
-                            <a onclick="showRequestForm()" style="color:var(--primary);font-size:.85rem;font-weight:600;cursor:pointer">Back to Request Form</a>
+                        <div class="card-body p-5">
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email address</label>
+                                    <input type="email" id="email" class="form-control" placeholder="enter email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Password</label>
+                                    <input type="password" id="password" class="form-control" placeholder="enter password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 py-2">Sign In</button>
+                                <div id="loginError" style="color: red; display: none; margin-top: 10px; font-size: 0.85rem;"></div>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>`);
+        </div>
+    </section>
 
-        function showResetModal() {
-            document.getElementById('resetPasswordModal').style.display = 'flex';
-            showRequestForm();
-        }
-        function closeResetModal() {
-            document.getElementById('resetPasswordModal').style.display = 'none';
-        }
-        function showRequestForm() {
-            document.getElementById('resetRequestForm').style.display = 'block';
-            document.getElementById('resetCheckStatus').style.display = 'none';
-        }
-        function showCheckStatusForm() {
-            document.getElementById('resetRequestForm').style.display = 'none';
-            document.getElementById('resetCheckStatus').style.display = 'block';
-            document.getElementById('resetStatusResult').innerHTML = '';
-        }
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <a href="#" class="logo"><img src="logo.svg" alt="TECH-BRIDGE ACADEMY" height="40"></a>
+                    <p>Providing exceptional education that inspires excellence, nurtures character, and empowers every student to achieve lifelong success.</p>
+                    <div class="social-links">
+                        <a href="https://wa.me/2348039392007?text=Hello%2C%20I'm%20interested%20in%20TECH-BRIDGE%20ACADEMY.%20Please%20send%20me%20more%20information." target="_blank" aria-label="WhatsApp" title="Chat on WhatsApp">
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </a>
+                        <a href="mailto:spnewman1210@gmail.com" aria-label="Gmail" title="Send us an Email">
+                            <i class="fa-solid fa-envelope"></i>
+                        </a>
+                        <a href="https://facebook.com/" target="_blank" aria-label="Facebook" title="Follow on Facebook">
+                            <i class="fa-brands fa-facebook-f"></i>
+                        </a>
+                        <a href="https://github.com/sundaykingsley1210-dev" target="_blank" aria-label="GitHub" title="View on GitHub">
+                            <i class="fa-brands fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#services">Services</a></li>
+                        <li><a href="#prospectus">School Prospectus</a></li>
+                        <li><a href="admission.html">Apply for Admission</a></li>
+                        <li><a href="login.html">Student/Teacher Portal</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col ceo-col">
+                    <h4>Meet the CEO</h4>
+                    <div class="ceo-card">
+                        <div class="ceo-image">
+                            <img src="ceo.png" alt="Pa-Kings - CEO" onerror="this.style.display='none'; this.parentElement.querySelector('.ceo-avatar').style.display='flex';">
+                            <div class="ceo-avatar" style="display: none;">PK</div>
+                        </div>
+                        <div class="ceo-info">
+                            <h5>Pa-Kings</h5>
+                            <span>Founder & CEO</span>
+                            <p class="ceo-quote">"Empowering the next generation of tech leaders through quality education and hands-on experience."</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 TECH-BRIDGE ACADEMY. All rights reserved. Built with passion by <strong>Pa-Kings</strong>.</p>
+            </div>
+        </div>
+    </footer>
 
-        async function handleCheckStatus(e) {
-            e.preventDefault();
-            const role = document.getElementById('checkRole').value;
-            const email = document.getElementById('checkEmail').value.trim();
-            const resultDiv = document.getElementById('resetStatusResult');
-
-            _initSupabase();
-            if (!_supabaseClient) { alert('Cannot connect to server.'); return; }
-
-            try {
-                var result = await _supabaseClient.from('password_resets').select('*').eq('email', email).eq('role', role).order('requested_at', {ascending: false}).limit(1).maybeSingle();
-                if (result.error) throw result.error;
-                if (!result.data) {
-                    resultDiv.innerHTML = '<div style="padding:12px;background:#f8d7da;border-radius:10px;border-left:4px solid #e53e3e"><strong style="color:#721c24"><i class="fa-solid fa-exclamation-circle"></i> No Request Found</strong><p style="margin:5px 0 0;font-size:.85rem;color:#721c24">No reset request found for this email. Please submit a new request.</p></div>';
-                    return;
-                }
-                var req = result.data;
-                if (req.status === 'pending') {
-                    resultDiv.innerHTML = '<div style="padding:12px;background:#fff3cd;border-radius:10px;border-left:4px solid #d69e2e"><strong style="color:#856404"><i class="fa-solid fa-clock"></i> Request Pending</strong><p style="margin:5px 0 0;font-size:.85rem;color:#856404">Your request is waiting for admin approval. Please check back later.</p></div>';
-                } else if (req.status === 'rejected') {
-                    resultDiv.innerHTML = '<div style="padding:12px;background:#f8d7da;border-radius:10px;border-left:4px solid #e53e3e"><strong style="color:#721c24"><i class="fa-solid fa-times-circle"></i> Request Rejected</strong><p style="margin:5px 0 0;font-size:.85rem;color:#721c24">Your reset request was rejected. Please submit a new one.</p></div>';
-                } else if (req.status === 'approved') {
-                    resultDiv.innerHTML = '<div style="padding:12px;background:#d4edda;border-radius:10px;border-left:4px solid #155724"><strong style="color:#155724"><i class="fa-solid fa-check-circle"></i> Request Approved!</strong><p style="margin:5px 0 0;font-size:.85rem;color:#155724">Your request has been approved. Your new password is: <strong>123456</strong><br>You can now log in with this password, then change it from your dashboard.</p></div>';
-                }
-            } catch(err) {
-                resultDiv.innerHTML = '<div style="padding:12px;background:#f8d7da;border-radius:10px;border-left:4px solid #e53e3e"><strong style="color:#721c24">Error checking status. Please try again.</strong></div>';
-            }
-        }
-
-        function showSetNewPasswordForm(email, role) {
-            var resultDiv = document.getElementById('resetStatusResult');
-            resultDiv.innerHTML = '<div style="padding:15px;background:#f0f7ff;border-radius:10px;border:1px solid #bfdbfe"><h4 style="margin-bottom:10px;color:var(--primary)"><i class="fa-solid fa-key"></i> Set New Password</h4><form onsubmit="handleSetNewPassword(event,\'' + email + '\',\'' + role + '\')"><div style="margin-bottom:12px"><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">New Password *</label><input type="password" id="newResetPassword" required minlength="4" placeholder="Enter new password (min 4 chars)" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><div style="margin-bottom:12px"><label style="display:block;margin-bottom:4px;font-weight:600;font-size:.85rem">Confirm Password *</label><input type="password" id="confirmResetPassword" required minlength="4" placeholder="Confirm new password" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:inherit;font-size:.9rem"></div><button type="submit" style="width:100%;padding:12px;background:var(--gradient);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer"><i class="fa-solid fa-save"></i> Save New Password</button></form></div>';
-        }
-
-        async function handleSetNewPassword(e, email, role) {
-            e.preventDefault();
-            var newPass = document.getElementById('newResetPassword').value;
-            var confirmPass = document.getElementById('confirmResetPassword').value;
-
-            if (newPass !== confirmPass) { alert('Passwords do not match!'); return; }
-            if (newPass.length < 4) { alert('Password must be at least 4 characters!'); return; }
-
-            _initSupabase();
-            if (!_supabaseClient) { alert('Cannot connect to server.'); return; }
-
-            try {
-                var userResult = await _supabaseClient.from('users').select('*').eq('email', email).eq('role', role).maybeSingle();
-                if (userResult.error) throw userResult.error;
-                if (!userResult.data) { alert('User not found.'); return; }
-
-                // Note: Password changes via Supabase Auth require the user to be logged in
-                // or use Supabase Auth admin API. For now, just notify the user.
-                console.log('Password reset requested for user:', userResult.data.id);
-
-                // Delete the reset request
-                await _supabaseClient.from('password_resets').delete().eq('email', email).eq('role', role);
-
-                document.getElementById('resetStatusResult').innerHTML = '<div style="padding:12px;background:#d4edda;border-radius:10px;border-left:4px solid #155724"><strong style="color:#155724"><i class="fa-solid fa-check-circle"></i> Request Processed!</strong><p style="margin:5px 0 0;font-size:.85rem;color:#155724">Your password reset request has been processed. Please contact the admin to set your new password via the Supabase dashboard.</p></div>';
-            } catch(err) {
-                alert('Failed to process password reset: ' + (err.message || 'Please try again.'));
-            }
-        }
-        async function handleResetRequest(e) {
-            e.preventDefault();
-            const role = document.getElementById('resetRole').value;
-            const email = document.getElementById('resetEmail').value.trim();
-            const errorEl = document.getElementById('loginError');
-
-            _initSupabase();
-            if (!_supabaseClient) { alert('Cannot connect to server. Check your internet.'); return; }
-
-            try {
-                var userResult = await _supabaseClient.from('users').select('*').eq('email', email).eq('role', role).maybeSingle();
-                var user = userResult.data;
-                var userErr = userResult.error;
-
-                if (userErr) throw userErr;
-                if (!user) {
-                    alert('No ' + role + ' account found with this email.');
-                    return;
-                }
-
-                var exResult = await _supabaseClient.from('password_resets').select('*').eq('email', email).eq('role', role).eq('status', 'pending').maybeSingle();
-                var existing = exResult.data;
-                var exErr = exResult.error;
-
-                if (exErr) throw exErr;
-                if (existing) {
-                    alert('You already have a pending reset request. Please wait for admin approval.');
-                    closeResetModal();
-                    return;
-                }
-
-                var insResult = await _supabaseClient.from('password_resets').insert({
-                    id: 'RST' + Date.now().toString(36).toUpperCase(),
-                    role: role,
-                    name: user.name,
-                    email: email,
-                    status: 'pending',
-                    requested_at: new Date().toISOString()
-                });
-                if (insResult.error) throw insResult.error;
-
-                alert('Password reset request sent to admin. You will receive your new password once the admin approves your request.');
-                closeResetModal();
-                document.getElementById('resetForm').reset();
-            } catch (err) {
-                console.error(err);
-                alert('Something went wrong. Please try again.');
-            }
-        }
-
-        function switchRole(role) {
-            currentRole = role;
-            document.getElementById('studentBtn').classList.toggle('active', role === 'student');
-            document.getElementById('teacherBtn').classList.toggle('active', role === 'teacher');
-            document.getElementById('adminBtn').classList.toggle('active', role === 'admin');
-            document.getElementById('loginError').style.display = 'none';
-
-            const nameGroup = document.getElementById('nameGroup');
-            const classGroup = document.getElementById('classGroup');
-
-            if (role === 'admin') {
-                nameGroup.style.display = 'none';
-                classGroup.style.display = 'none';
-            } else if (role === 'teacher') {
-                nameGroup.style.display = 'none';
-                classGroup.style.display = 'none';
-            } else {
-                nameGroup.style.display = 'block';
-                classGroup.style.display = 'block';
-                document.getElementById('nameLabel').textContent = 'Student Full Name *';
-            }
-        }
-
-        async function handleLogin(e) {
-            e.preventDefault();
-            const name = document.getElementById('loginName').value.trim();
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            const selectedClass = document.getElementById('loginClass').value;
-            const errorEl = document.getElementById('loginError');
-            errorEl.style.display = 'none';
-
-            if (!email || !password) {
-                errorEl.textContent = 'Please enter email and password.';
-                errorEl.style.display = 'block';
-                return;
-            }
-
-            _initSupabase();
-            if (!_supabaseClient) {
-                errorEl.textContent = 'Connecting to server... Please wait and try again.';
-                errorEl.style.display = 'block';
-                return;
-            }
-
-            try {
-                const data = await signIn(email, password);
-                const profile = data.user;
-
-                if (currentRole === 'student') {
-                    if (!selectedClass) {
-                        errorEl.textContent = 'Please select your class.';
-                        errorEl.style.display = 'block';
-                        return;
-                    }
-                    if (profile.role === 'student' && profile.class === selectedClass) {
-                        localStorage.setItem('tba_currentUser', JSON.stringify(profile));
-                        window.location.href = 'student-dashboard.html';
-                    } else {
-                        errorEl.textContent = 'Invalid email, password, or class.';
-                        errorEl.style.display = 'block';
-                    }
-                } else if (currentRole === 'teacher') {
-                    if (profile.role === 'teacher') {
-                        localStorage.setItem('tba_currentUser', JSON.stringify(profile));
-                        window.location.href = 'teacher-dashboard.html';
-                    } else {
-                        errorEl.textContent = 'This account is not a teacher account.';
-                        errorEl.style.display = 'block';
-                    }
-                } else {
-                    if (profile.role === 'admin') {
-                        localStorage.setItem('tba_currentUser', JSON.stringify(profile));
-                        window.location.href = 'admin-dashboard.html';
-                    } else {
-                        errorEl.textContent = 'This account is not an admin account.';
-                        errorEl.style.display = 'block';
-                    }
-                }
-            } catch (err) {
-                console.error(err);
-                var errMsg = err.message || 'Invalid email or password.';
-                if (currentRole === 'student') {
-                    _initSupabase();
-                    if (_supabaseClient) {
-                        try {
-                            var appCheck = await _supabaseClient.from('applications').select('status').eq('student_email', email).maybeSingle();
-                            if (appCheck && appCheck.data) {
-                                var st = appCheck.data.status;
-                                if (st === 'Pending') errMsg = 'Your application is still pending admin approval. Please wait for approval before logging in.';
-                                else if (st === 'Approved') errMsg = 'Your application has been approved. Please wait for the admin to complete admission.';
-                                else if (st === 'Rejected') errMsg = 'Your application was not approved. Please contact the school for more information.';
-                            }
-                        } catch(e) {}
-                    }
-                }
-                errorEl.textContent = errMsg;
-                errorEl.style.display = 'block';
-            }
-        }
-
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>

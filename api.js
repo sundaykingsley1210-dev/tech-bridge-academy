@@ -178,5 +178,5 @@ const API = {
   settings: {
     get(key) { return API.get('/api/settings?key=' + key); },
     save(data) { return API.post('/api/settings', data); },
-  },
+  };
 };

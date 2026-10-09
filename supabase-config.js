@@ -1,22 +1,10 @@
 // Supabase Configuration for Tech-Bridge Academy
-
 const SUPABASE_URL = 'https://ljhritlqicnlppwcoijw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_jDqBNBJKoF6RmPgaXNTW-g_G92B6L92';
 
 // Initialize Supabase client
 let supabase = null;
-function initSupabase() {
-    try {
-        if (window.supabase && window.supabase.createClient) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } else if (window.createClient) {
-            supabase = window.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
-    } catch(e) {
-        console.error('Supabase init error:', e);
-    }
-}
-initSupabase();
+try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {}
 
 // Retry init if CDN loads late
 setTimeout(initSupabase, 1000);
