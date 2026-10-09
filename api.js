@@ -23,18 +23,40 @@ const API = {
     const headers = { 'Content-Type': 'application/json' };
     if (this.token) headers['Authorization'] = 'Bearer ' + this.token;
     
-    // Try primary URL first
-    let res = await fetch(primaryUrl, { ...opts, headers: { ...headers, ...opts.headers } });
-    let data = await res.json();
-    
-    // If failed, try fallback URL
-    if (!res.ok) {
-      res = await fetch(fallbackUrl, { ...opts, headers: { ...headers, ...opts.headers } });
-      data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Request failed. Using fallback API.');
+    // Try primary URL first with timeout
+    try {
+      const res = await fetch(primaryUrl, { ...opts, headers: { ...headers, ...opts.headers }, timeout: 10000 });
+      let data = await res.json();
+      
+      // If failed, try fallback URL
+      if (!res.ok) {
+        try {
+          const fallbackRes = await fetch(fallbackUrl, { ...opts, headers: { ...headers, ...opts.headers }, timeout: 10000 });
+          const fallbackData = await fallbackRes.json();
+          if (fallbackRes.ok) {
+            return fallbackData;
+          }
+        } catch (fallbackError) {
+          // Fallback failed, continue with primary error
+        }
+      }
+      
+      return data;
+    } catch (primaryError) {
+      // Primary fetch failed, try fallback
+      try {
+        const fallbackRes = await fetch(fallbackUrl, { ...opts, headers: { ...headers, ...opts.headers }, timeout: 10000 });
+        const fallbackData = await fallbackRes.json();
+        if (fallbackRes.ok) {
+          return fallbackData;
+        }
+      } catch (fallbackError) {
+        // Both failed
+      }
     }
     
-    return data;
+    // If we get here, both URLs failed
+    throw new Error('API request failed. Please try again later.');
   },
 
   get(path) { return this.request(path); },
